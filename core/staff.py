@@ -5,7 +5,13 @@ from .models import CoreStaff as Staff
 
 def staff_list(request):
     search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
     staff_members = Staff.objects.all().order_by('-id')
+
+    if status_filter == 'active':
+        staff_members = staff_members.filter(is_active=True)
+    elif status_filter == 'inactive':
+        staff_members = staff_members.filter(is_active=False)
 
     if search_query:
         staff_members = staff_members.filter(
@@ -18,6 +24,7 @@ def staff_list(request):
     context = {
         "staff_members": staff_members,
         "search_query": search_query,
+        "status_filter": status_filter,
     }
     return render(request, "staff.html", context)
 
@@ -35,6 +42,7 @@ def staff_create(request):
             contact=request.POST.get('contact') or None,
             emergency_contact=request.POST.get('emergency_contact') or None,
             email=request.POST.get('email') or None,
+            is_active=request.POST.get('is_active') == '1',
         )
         if 'photo' in request.FILES:
             staff.photo = request.FILES['photo']
@@ -59,6 +67,7 @@ def staff_update(request, pk):
         staff.contact = request.POST.get('contact') or None
         staff.emergency_contact = request.POST.get('emergency_contact') or None
         staff.email = request.POST.get('email') or None
+        staff.is_active = request.POST.get('is_active') == '1'
 
         if 'photo' in request.FILES:
             staff.photo = request.FILES['photo']
@@ -67,6 +76,14 @@ def staff_update(request, pk):
 
         staff.save()
         messages.success(request, f'Employee "{staff.name}" updated successfully!')
+    return redirect("staff_list")
+
+def staff_toggle_status(request, pk):
+    staff = get_object_or_404(Staff, pk=pk)
+    staff.is_active = not staff.is_active
+    staff.save()
+    status_str = "Active" if staff.is_active else "Deactivated"
+    messages.success(request, f'Employee "{staff.name}" is now {status_str}.')
     return redirect("staff_list")
 
 def staff_delete(request, pk):

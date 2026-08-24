@@ -3,9 +3,9 @@ from django.db.models import Q
 from django.contrib import messages
 from .models import CoreStudent as Student
 
-
 def student_list(request):
     selected_class = request.GET.get('class', '').strip()
+    status_filter = request.GET.get('status', '').strip()
     search_query = request.GET.get('q', '').strip()
     
     students = Student.objects.all().order_by('-id')
@@ -13,18 +13,25 @@ def student_list(request):
     if selected_class:
         students = students.filter(student_class__iexact=selected_class)
 
+    if status_filter == 'active':
+        students = students.filter(is_active=True)
+    elif status_filter == 'inactive':
+        students = students.filter(is_active=False)
+
     if search_query:
         students = students.filter(
-            Q(name__icontains=search_query) | Q(roll_no__icontains=search_query)
+            Q(name__icontains=search_query) | 
+            Q(roll_no__icontains=search_query) |
+            Q(father_name__icontains=search_query)
         )
 
     context = {
         "students": students,
         "selected_class": selected_class,
+        "status_filter": status_filter,
         "search_query": search_query,
     }
     return render(request, "students.html", context)
-
 
 def student_create(request):
     if request.method == "POST":
@@ -39,6 +46,8 @@ def student_create(request):
             gender=request.POST.get('gender') or None,
             contact=request.POST.get('contact') or None,
             address=request.POST.get('address') or None,
+            previous_school=request.POST.get('previous_school') or None,
+            is_active=request.POST.get('is_active') == '1',
             admission_fee=request.POST.get('admission_fee') or 0.00,
             monthly_fee=request.POST.get('monthly_fee') or 0.00,
             transport_charges=request.POST.get('transport_charges') or 0.00,
@@ -53,7 +62,6 @@ def student_create(request):
         messages.success(request, f'Student "{student.name}" registered successfully!')
     return redirect("student_list")
 
-
 def student_update(request, pk):
     student = get_object_or_404(Student, pk=pk)
     if request.method == "POST":
@@ -67,6 +75,8 @@ def student_update(request, pk):
         student.gender = request.POST.get('gender') or None
         student.contact = request.POST.get('contact') or None
         student.address = request.POST.get('address') or None
+        student.previous_school = request.POST.get('previous_school') or None
+        student.is_active = request.POST.get('is_active') == '1'
         student.admission_fee = request.POST.get('admission_fee') or 0.00
         student.monthly_fee = request.POST.get('monthly_fee') or 0.00
         student.transport_charges = request.POST.get('transport_charges') or 0.00
@@ -81,6 +91,13 @@ def student_update(request, pk):
         messages.success(request, f'Student "{student.name}" updated successfully!')
     return redirect("student_list")
 
+def student_toggle_status(request, pk):
+    student = get_object_or_404(Student, pk=pk)
+    student.is_active = not student.is_active
+    student.save()
+    status_str = "Active" if student.is_active else "Deactivated"
+    messages.success(request, f'Student "{student.name}" is now {status_str}.')
+    return redirect("student_list")
 
 def student_delete(request, pk):
     student = get_object_or_404(Student, pk=pk)

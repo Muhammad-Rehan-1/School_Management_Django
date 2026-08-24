@@ -7,33 +7,36 @@
 
 {% block extra_css %}
 <style>
-  :root { --green: #3E9E6B; --red: #E15C5C; --teal: #2A9D8F; --teal-soft: #A8DADC; }
+  :root { --green: #3E9E6B; --red: #E15C5C; --teal: #2A9D8F; --teal-soft: #A8DADC; --orange: #F08A5D; }
   .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
   .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
   .alert.success { background: #E8F7EF; color: var(--green); }
   .alert.error { background: #FDECEC; color: var(--red); }
   
   .toolbar {
-    background: var(--card); border-radius: 16px; padding: 16px 18px; display: flex; align-items: center;
-    gap: 14px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    background: var(--card); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center;
+    gap: 12px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
   }
   .toolbar h2 { font-size: 16px; font-weight: 600; margin-right: auto; }
-  .toolbar .count { font-size: 11.5px; color: var(--muted); font-weight: 500; background: #F1F2F7; padding: 4px 10px; border-radius: 20px; margin-right: 8px; }
-  .search-form { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 440px; }
-  .search-form input { flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; font-family: inherit; outline: none; }
-  .search-form input:focus { border-color: var(--orange); background: #fff; }
-  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .toolbar select, .toolbar input {
+    padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none; font-family: inherit;
+  }
+  .toolbar input { min-width: 220px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--teal); background: #fff; }
+
+  .badge-active { background: #E8F7EF; color: var(--green); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+  .badge-inactive { background: #FDECEC; color: var(--red); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
   .btn-primary:hover { background: #E8794C; }
-  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn-secondary:hover { background: #F5F6FA; }
-  .btn-add { display: flex; align-items: center; gap: 8px; }
-  .btn-add svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; }
 
   .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; min-width: 950px; }
   thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
   tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-  tbody tr:last-child td { border-bottom: none; }
   tbody tr:hover { background: #FAFBFD; }
   
   .staff-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
@@ -43,18 +46,21 @@
   }
   .staff-name .av img { width: 100%; height: 100%; object-fit: cover; }
   .badge { background: #E0F2F1; color: var(--teal); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
-  .row-actions { display: flex; gap: 8px; }
+  
+  .row-actions { display: flex; gap: 6px; }
   .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
   .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.preview svg { stroke: var(--green); }
+  .icon-action.preview:hover { background: #E8F7EF; }
   .icon-action.edit svg { stroke: var(--teal); }
   .icon-action.edit:hover { background: #E0F2F1; }
   .icon-action.delete svg { stroke: var(--red); }
   .icon-action.delete:hover { background: #FDECEC; }
-  .empty-row td { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
 
+  /* Modals */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
   .modal-overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 24px 26px 26px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
   .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .modal-head .ic { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #E0F2F1; }
   .modal-head .ic svg { width: 20px; height: 20px; fill: none; stroke: var(--teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -62,16 +68,22 @@
   .modal-head-txt h2 { font-size: 16.5px; font-weight: 600; }
   .modal-head-txt p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
   .modal-close { width: 32px; height: 32px; border-radius: 9px; border: none; background: #F1F2F7; color: var(--muted); font-size: 16px; cursor: pointer; flex-shrink: 0; }
-  .modal-close:hover { background: #E9EBF1; color: var(--text); }
+
   form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
   .form-section-title { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 10px; }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field.full { grid-column: 1 / -1; }
   .field label { font-size: 12px; font-weight: 500; }
-  .field label .opt { color: var(--muted); font-weight: 400; }
-  .field input, .field select { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: .15s; width: 100%; }
-  .field input:focus, .field select:focus { border-color: var(--teal); background: #fff; }
-  .modal-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+  .field input, .field select { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; outline: none; width: 100%; }
+
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .preview-item { background: #F8F9FC; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); }
+  .preview-item.full { grid-column: 1 / -1; }
+  .preview-item .p-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .preview-item .p-val { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .preview-img-box { display: flex; gap: 14px; margin-top: 10px; }
+  .preview-img-card { flex: 1; background: #F8F9FC; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid var(--line); }
+  .preview-img-card img { width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px; margin-top: 6px; background: #fff; }
 </style>
 {% endblock %}
 
@@ -86,18 +98,17 @@
 
   <div class="toolbar">
     <h2>Administrative & Support Staff</h2>
-    <span class="count">{{ staff_members.count|default:"0" }} record{{ staff_members.count|pluralize }}</span>
 
-    <form class="search-form" method="get" action="{% url 'staff_list' %}">
-      <input type="text" name="q" placeholder="Search by name, ID, role, CNIC..." value="{{ search_query }}">
-      <button type="submit" class="btn-secondary">Search</button>
-      {% if search_query %}
-        <a href="{% url 'staff_list' %}" class="btn-secondary" style="text-decoration:none;display:flex;align-items:center;">Clear</a>
-      {% endif %}
-    </form>
+    <select id="staffStatusFilter" onchange="filterStaff()">
+      <option value="">All Statuses</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Employees</option>
+      <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Deactivated</option>
+    </select>
 
-    <button type="button" class="btn-primary btn-add" id="openAddStaffModal">
-      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    <input type="text" id="liveStaffSearch" placeholder="⚡ Live search name, ID, role, CNIC..." value="{{ search_query }}">
+
+    <button type="button" class="btn-primary" id="openAddStaffModal">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
       Add Employee
     </button>
   </div>
@@ -112,37 +123,61 @@
           <th>Role</th>
           <th>Salary</th>
           <th>Contact</th>
-          <th>Emergency</th>
+          <th>Status</th>
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="staffTableBody">
         {% for staff in staff_members %}
-        <tr>
+        <tr class="staff-row">
           <td>
             <div class="staff-name">
               <span class="av">
-                {% if staff.photo %}
-                  <img src="{{ staff.photo.url }}" alt="{{ staff.name }}">
-                {% else %}
-                  {{ staff.name|slice:":1"|upper }}
-                {% endif %}
+                {% if staff.photo %}<img src="{{ staff.photo.url }}" alt="{{ staff.name }}">
+                {% else %}{{ staff.name|slice:":1"|upper }}{% endif %}
               </span>
               <div>
-                <div>{{ staff.name }}</div>
-                <small style="color:var(--muted);font-weight:400;">{{ staff.qualification|default:"—" }}</small>
+                <div class="st-name">{{ staff.name }}</div>
+                <small style="color:var(--muted);">{{ staff.qualification|default:"—" }}</small>
               </div>
             </div>
           </td>
-          <td><b>{{ staff.emp_id }}</b></td>
-          <td>{{ staff.cnic|default:"—" }}</td>
-          <td><span class="badge">{{ staff.role }}</span></td>
+          <td><b class="st-empid">{{ staff.emp_id }}</b></td>
+          <td class="st-cnic">{{ staff.cnic|default:"—" }}</td>
+          <td><span class="badge st-role">{{ staff.role }}</span></td>
           <td><b>Rs. {{ staff.salary }}</b></td>
           <td>{{ staff.contact|default:"—" }}</td>
-          <td>{{ staff.emergency_contact|default:"—" }}</td>
+          <td>
+            <button type="button" 
+              class="{% if staff.is_active %}badge-active{% else %}badge-inactive{% endif %} toggle-staff-status"
+              data-url="{% url 'staff_toggle_status' staff.id %}"
+              data-name="{{ staff.name }}"
+              data-target-action="{{ staff.is_active|yesno:'deactivate,activate' }}">
+              {% if staff.is_active %}Active{% else %}Deactivated{% endif %}
+            </button>
+          </td>
           <td>
             <div class="row-actions">
-              <button type="button" class="icon-action edit"
+              <button type="button" class="icon-action preview preview-staff-btn"
+                data-name="{{ staff.name }}"
+                data-empid="{{ staff.emp_id }}"
+                data-cnic="{{ staff.cnic|default:'—' }}"
+                data-role="{{ staff.role }}"
+                data-qualification="{{ staff.qualification|default:'—' }}"
+                data-salary="{{ staff.salary }}"
+                data-joining="{{ staff.joining_date|date:'d-M-Y'|default:'—' }}"
+                data-gender="{{ staff.gender|default:'—' }}"
+                data-contact="{{ staff.contact|default:'—' }}"
+                data-emergency="{{ staff.emergency_contact|default:'—' }}"
+                data-email="{{ staff.email|default:'—' }}"
+                data-active="{{ staff.is_active|yesno:'Active,Deactivated' }}"
+                data-photo="{% if staff.photo %}{{ staff.photo.url }}{% endif %}"
+                data-cnic-photo="{% if staff.cnic_photo %}{{ staff.cnic_photo.url }}{% endif %}"
+                title="Preview Profile">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+
+              <button type="button" class="icon-action edit edit-staff-btn"
                 data-url="{% url 'staff_update' staff.id %}"
                 data-name="{{ staff.name }}"
                 data-empid="{{ staff.emp_id }}"
@@ -155,9 +190,11 @@
                 data-contact="{{ staff.contact|default:'' }}"
                 data-emergency="{{ staff.emergency_contact|default:'' }}"
                 data-email="{{ staff.email|default:'' }}"
+                data-active="{{ staff.is_active|yesno:'1,0' }}"
                 title="Edit">
                 <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
               </button>
+
               <form method="post" action="{% url 'staff_delete' staff.id %}" onsubmit="return confirm('Delete {{ staff.name }}\'s record?');">
                 {% csrf_token %}
                 <button type="submit" class="icon-action delete" title="Delete">
@@ -168,47 +205,92 @@
           </td>
         </tr>
         {% empty %}
-        <tr class="empty-row">
-          <td colspan="8">No staff members found{% if search_query %} matching "{{ search_query }}"{% endif %}.</td>
-        </tr>
+        <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);">No staff members found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
 </div>
-{% endblock %}
 
-{% block modals %}
-<!-- Add Staff Modal -->
+<div class="modal-overlay" id="previewStaffOverlay">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-head">
+      <div class="staff-name">
+        <div class="av" id="sp-avatar-box" style="width:44px;height:44px;font-size:16px;">
+          <span id="sp-avatar-text"></span>
+          <img id="sp-avatar-img" src="" style="display:none;">
+        </div>
+        <div class="modal-head-txt" style="margin-left:8px;">
+          <h2 id="sp-name" style="font-size:18px;"></h2>
+          <p id="sp-sub"></p>
+        </div>
+      </div>
+      <button class="modal-close" type="button" data-close="previewStaffOverlay">✕</button>
+    </div>
+
+    <div class="preview-grid">
+      <div class="preview-item"><div class="p-lbl">Employee ID</div><div class="p-val" id="sp-empid"></div></div>
+      <div class="preview-item"><div class="p-lbl">CNIC Number</div><div class="p-val" id="sp-cnic"></div></div>
+      <div class="preview-item"><div class="p-lbl">Designation / Role</div><div class="p-val" id="sp-role"></div></div>
+      <div class="preview-item"><div class="p-lbl">Qualification</div><div class="p-val" id="sp-qualification"></div></div>
+      <div class="preview-item"><div class="p-lbl">Monthly Salary</div><div class="p-val" id="sp-salary" style="color:var(--green);"></div></div>
+      <div class="preview-item"><div class="p-lbl">Joining Date</div><div class="p-val" id="sp-joining"></div></div>
+      <div class="preview-item"><div class="p-lbl">Gender</div><div class="p-val" id="sp-gender"></div></div>
+      <div class="preview-item"><div class="p-lbl">Primary Contact</div><div class="p-val" id="sp-contact"></div></div>
+      <div class="preview-item"><div class="p-lbl">Emergency Contact</div><div class="p-val" id="sp-emergency"></div></div>
+      <div class="preview-item"><div class="p-lbl">Email Address</div><div class="p-val" id="sp-email"></div></div>
+    </div>
+
+    <div class="form-section-title" style="margin-top:16px;">Attached Documents</div>
+    <div class="preview-img-box">
+      <div class="preview-img-card">
+        <div class="p-lbl">Employee Photo</div>
+        <img id="sp-photo-view" src="" style="display:none;">
+        <div id="sp-no-photo" style="font-size:12px;color:var(--muted);padding:20px;">No photo uploaded</div>
+      </div>
+      <div class="preview-img-card">
+        <div class="p-lbl">CNIC Document Picture</div>
+        <img id="sp-cnic-view" src="" style="display:none;">
+        <div id="sp-no-cnic" style="font-size:12px;color:var(--muted);padding:20px;">No CNIC uploaded</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button type="button" class="btn-secondary" data-close="previewStaffOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="statusConfirmOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;padding:26px 20px;">
+    <div style="width:50px;height:50px;border-radius:50%;background:#E0F2F1;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--teal)" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h3 style="font-size:17px;font-weight:600;margin-bottom:6px;">Confirm Status Change</h3>
+    <p id="statusConfirmMsg" style="font-size:13px;color:var(--muted);margin-bottom:18px;"></p>
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button type="button" class="btn-secondary" data-close="statusConfirmOverlay">Cancel</button>
+      <a id="statusConfirmBtn" href="#" class="btn-primary" style="text-decoration:none;">Confirm & Proceed</a>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="addStaffOverlay">
   <div class="modal">
     <div class="modal-head">
       <span class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
-      <div class="modal-head-txt"><h2>Register Non-Teaching Employee</h2><p>Add staff credentials and role assignments</p></div>
+      <div class="modal-head-txt"><h2>Register Support Staff</h2><p>Add employee profile details</p></div>
       <button class="modal-close" type="button" data-close="addStaffOverlay">✕</button>
     </div>
     
     <form class="modal-form" method="post" action="{% url 'staff_create' %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="form-section-title">Personal & Employment Details</div>
-      
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" name="name" placeholder="e.g. Muhammad Aslam" required>
-      </div>
-      <div class="field">
-        <label>Employee ID</label>
-        <input type="text" name="emp_id" placeholder="e.g. STF-201" required>
-      </div>
-      <div class="field">
-        <label>CNIC Number</label>
-        <input type="text" name="cnic" placeholder="e.g. 34101-1234567-1" required>
-      </div>
+      <div class="field"><label>Full Name</label><input type="text" name="name" required></div>
+      <div class="field"><label>Employee ID</label><input type="text" name="emp_id" placeholder="e.g. STF-201" required></div>
+      <div class="field"><label>CNIC Number</label><input type="text" name="cnic" placeholder="e.g. 34101-1234567-1" required></div>
       <div class="field">
         <label>Role / Designation</label>
         <select name="role" required>
-          <option value="">Select Role</option>
           <option value="Accountant">Accountant</option>
           <option value="Admin Officer">Admin Officer</option>
           <option value="Clerk / Receptionist">Clerk / Receptionist</option>
@@ -220,53 +302,18 @@
           <option value="Other">Other</option>
         </select>
       </div>
-      <div class="field">
-        <label>Qualification <span class="opt">(optional)</span></label>
-        <input type="text" name="qualification" placeholder="e.g. Matric / B.Com / None">
-      </div>
-      <div class="field">
-        <label>Joining Date</label>
-        <input type="date" name="joining_date">
-      </div>
-      <div class="field">
-        <label>Gender</label>
-        <select name="gender">
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Monthly Salary (Rs.)</label>
-        <input type="number" step="0.01" name="salary" placeholder="0.00" required>
-      </div>
+      <div class="field"><label>Qualification</label><input type="text" name="qualification"></div>
+      <div class="field"><label>Joining Date</label><input type="date" name="joining_date"></div>
+      <div class="field"><label>Gender</label><select name="gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+      <div class="field"><label>Account Status</label><select name="is_active"><option value="1" selected>Active</option><option value="0">Deactivated</option></select></div>
+      <div class="field"><label>Monthly Salary (Rs.)</label><input type="number" step="0.01" name="salary" required></div>
+      <div class="field"><label>Primary Contact</label><input type="tel" name="contact" required></div>
+      <div class="field"><label>Emergency Contact</label><input type="tel" name="emergency_contact" required></div>
+      <div class="field"><label>Email Address</label><input type="email" name="email"></div>
+      <div class="field"><label>Employee Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>CNIC Picture</label><input type="file" name="cnic_photo" accept="image/*"></div>
 
-      <div class="form-section-title">Contact Information</div>
-      <div class="field">
-        <label>Primary Contact</label>
-        <input type="tel" name="contact" placeholder="e.g. 0300-1234567" required>
-      </div>
-      <div class="field">
-        <label>Emergency Contact</label>
-        <input type="tel" name="emergency_contact" placeholder="e.g. 0321-7654321" required>
-      </div>
-      <div class="field full">
-        <label>Email Address <span class="opt">(optional)</span></label>
-        <input type="email" name="email" placeholder="e.g. staff@school.edu">
-      </div>
-
-      <div class="form-section-title">Documents & Images</div>
-      <div class="field">
-        <label>Employee Photo</label>
-        <input type="file" name="photo" accept="image/*">
-      </div>
-      <div class="field">
-        <label>CNIC Document Picture</label>
-        <input type="file" name="cnic_photo" accept="image/*">
-      </div>
-
-      <div class="modal-actions">
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
         <button type="button" class="btn-secondary" data-close="addStaffOverlay">Cancel</button>
         <button type="submit" class="btn-primary">Save Employee</button>
       </div>
@@ -274,7 +321,6 @@
   </div>
 </div>
 
-<!-- Edit Staff Modal -->
 <div class="modal-overlay" id="editStaffOverlay">
   <div class="modal">
     <div class="modal-head">
@@ -285,20 +331,9 @@
     
     <form class="modal-form" method="post" id="editStaffForm" action="" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="form-section-title">Personal & Employment Details</div>
-      
-      <div class="field">
-        <label>Full Name</label>
-        <input type="text" name="name" id="edit-st-name" required>
-      </div>
-      <div class="field">
-        <label>Employee ID</label>
-        <input type="text" name="emp_id" id="edit-st-empid" required>
-      </div>
-      <div class="field">
-        <label>CNIC Number</label>
-        <input type="text" name="cnic" id="edit-st-cnic" required>
-      </div>
+      <div class="field"><label>Full Name</label><input type="text" name="name" id="edit-st-name" required></div>
+      <div class="field"><label>Employee ID</label><input type="text" name="emp_id" id="edit-st-empid" required></div>
+      <div class="field"><label>CNIC Number</label><input type="text" name="cnic" id="edit-st-cnic" required></div>
       <div class="field">
         <label>Role / Designation</label>
         <select name="role" id="edit-st-role" required>
@@ -313,53 +348,18 @@
           <option value="Other">Other</option>
         </select>
       </div>
-      <div class="field">
-        <label>Qualification <span class="opt">(optional)</span></label>
-        <input type="text" name="qualification" id="edit-st-qualification">
-      </div>
-      <div class="field">
-        <label>Joining Date</label>
-        <input type="date" name="joining_date" id="edit-st-joining">
-      </div>
-      <div class="field">
-        <label>Gender</label>
-        <select name="gender" id="edit-st-gender">
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Monthly Salary (Rs.)</label>
-        <input type="number" step="0.01" name="salary" id="edit-st-salary" required>
-      </div>
+      <div class="field"><label>Qualification</label><input type="text" name="qualification" id="edit-st-qualification"></div>
+      <div class="field"><label>Joining Date</label><input type="date" name="joining_date" id="edit-st-joining"></div>
+      <div class="field"><label>Gender</label><select name="gender" id="edit-st-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+      <div class="field"><label>Account Status</label><select name="is_active" id="edit-st-active"><option value="1">Active</option><option value="0">Deactivated</option></select></div>
+      <div class="field"><label>Monthly Salary (Rs.)</label><input type="number" step="0.01" name="salary" id="edit-st-salary" required></div>
+      <div class="field"><label>Primary Contact</label><input type="tel" name="contact" id="edit-st-contact" required></div>
+      <div class="field"><label>Emergency Contact</label><input type="tel" name="emergency_contact" id="edit-st-emergency" required></div>
+      <div class="field"><label>Email Address</label><input type="email" name="email" id="edit-st-email"></div>
+      <div class="field"><label>Change Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>Change CNIC Picture</label><input type="file" name="cnic_photo" accept="image/*"></div>
 
-      <div class="form-section-title">Contact Information</div>
-      <div class="field">
-        <label>Primary Contact</label>
-        <input type="tel" name="contact" id="edit-st-contact" required>
-      </div>
-      <div class="field">
-        <label>Emergency Contact</label>
-        <input type="tel" name="emergency_contact" id="edit-st-emergency" required>
-      </div>
-      <div class="field full">
-        <label>Email Address</label>
-        <input type="email" name="email" id="edit-st-email">
-      </div>
-
-      <div class="form-section-title">Update Documents (Optional)</div>
-      <div class="field">
-        <label>Change Photo</label>
-        <input type="file" name="photo" accept="image/*">
-      </div>
-      <div class="field">
-        <label>Change CNIC Picture</label>
-        <input type="file" name="cnic_photo" accept="image/*">
-      </div>
-
-      <div class="modal-actions">
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
         <button type="button" class="btn-secondary" data-close="editStaffOverlay">Cancel</button>
         <button type="submit" class="btn-primary">Save Changes</button>
       </div>
@@ -370,27 +370,38 @@
 
 {% block extra_js %}
 <script>
-  const addStaffOverlay = document.getElementById('addStaffOverlay');
-  const editStaffOverlay = document.getElementById('editStaffOverlay');
-  const editStaffForm = document.getElementById('editStaffForm');
+  function filterStaff() {
+    const status = document.getElementById('staffStatusFilter').value;
+    const search = document.getElementById('liveStaffSearch').value;
+    window.location.href = `?status=${status}&q=${search}`;
+  }
 
-  document.getElementById('openAddStaffModal').addEventListener('click', () => addStaffOverlay.classList.add('show'));
+  // Live Instant Search
+  document.getElementById('liveStaffSearch').addEventListener('input', function() {
+    const val = this.value.toLowerCase().trim();
+    document.querySelectorAll('.staff-row').forEach(row => {
+      const name = row.querySelector('.st-name').textContent.toLowerCase();
+      const empid = row.querySelector('.st-empid').textContent.toLowerCase();
+      const cnic = row.querySelector('.st-cnic').textContent.toLowerCase();
+      const role = row.querySelector('.st-role').textContent.toLowerCase();
+      row.style.display = (name.includes(val) || empid.includes(val) || cnic.includes(val) || role.includes(val)) ? '' : 'none';
+    });
+  });
 
   document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', () => document.getElementById(btn.dataset.close).classList.remove('show'));
-  });
-
-  [addStaffOverlay, editStaffOverlay].forEach(overlay => {
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { addStaffOverlay.classList.remove('show'); editStaffOverlay.classList.remove('show'); }
-  });
-
-  document.querySelectorAll('.icon-action.edit').forEach(btn => {
     btn.addEventListener('click', () => {
-      editStaffForm.action = btn.dataset.url;
+      document.getElementById(btn.dataset.close).classList.remove('show');
+    });
+  });
+
+  document.getElementById('openAddStaffModal').addEventListener('click', () => {
+    document.getElementById('addStaffOverlay').classList.add('show');
+  });
+
+  // Edit Staff
+  document.querySelectorAll('.edit-staff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('editStaffForm').action = btn.dataset.url;
       document.getElementById('edit-st-name').value = btn.dataset.name || '';
       document.getElementById('edit-st-empid').value = btn.dataset.empid || '';
       document.getElementById('edit-st-cnic').value = btn.dataset.cnic || '';
@@ -402,7 +413,73 @@
       document.getElementById('edit-st-contact').value = btn.dataset.contact || '';
       document.getElementById('edit-st-emergency').value = btn.dataset.emergency || '';
       document.getElementById('edit-st-email').value = btn.dataset.email || '';
-      editStaffOverlay.classList.add('show');
+      document.getElementById('edit-st-active').value = btn.dataset.active || '1';
+      document.getElementById('editStaffOverlay').classList.add('show');
+    });
+  });
+
+  // Preview Staff
+  document.querySelectorAll('.preview-staff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('sp-name').textContent = btn.dataset.name;
+      document.getElementById('sp-sub').textContent = `${btn.dataset.role} · ${btn.dataset.empid} (${btn.dataset.active})`;
+      document.getElementById('sp-empid').textContent = btn.dataset.empid;
+      document.getElementById('sp-cnic').textContent = btn.dataset.cnic;
+      document.getElementById('sp-role').textContent = btn.dataset.role;
+      document.getElementById('sp-qualification').textContent = btn.dataset.qualification;
+      document.getElementById('sp-salary').textContent = `Rs. ${btn.dataset.salary}`;
+      document.getElementById('sp-joining').textContent = btn.dataset.joining;
+      document.getElementById('sp-gender').textContent = btn.dataset.gender;
+      document.getElementById('sp-contact').textContent = btn.dataset.contact;
+      document.getElementById('sp-emergency').textContent = btn.dataset.emergency;
+      document.getElementById('sp-email').textContent = btn.dataset.email;
+
+      const avImg = document.getElementById('sp-avatar-img');
+      const avTxt = document.getElementById('sp-avatar-text');
+      const photoView = document.getElementById('sp-photo-view');
+      const noPhoto = document.getElementById('sp-no-photo');
+      const cnicView = document.getElementById('sp-cnic-view');
+      const noCnic = document.getElementById('sp-no-cnic');
+
+      if (btn.dataset.photo) {
+        avImg.src = btn.dataset.photo;
+        avImg.style.display = 'block';
+        avTxt.style.display = 'none';
+        photoView.src = btn.dataset.photo;
+        photoView.style.display = 'block';
+        noPhoto.style.display = 'none';
+      } else {
+        avImg.style.display = 'none';
+        avTxt.textContent = btn.dataset.name.charAt(0).toUpperCase();
+        avTxt.style.display = 'block';
+        photoView.style.display = 'none';
+        noPhoto.style.display = 'block';
+      }
+
+      if (btn.dataset.cnicPhoto) {
+        cnicView.src = btn.dataset.cnicPhoto;
+        cnicView.style.display = 'block';
+        noCnic.style.display = 'none';
+      } else {
+        cnicView.style.display = 'none';
+        noCnic.style.display = 'block';
+      }
+
+      document.getElementById('previewStaffOverlay').classList.add('show');
+    });
+  });
+
+  // Toggle Status Confirmation
+  document.querySelectorAll('.toggle-staff-status').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const staffName = this.dataset.name;
+      const targetAction = this.dataset.targetAction;
+      const toggleUrl = this.dataset.url;
+
+      document.getElementById('statusConfirmMsg').innerHTML = `Are you sure you want to <b>${targetAction.toUpperCase()}</b> the employee account of <b>${staffName}</b>?`;
+      document.getElementById('statusConfirmBtn').href = toggleUrl;
+      document.getElementById('statusConfirmOverlay').classList.add('show');
     });
   });
 </script>
