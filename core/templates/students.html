@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Students{% endblock %}
+{% block page_title %}Students{% endblock %}
+{% block nav_students %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --green: #3E9E6B;
+    --red: #E15C5C;
+  }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Alerts */
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: #E8F7EF; color: var(--green); }
+  .alert.error { background: #FDECEC; color: var(--red); }
+
+  /* Class Filter Tabs */
+  .class-tabs-card {
+    background: var(--card); border-radius: 16px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; align-items: center; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin;
+  }
+  .tab-item {
+    display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 10px; font-size: 13px;
+    font-weight: 500; color: var(--muted); text-decoration: none; background: #F8F9FC; transition: 0.2s ease;
+  }
+  .tab-item:hover { background: #F1F2F7; color: var(--text); }
+  .tab-item.active { background: var(--primary); color: #fff; font-weight: 600; }
+
+  /* Toolbar */
+  .toolbar {
+    background: var(--card); border-radius: 16px; padding: 16px 18px; display: flex; align-items: center;
+    gap: 14px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 600; margin-right: auto; }
+  .toolbar .count {
+    font-size: 11.5px; color: var(--muted); font-weight: 500; background: #F1F2F7; padding: 4px 10px;
+    border-radius: 20px; margin-right: 8px;
+  }
+  .search-form { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 440px; }
+  .search-form input {
+    flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; font-family: inherit; outline: none;
+  }
+  .search-form input:focus { border-color: var(--orange); background: #fff; }
+  .btn-primary {
+    padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-secondary {
+    padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted);
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  .btn-secondary:hover { background: #F5F6FA; }
+  .btn-add { display: flex; align-items: center; gap: 8px; }
+  .btn-add svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; }
+
+  /* Table */
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted);
+    padding: 14px 16px; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFBFD; }
+  .stu-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .stu-name .av {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--orange-soft, #F6A97F); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+  }
+  .stu-name .av img { width: 100%; height: 100%; object-fit: cover; }
+  .badge { background: #F1F2F7; color: var(--text); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .row-actions { display: flex; gap: 8px; }
+  .icon-action {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.edit svg { stroke: #3E6FB0; }
+  .icon-action.edit:hover { background: #E8F1FC; }
+  .icon-action.delete svg { stroke: var(--red); }
+  .icon-action.delete:hover { background: #FDECEC; }
+  .empty-row td { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* Modals */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5);
+    align-items: center; justify-content: center; z-index: 500; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 18px; width: 100%; max-width: 680px; max-height: 90vh;
+    overflow-y: auto; padding: 24px 26px 26px; box-shadow: 0 20px 50px rgba(20,24,40,.25);
+  }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .modal-head .ic {
+    width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; background: #FDEDE4;
+  }
+  .modal-head .ic svg { width: 20px; height: 20px; fill: none; stroke: var(--orange); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-head-txt { flex: 1; margin-left: 12px; }
+  .modal-head-txt h2 { font-size: 16.5px; font-weight: 600; }
+  .modal-head-txt p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 9px; border: none; background: #F1F2F7;
+    color: var(--muted); font-size: 16px; cursor: pointer; flex-shrink: 0;
+  }
+  .modal-close:hover { background: #E9EBF1; color: var(--text); }
+
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .form-section-title {
+    grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--primary);
+    border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 10px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field label .opt { color: var(--muted); font-weight: 400; }
+  .field input, .field select, .field textarea {
+    padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC;
+    font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: .15s; width: 100%;
+  }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--orange); background: #fff; }
+  .modal-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+  @media (max-width: 760px) {
+    .content { padding: 6px 16px 20px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar h2 { margin-right: 0; }
+    .search-form { max-width: none; }
+    form.modal-form { grid-template-columns: 1fr; }
+    .modal { padding: 20px 18px 22px; border-radius: 16px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Class Filter Pills -->
+  <div class="class-tabs-card">
+    <a href="{% url 'student_list' %}{% if search_query %}?q={{ search_query }}{% endif %}" class="tab-item {% if not selected_class %}active{% endif %}">All Classes</a>
+    <a href="{% url 'student_list' %}?class=PG{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'PG' %}active{% endif %}">PG</a>
+    <a href="{% url 'student_list' %}?class=Nursery{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Nursery' %}active{% endif %}">Nursery</a>
+    <a href="{% url 'student_list' %}?class=Prep{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Prep' %}active{% endif %}">Prep</a>
+    <a href="{% url 'student_list' %}?class=One{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'One' %}active{% endif %}">Class 1</a>
+    <a href="{% url 'student_list' %}?class=Two{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Two' %}active{% endif %}">Class 2</a>
+    <a href="{% url 'student_list' %}?class=Three{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Three' %}active{% endif %}">Class 3</a>
+    <a href="{% url 'student_list' %}?class=Four{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Four' %}active{% endif %}">Class 4</a>
+    <a href="{% url 'student_list' %}?class=Five{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Five' %}active{% endif %}">Class 5</a>
+    <a href="{% url 'student_list' %}?class=Six{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Six' %}active{% endif %}">Class 6</a>
+    <a href="{% url 'student_list' %}?class=Seven{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Seven' %}active{% endif %}">Class 7</a>
+    <a href="{% url 'student_list' %}?class=Eight{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Eight' %}active{% endif %}">Class 8</a>
+    <a href="{% url 'student_list' %}?class=Nine{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Nine' %}active{% endif %}">Class 9</a>
+    <a href="{% url 'student_list' %}?class=Ten{% if search_query %}&q={{ search_query }}{% endif %}" class="tab-item {% if selected_class == 'Ten' %}active{% endif %}">Class 10</a>
+  </div>
+
+  <!-- Search & Action Toolbar -->
+  <div class="toolbar">
+    <h2>
+      {% if selected_class %}Students — Class {{ selected_class }}{% else %}All Students{% endif %}
+    </h2>
+    <span class="count">{{ students.count|default:"0" }} record{{ students.count|pluralize }}</span>
+
+    <form class="search-form" method="get" action="{% url 'student_list' %}">
+      {% if selected_class %}
+        <input type="hidden" name="class" value="{{ selected_class }}">
+      {% endif %}
+      <input type="text" name="q" placeholder="Search by name or roll no..." value="{{ search_query }}">
+      <button type="submit" class="btn-secondary">Search</button>
+      {% if search_query or selected_class %}
+        <a href="{% url 'student_list' %}" class="btn-secondary" style="text-decoration:none;display:flex;align-items:center;">Clear</a>
+      {% endif %}
+    </form>
+
+    <button type="button" class="btn-primary btn-add" id="openAddModal">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Student
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Father's Name</th>
+          <th>Father CNIC</th>
+          <th>Class & Roll</th>
+          <th>Monthly Fee</th>
+          <th>Transport</th>
+          <th>Contact</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td>
+            <div class="stu-name">
+              <span class="av">
+                {% if student.photo %}
+                  <img src="{{ student.photo.url }}" alt="{{ student.name }}">
+                {% else %}
+                  {{ student.name|slice:":1"|upper }}
+                {% endif %}
+              </span>
+              <div>
+                <div>{{ student.name }}</div>
+                <small style="color:var(--muted);font-weight:400;">{{ student.gender|default:"—" }}</small>
+              </div>
+            </div>
+          </td>
+          <td>{{ student.father_name }}</td>
+          <td>{{ student.father_cnic|default:"—" }}</td>
+          <td>
+            <span class="badge">{{ student.student_class }}</span>
+            <span style="font-weight:600;margin-left:4px;">#{{ student.roll_no }}</span>
+          </td>
+          <td><b>Rs. {{ student.monthly_fee }}</b></td>
+          <td>Rs. {{ student.transport_charges }}</td>
+          <td>{{ student.contact|default:"—" }}</td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="icon-action edit"
+                data-url="{% url 'student_update' student.id %}"
+                data-name="{{ student.name }}"
+                data-father="{{ student.father_name }}"
+                data-cnic="{{ student.father_cnic|default:'' }}"
+                data-class="{{ student.student_class }}"
+                data-roll="{{ student.roll_no }}"
+                data-dob="{{ student.dob|date:'Y-m-d' }}"
+                data-enrolment="{{ student.enrolment_date|date:'Y-m-d' }}"
+                data-gender="{{ student.gender|default:'' }}"
+                data-contact="{{ student.contact|default:'' }}"
+                data-address="{{ student.address|default:'' }}"
+                data-admission-fee="{{ student.admission_fee }}"
+                data-monthly-fee="{{ student.monthly_fee }}"
+                data-transport-fee="{{ student.transport_charges }}"
+                data-other-fee="{{ student.other_charges }}"
+                title="Edit">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+              <form method="post" action="{% url 'student_delete' student.id %}" onsubmit="return confirm('Delete {{ student.name }}\'s record?');">
+                {% csrf_token %}
+                <button type="submit" class="icon-action delete" title="Delete">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="8">No students found{% if selected_class %} in Class {{ selected_class }}{% endif %}{% if search_query %} matching "{{ search_query }}"{% endif %}.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="addOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+      <div class="modal-head-txt"><h2>Register New Student</h2><p>Fill in student and fee credentials below</p></div>
+      <button class="modal-close" type="button" data-close="addOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" method="post" action="{% url 'student_create' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-section-title">Personal & Academic Details</div>
+      
+      <div class="field">
+        <label>Student Full Name</label>
+        <input type="text" name="name" placeholder="e.g. Rehan" required>
+      </div>
+      <div class="field">
+        <label>Father's Name</label>
+        <input type="text" name="father_name" placeholder="e.g. Asif" required>
+      </div>
+      <div class="field">
+        <label>Father CNIC <span class="opt">(optional)</span></label>
+        <input type="text" name="father_cnic" placeholder="e.g. 34101-1234567-1">
+      </div>
+      <div class="field">
+        <label>Class</label>
+        <select name="student_class" required>
+          <option value="">Select Class</option>
+          <option value="PG">PG</option>
+          <option value="Nursery">Nursery</option>
+          <option value="Prep">Prep</option>
+          <option value="One">Class One</option>
+          <option value="Two">Class Two</option>
+          <option value="Three">Class Three</option>
+          <option value="Four">Class Four</option>
+          <option value="Five">Class Five</option>
+          <option value="Six">Class Six</option>
+          <option value="Seven">Class Seven</option>
+          <option value="Eight">Class Eight</option>
+          <option value="Nine">Class Nine</option>
+          <option value="Ten">Class Ten</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Roll Number</label>
+        <input type="text" name="roll_no" placeholder="e.g. 24" required>
+      </div>
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob">
+      </div>
+      <div class="field">
+        <label>Enrolment Date</label>
+        <input type="date" name="enrolment_date">
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contact Number</label>
+        <input type="tel" name="contact" placeholder="e.g. 0300-1234567">
+      </div>
+      <div class="field full">
+        <label>Residential Address</label>
+        <textarea name="address" rows="2" placeholder="Street address, city, area..."></textarea>
+      </div>
+
+      <div class="form-section-title">Fee Details</div>
+      <div class="field">
+        <label>Admission Fee (Rs.)</label>
+        <input type="number" step="0.01" name="admission_fee" placeholder="0.00" value="0.00">
+      </div>
+      <div class="field">
+        <label>Monthly Tuition Fee (Rs.)</label>
+        <input type="number" step="0.01" name="monthly_fee" placeholder="0.00" value="0.00" required>
+      </div>
+      <div class="field">
+        <label>Transport Charges (Rs.)</label>
+        <input type="number" step="0.01" name="transport_charges" placeholder="0.00" value="0.00">
+      </div>
+      <div class="field">
+        <label>Other Charges (Rs.)</label>
+        <input type="number" step="0.01" name="other_charges" placeholder="0.00" value="0.00">
+      </div>
+
+      <div class="form-section-title">Document & Pictures</div>
+      <div class="field">
+        <label>Student Photo</label>
+        <input type="file" name="photo" accept="image/*">
+      </div>
+      <div class="field">
+        <label>Form B Picture</label>
+        <input type="file" name="form_b_image" accept="image/*">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close="addOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal-overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic" style="background:#E8F1FC;"><svg viewBox="0 0 24 24" style="stroke:#3E6FB0;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>
+      <div class="modal-head-txt"><h2>Edit Student Profile</h2><p>Update student details and fee records</p></div>
+      <button class="modal-close" type="button" data-close="editOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" method="post" id="editForm" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-section-title">Personal & Academic Details</div>
+      <div class="field">
+        <label>Student Full Name</label>
+        <input type="text" name="name" id="edit-name" required>
+      </div>
+      <div class="field">
+        <label>Father's Name</label>
+        <input type="text" name="father_name" id="edit-father" required>
+      </div>
+      <div class="field">
+        <label>Father CNIC</label>
+        <input type="text" name="father_cnic" id="edit-cnic">
+      </div>
+      <div class="field">
+        <label>Class</label>
+        <select name="student_class" id="edit-class" required>
+          <option value="">Select Class</option>
+          <option value="PG">PG</option>
+          <option value="Nursery">Nursery</option>
+          <option value="Prep">Prep</option>
+          <option value="One">Class One</option>
+          <option value="Two">Class Two</option>
+          <option value="Three">Class Three</option>
+          <option value="Four">Class Four</option>
+          <option value="Five">Class Five</option>
+          <option value="Six">Class Six</option>
+          <option value="Seven">Class Seven</option>
+          <option value="Eight">Class Eight</option>
+          <option value="Nine">Class Nine</option>
+          <option value="Ten">Class Ten</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Roll Number</label>
+        <input type="text" name="roll_no" id="edit-roll" required>
+      </div>
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob" id="edit-dob">
+      </div>
+      <div class="field">
+        <label>Enrolment Date</label>
+        <input type="date" name="enrolment_date" id="edit-enrolment">
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender" id="edit-gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contact Number</label>
+        <input type="tel" name="contact" id="edit-contact">
+      </div>
+      <div class="field full">
+        <label>Residential Address</label>
+        <textarea name="address" id="edit-address" rows="2"></textarea>
+      </div>
+
+      <div class="form-section-title">Fee Details</div>
+      <div class="field">
+        <label>Admission Fee (Rs.)</label>
+        <input type="number" step="0.01" name="admission_fee" id="edit-admission-fee">
+      </div>
+      <div class="field">
+        <label>Monthly Tuition Fee (Rs.)</label>
+        <input type="number" step="0.01" name="monthly_fee" id="edit-monthly-fee" required>
+      </div>
+      <div class="field">
+        <label>Transport Charges (Rs.)</label>
+        <input type="number" step="0.01" name="transport_charges" id="edit-transport-fee">
+      </div>
+      <div class="field">
+        <label>Other Charges (Rs.)</label>
+        <input type="number" step="0.01" name="other_charges" id="edit-other-fee">
+      </div>
+
+      <div class="form-section-title">Update Documents (Optional)</div>
+      <div class="field">
+        <label>Change Photo</label>
+        <input type="file" name="photo" accept="image/*">
+      </div>
+      <div class="field">
+        <label>Change Form B Picture</label>
+        <input type="file" name="form_b_image" accept="image/*">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close="editOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const addOverlay = document.getElementById('addOverlay');
+  const editOverlay = document.getElementById('editOverlay');
+  const editForm = document.getElementById('editForm');
+
+  document.getElementById('openAddModal').addEventListener('click', () => addOverlay.classList.add('show'));
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => document.getElementById(btn.dataset.close).classList.remove('show'));
+  });
+
+  [addOverlay, editOverlay].forEach(overlay => {
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { addOverlay.classList.remove('show'); editOverlay.classList.remove('show'); }
+  });
+
+  document.querySelectorAll('.icon-action.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      editForm.action = btn.dataset.url;
+      document.getElementById('edit-name').value = btn.dataset.name || '';
+      document.getElementById('edit-father').value = btn.dataset.father || '';
+      document.getElementById('edit-cnic').value = btn.dataset.cnic || '';
+      document.getElementById('edit-class').value = btn.dataset.class || '';
+      document.getElementById('edit-roll').value = btn.dataset.roll || '';
+      document.getElementById('edit-dob').value = btn.dataset.dob || '';
+      document.getElementById('edit-enrolment').value = btn.dataset.enrolment || '';
+      document.getElementById('edit-gender').value = btn.dataset.gender || '';
+      document.getElementById('edit-contact').value = btn.dataset.contact || '';
+      document.getElementById('edit-address').value = btn.dataset.address || '';
+      document.getElementById('edit-admission-fee').value = btn.dataset.admissionFee || '0.00';
+      document.getElementById('edit-monthly-fee').value = btn.dataset.monthlyFee || '0.00';
+      document.getElementById('edit-transport-fee').value = btn.dataset.transportFee || '0.00';
+      document.getElementById('edit-other-fee').value = btn.dataset.otherFee || '0.00';
+      editOverlay.classList.add('show');
+    });
+  });
+</script>
+{% endblock %}

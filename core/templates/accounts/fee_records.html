@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Fee Records{% endblock %}
+{% block page_title %}Fee Records & Accounts{% endblock %}
+{% block accounts_open %}open{% endblock %}
+{% block nav_fee_records %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --green: #3E9E6B; --red: #E15C5C; --orange: #F08A5D; --blue: #3E6FB0; }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+
+  .filter-card {
+    background: var(--card); border-radius: 16px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-card select {
+    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; font-weight: 500; outline: none;
+  }
+  
+  .class-tabs-card {
+    background: var(--card); border-radius: 16px; padding: 10px 14px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; align-items: center; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin;
+  }
+  .tab-item {
+    display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 9px; font-size: 12.5px;
+    font-weight: 500; color: var(--muted); text-decoration: none; background: #F8F9FC; transition: .2s;
+  }
+  .tab-item:hover { background: #F1F2F7; color: var(--text); }
+  .tab-item.active { background: var(--primary); color: #fff; font-weight: 600; }
+
+  .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .stats-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat-box {
+    background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .stat-box .lbl { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+  .stat-box .val { font-size: 18px; font-weight: 700; }
+  .stat-box.green .val { color: var(--green); }
+  .stat-box.red .val { color: var(--red); }
+  .stat-box.blue .val { color: var(--blue); }
+
+  .donut-card {
+    background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .donut-wrap { position: relative; width: 120px; height: 120px; margin: 8px 0; }
+  .donut-ring {
+    width: 100%; height: 100%; border-radius: 50%;
+    -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+            mask: radial-gradient(circle, transparent 58%, #000 60%);
+  }
+  .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .donut-center b { font-size: 16px; }
+  .donut-center span { font-size: 10px; color: var(--muted); }
+  .donut-legend { display: flex; gap: 16px; font-size: 11.5px; margin-top: 4px; }
+  .donut-legend span { display: flex; align-items: center; gap: 5px; }
+  .donut-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:hover { background: #FAFBFD; }
+  
+  .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+  .badge-status.paid { background: #E8F7EF; color: var(--green); }
+  .badge-status.unpaid { background: #FDECEC; color: var(--red); }
+  .badge-status.partial { background: #FFF4E5; color: var(--orange); }
+
+  .btn-action-view {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff;
+    color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-action-view:hover { background: #E8F1FC; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 780px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal-close { background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <!-- Billing Period Filter -->
+  <div class="filter-card">
+    <form method="get" class="filter-group" id="monthForm">
+      {% if selected_class %}<input type="hidden" name="class" value="{{ selected_class }}">{% endif %}
+      <label style="font-size:13px;font-weight:600;">Billing Period:</label>
+      <select name="month" onchange="document.getElementById('monthForm').submit()">
+        {% for m_val, m_name in months.items %}
+          <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+      <select name="year" onchange="document.getElementById('monthForm').submit()">
+        {% for y in years %}
+          <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <div style="font-size:13px;color:var(--muted);">
+      Viewing record for: <b>{{ selected_month_name }} {{ selected_year }}</b>
+    </div>
+  </div>
+
+  <!-- Class Filter Pills -->
+  <div class="class-tabs-card">
+    <a href="?month={{ selected_month }}&year={{ selected_year }}" class="tab-item {% if not selected_class %}active{% endif %}">All School Classes</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=PG" class="tab-item {% if selected_class == 'PG' %}active{% endif %}">PG</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Nursery" class="tab-item {% if selected_class == 'Nursery' %}active{% endif %}">Nursery</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Prep" class="tab-item {% if selected_class == 'Prep' %}active{% endif %}">Prep</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=One" class="tab-item {% if selected_class == 'One' %}active{% endif %}">Class 1</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Two" class="tab-item {% if selected_class == 'Two' %}active{% endif %}">Class 2</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Three" class="tab-item {% if selected_class == 'Three' %}active{% endif %}">Class 3</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Four" class="tab-item {% if selected_class == 'Four' %}active{% endif %}">Class 4</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Five" class="tab-item {% if selected_class == 'Five' %}active{% endif %}">Class 5</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Six" class="tab-item {% if selected_class == 'Six' %}active{% endif %}">Class 6</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Seven" class="tab-item {% if selected_class == 'Seven' %}active{% endif %}">Class 7</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Eight" class="tab-item {% if selected_class == 'Eight' %}active{% endif %}">Class 8</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Nine" class="tab-item {% if selected_class == 'Nine' %}active{% endif %}">Class 9</a>
+    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Ten" class="tab-item {% if selected_class == 'Ten' %}active{% endif %}">Class 10</a>
+  </div>
+
+  <!-- Analytics Banner + Donut -->
+  <div class="analytics-grid">
+    <div class="stats-banner">
+      <div class="stat-box">
+        <span class="lbl">Total Receivable</span>
+        <span class="val">Rs. {{ total_receivable }}</span>
+      </div>
+      <div class="stat-box green">
+        <span class="lbl">Collected (Paid)</span>
+        <span class="val">Rs. {{ total_collected }}</span>
+      </div>
+      <div class="stat-box blue">
+        <span class="lbl">Advance Received</span>
+        <span class="val">Rs. {{ total_advance }}</span>
+      </div>
+      <div class="stat-box red">
+        <span class="lbl">Pending Amount</span>
+        <span class="val">Rs. {{ total_pending }}</span>
+      </div>
+    </div>
+
+    <div class="donut-card">
+      <div style="font-size:12px;font-weight:600;">Payment Ratio</div>
+      <div class="donut-wrap">
+        <div class="donut-ring" id="donutRing" data-paid="{{ paid_percentage|default:0 }}"></div>
+        <div class="donut-center">
+          <b>{{ paid_percentage|default:0 }}%</b>
+          <span>Paid</span>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <span><i style="background:var(--green)"></i> Paid: {{ paid_count }}</span>
+        <span><i style="background:var(--red)"></i> Unpaid: {{ unpaid_count }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fee Table -->
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Challan No.</th>
+          <th>Student</th>
+          <th>Class & Roll</th>
+          <th>Total (Rs.)</th>
+          <th>Paid (Rs.)</th>
+          <th>Advance (Rs.)</th>
+          <th>Balance (Rs.)</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fees %}
+        <tr>
+          <td><b>{{ f.challan_no }}</b></td>
+          <td>
+            <b>{{ f.student.name }}</b>
+            <div style="font-size:11px;color:var(--muted);">Father: {{ f.student.father_name }}</div>
+          </td>
+          <td>
+            <span style="background:#F1F2F7;padding:3px 8px;border-radius:12px;font-size:11.5px;font-weight:600;">
+              {{ f.student.student_class }}
+            </span> #{{ f.student.roll_no }}
+          </td>
+          <td><b>{{ f.total_amount }}</b></td>
+          <td style="color:var(--green);font-weight:600;">{{ f.paid_amount }}</td>
+          <td style="color:var(--blue);font-weight:600;">{{ f.advance_fee }}</td>
+          <td style="color:var(--red);font-weight:600;">{{ f.balance }}</td>
+          <td>
+            <span class="badge-status {% if f.status == 'Paid' %}paid{% elif f.status == 'Partial' %}partial{% else %}unpaid{% endif %}">
+              {{ f.status }}
+            </span>
+          </td>
+          <td>
+            <button type="button" class="btn-action-view open-ledger-btn" data-id="{{ f.student.id }}" data-year="{{ selected_year }}">
+              🔍 View Detail
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align:center;padding:36px;color:var(--muted);">
+            No fee records found for {{ selected_month_name }} {{ selected_year }}.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Yearly Ledger Modal -->
+<div class="modal-overlay" id="ledgerModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+      <div>
+        <h3 id="ledgerTitle" style="font-size:16px;">Student Fee History</h3>
+        <p id="ledgerSub" style="font-size:12px;color:var(--muted);margin-top:2px;"></p>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('ledgerModal').classList.remove('show')">✕</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px;" id="ledgerTable">
+        <thead>
+          <tr style="background:#F8F9FC;border-bottom:1px solid var(--line);">
+            <th style="padding:10px;text-align:left;">Month</th>
+            <th style="padding:10px;text-align:left;">Total</th>
+            <th style="padding:10px;text-align:left;">Paid</th>
+            <th style="padding:10px;text-align:left;">Advance</th>
+            <th style="padding:10px;text-align:left;">Balance</th>
+            <th style="padding:10px;text-align:left;">Date Paid</th>
+            <th style="padding:10px;text-align:left;">Method</th>
+            <th style="padding:10px;text-align:left;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const donut = document.getElementById('donutRing');
+    if (donut) {
+      const paid = parseInt(donut.dataset.paid, 10) || 0;
+      donut.style.background = `conic-gradient(var(--green) 0 ${paid}%, var(--red) ${paid}% 100%)`;
+    }
+
+    // Ledger Detail API Fetcher
+    document.querySelectorAll('.open-ledger-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const studentId = this.dataset.id;
+        const year = this.dataset.year;
+
+        fetch(`/accounts/api/ledger/${studentId}/?year=${year}`)
+          .then(res => res.json())
+          .then(data => {
+            document.getElementById('ledgerTitle').textContent = `${data.student_name} (${data.student_class} #${data.roll_no})`;
+            document.getElementById('ledgerSub').textContent = `Father: ${data.father_name} | Full Year ${data.year} Record`;
+            
+            const tbody = document.getElementById('ledgerBody');
+            tbody.innerHTML = '';
+
+            if (data.ledger.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:gray;">No payment record for this year.</td></tr>';
+            } else {
+              data.ledger.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #ECEEF3';
+                tr.innerHTML = `
+                  <td style="padding:10px;font-weight:600;">${row.month}</td>
+                  <td style="padding:10px;">Rs. ${row.total}</td>
+                  <td style="padding:10px;color:var(--green);font-weight:600;">Rs. ${row.paid}</td>
+                  <td style="padding:10px;color:var(--blue);font-weight:600;">Rs. ${row.advance}</td>
+                  <td style="padding:10px;color:var(--red);font-weight:600;">Rs. ${row.balance}</td>
+                  <td style="padding:10px;">${row.payment_date}</td>
+                  <td style="padding:10px;">${row.payment_method}</td>
+                  <td style="padding:10px;"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${row.status === 'Paid' ? '#E8F7EF;color:#3E9E6B;' : '#FDECEC;color:#E15C5C;'}">${row.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+              });
+            }
+            document.getElementById('ledgerModal').classList.add('show');
+          });
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Teachers{% endblock %}
+{% block page_title %}Teachers{% endblock %}
+{% block staff_open %}open{% endblock %}
+{% block nav_teachers %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --green: #3E9E6B; --red: #E15C5C; --blue: #3E6FB0; --blue-soft: #7FB3E8; }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: #E8F7EF; color: var(--green); }
+  .alert.error { background: #FDECEC; color: var(--red); }
+  
+  .toolbar {
+    background: var(--card); border-radius: 16px; padding: 16px 18px; display: flex; align-items: center;
+    gap: 14px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 600; margin-right: auto; }
+  .toolbar .count { font-size: 11.5px; color: var(--muted); font-weight: 500; background: #F1F2F7; padding: 4px 10px; border-radius: 20px; margin-right: 8px; }
+  .search-form { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; max-width: 440px; }
+  .search-form input { flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; font-family: inherit; outline: none; }
+  .search-form input:focus { border-color: var(--orange); background: #fff; }
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .btn-secondary:hover { background: #F5F6FA; }
+  .btn-add { display: flex; align-items: center; gap: 8px; }
+  .btn-add svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFBFD; }
+  
+  .teacher-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .teacher-name .av {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--blue-soft); color: #1E2740;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+  }
+  .teacher-name .av img { width: 100%; height: 100%; object-fit: cover; }
+  .badge { background: #E8F1FC; color: var(--blue); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .row-actions { display: flex; gap: 8px; }
+  .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.edit svg { stroke: var(--blue); }
+  .icon-action.edit:hover { background: #E8F1FC; }
+  .icon-action.delete svg { stroke: var(--red); }
+  .icon-action.delete:hover { background: #FDECEC; }
+  .empty-row td { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 24px 26px 26px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .modal-head .ic { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #E8F1FC; }
+  .modal-head .ic svg { width: 20px; height: 20px; fill: none; stroke: var(--blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-head-txt { flex: 1; margin-left: 12px; }
+  .modal-head-txt h2 { font-size: 16.5px; font-weight: 600; }
+  .modal-head-txt p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .modal-close { width: 32px; height: 32px; border-radius: 9px; border: none; background: #F1F2F7; color: var(--muted); font-size: 16px; cursor: pointer; flex-shrink: 0; }
+  .modal-close:hover { background: #E9EBF1; color: var(--text); }
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .form-section-title { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field label .opt { color: var(--muted); font-weight: 400; }
+  .field input, .field select { padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: .15s; width: 100%; }
+  .field input:focus, .field select:focus { border-color: var(--blue); background: #fff; }
+  .modal-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="toolbar">
+    <h2>Teaching Faculty</h2>
+    <span class="count">{{ teachers.count|default:"0" }} record{{ teachers.count|pluralize }}</span>
+
+    <form class="search-form" method="get" action="{% url 'teacher_list' %}">
+      <input type="text" name="q" placeholder="Search by name, ID, subject, CNIC..." value="{{ search_query }}">
+      <button type="submit" class="btn-secondary">Search</button>
+      {% if search_query %}
+        <a href="{% url 'teacher_list' %}" class="btn-secondary" style="text-decoration:none;display:flex;align-items:center;">Clear</a>
+      {% endif %}
+    </form>
+
+    <button type="button" class="btn-primary btn-add" id="openAddTeacherModal">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Teacher
+    </button>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Teacher</th>
+          <th>ID</th>
+          <th>CNIC</th>
+          <th>Subject</th>
+          <th>Salary</th>
+          <th>Contact</th>
+          <th>Emergency</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for teacher in teachers %}
+        <tr>
+          <td>
+            <div class="teacher-name">
+              <span class="av">
+                {% if teacher.photo %}
+                  <img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+                {% else %}
+                  {{ teacher.name|slice:":1"|upper }}
+                {% endif %}
+              </span>
+              <div>
+                <div>{{ teacher.name }}</div>
+                <small style="color:var(--muted);font-weight:400;">{{ teacher.qualification|default:"—" }}</small>
+              </div>
+            </div>
+          </td>
+          <td><b>{{ teacher.emp_id }}</b></td>
+          <td>{{ teacher.cnic|default:"—" }}</td>
+          <td><span class="badge">{{ teacher.subject }}</span></td>
+          <td><b>Rs. {{ teacher.salary }}</b></td>
+          <td>{{ teacher.contact|default:"—" }}</td>
+          <td>{{ teacher.emergency_contact|default:"—" }}</td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="icon-action edit"
+                data-url="{% url 'teacher_update' teacher.id %}"
+                data-name="{{ teacher.name }}"
+                data-empid="{{ teacher.emp_id }}"
+                data-cnic="{{ teacher.cnic|default:'' }}"
+                data-subject="{{ teacher.subject }}"
+                data-qualification="{{ teacher.qualification|default:'' }}"
+                data-salary="{{ teacher.salary }}"
+                data-joining="{{ teacher.joining_date|date:'Y-m-d' }}"
+                data-gender="{{ teacher.gender|default:'' }}"
+                data-contact="{{ teacher.contact|default:'' }}"
+                data-emergency="{{ teacher.emergency_contact|default:'' }}"
+                data-email="{{ teacher.email|default:'' }}"
+                title="Edit">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+              <form method="post" action="{% url 'teacher_delete' teacher.id %}" onsubmit="return confirm('Delete {{ teacher.name }}\'s record?');">
+                {% csrf_token %}
+                <button type="submit" class="icon-action delete" title="Delete">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr class="empty-row">
+          <td colspan="8">No teachers found{% if search_query %} matching "{{ search_query }}"{% endif %}.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Add Teacher Modal -->
+<div class="modal-overlay" id="addTeacherOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/></svg></span>
+      <div class="modal-head-txt"><h2>Register New Teacher</h2><p>Add teacher personal, academic, and financial details</p></div>
+      <button class="modal-close" type="button" data-close="addTeacherOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" method="post" action="{% url 'teacher_create' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-section-title">Personal & Academic Details</div>
+      
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="e.g. Dr. Salman Khan" required>
+      </div>
+      <div class="field">
+        <label>Employee ID</label>
+        <input type="text" name="emp_id" placeholder="e.g. TCH-101" required>
+      </div>
+      <div class="field">
+        <label>CNIC Number</label>
+        <input type="text" name="cnic" placeholder="e.g. 34101-1234567-1" required>
+      </div>
+      <div class="field">
+        <label>Subject / Department</label>
+        <input type="text" name="subject" placeholder="e.g. Mathematics" required>
+      </div>
+      <div class="field">
+        <label>Qualification</label>
+        <input type="text" name="qualification" placeholder="e.g. M.Phil / MS in CS" required>
+      </div>
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date">
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monthly Salary (Rs.)</label>
+        <input type="number" step="0.01" name="salary" placeholder="0.00" required>
+      </div>
+
+      <div class="form-section-title">Contact Information</div>
+      <div class="field">
+        <label>Primary Contact</label>
+        <input type="tel" name="contact" placeholder="e.g. 0300-1234567" required>
+      </div>
+      <div class="field">
+        <label>Emergency Contact</label>
+        <input type="tel" name="emergency_contact" placeholder="e.g. 0321-7654321" required>
+      </div>
+      <div class="field full">
+        <label>Email Address <span class="opt">(optional)</span></label>
+        <input type="email" name="email" placeholder="e.g. teacher@school.edu">
+      </div>
+
+      <div class="form-section-title">Documents & Images</div>
+      <div class="field">
+        <label>Teacher Photo</label>
+        <input type="file" name="photo" accept="image/*">
+      </div>
+      <div class="field">
+        <label>CNIC Document Picture</label>
+        <input type="file" name="cnic_photo" accept="image/*">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close="addTeacherOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Teacher</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Teacher Modal -->
+<div class="modal-overlay" id="editTeacherOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>
+      <div class="modal-head-txt"><h2>Edit Teacher Profile</h2><p>Update teacher details</p></div>
+      <button class="modal-close" type="button" data-close="editTeacherOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" method="post" id="editTeacherForm" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-section-title">Personal & Academic Details</div>
+      
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="name" id="edit-t-name" required>
+      </div>
+      <div class="field">
+        <label>Employee ID</label>
+        <input type="text" name="emp_id" id="edit-t-empid" required>
+      </div>
+      <div class="field">
+        <label>CNIC Number</label>
+        <input type="text" name="cnic" id="edit-t-cnic" required>
+      </div>
+      <div class="field">
+        <label>Subject / Department</label>
+        <input type="text" name="subject" id="edit-t-subject" required>
+      </div>
+      <div class="field">
+        <label>Qualification</label>
+        <input type="text" name="qualification" id="edit-t-qualification" required>
+      </div>
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date" id="edit-t-joining">
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender" id="edit-t-gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monthly Salary (Rs.)</label>
+        <input type="number" step="0.01" name="salary" id="edit-t-salary" required>
+      </div>
+
+      <div class="form-section-title">Contact Information</div>
+      <div class="field">
+        <label>Primary Contact</label>
+        <input type="tel" name="contact" id="edit-t-contact" required>
+      </div>
+      <div class="field">
+        <label>Emergency Contact</label>
+        <input type="tel" name="emergency_contact" id="edit-t-emergency" required>
+      </div>
+      <div class="field full">
+        <label>Email Address</label>
+        <input type="email" name="email" id="edit-t-email">
+      </div>
+
+      <div class="form-section-title">Update Documents (Optional)</div>
+      <div class="field">
+        <label>Change Photo</label>
+        <input type="file" name="photo" accept="image/*">
+      </div>
+      <div class="field">
+        <label>Change CNIC Picture</label>
+        <input type="file" name="cnic_photo" accept="image/*">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close="editTeacherOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const addTeacherOverlay = document.getElementById('addTeacherOverlay');
+  const editTeacherOverlay = document.getElementById('editTeacherOverlay');
+  const editTeacherForm = document.getElementById('editTeacherForm');
+
+  document.getElementById('openAddTeacherModal').addEventListener('click', () => addTeacherOverlay.classList.add('show'));
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => document.getElementById(btn.dataset.close).classList.remove('show'));
+  });
+
+  [addTeacherOverlay, editTeacherOverlay].forEach(overlay => {
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { addTeacherOverlay.classList.remove('show'); editTeacherOverlay.classList.remove('show'); }
+  });
+
+  document.querySelectorAll('.icon-action.edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      editTeacherForm.action = btn.dataset.url;
+      document.getElementById('edit-t-name').value = btn.dataset.name || '';
+      document.getElementById('edit-t-empid').value = btn.dataset.empid || '';
+      document.getElementById('edit-t-cnic').value = btn.dataset.cnic || '';
+      document.getElementById('edit-t-subject').value = btn.dataset.subject || '';
+      document.getElementById('edit-t-qualification').value = btn.dataset.qualification || '';
+      document.getElementById('edit-t-salary').value = btn.dataset.salary || '0.00';
+      document.getElementById('edit-t-joining').value = btn.dataset.joining || '';
+      document.getElementById('edit-t-gender').value = btn.dataset.gender || '';
+      document.getElementById('edit-t-contact').value = btn.dataset.contact || '';
+      document.getElementById('edit-t-emergency').value = btn.dataset.emergency || '';
+      document.getElementById('edit-t-email').value = btn.dataset.email || '';
+      editTeacherOverlay.classList.add('show');
+    });
+  });
+</script>
+{% endblock %}

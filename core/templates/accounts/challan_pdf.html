@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ACERO — Fee Challan Documents</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+  body { background: #f4f5f8; padding: 10px; }
+  
+  .print-actions {
+    display: flex; justify-content: center; gap: 12px; margin-bottom: 12px;
+  }
+  .btn-print-action {
+    background: #34405E; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
+  }
+
+  .challan-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    page-break-after: always;
+  }
+  .challan-copy {
+    border: 1.5px dashed #444;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .c-header { text-align: center; border-bottom: 1.5px solid #222; padding-bottom: 6px; margin-bottom: 8px; }
+  .c-header h2 { font-size: 13px; font-weight: bold; }
+  .c-header p { font-size: 9px; color: #555; }
+  .copy-tag {
+    display: inline-block; background: #222; color: #fff; font-size: 9px; font-weight: bold;
+    padding: 2px 8px; border-radius: 10px; margin-top: 3px;
+  }
+  
+  .info-table { width: 100%; margin-bottom: 8px; border-collapse: collapse; font-size: 10.5px; }
+  .info-table td { padding: 3px 0; }
+  .info-table td.lbl { color: #555; width: 40%; }
+  .info-table td.val { font-weight: bold; }
+
+  .fee-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10.5px; }
+  .fee-table th, .fee-table td { border: 1px solid #ccc; padding: 4px; text-align: left; }
+  .fee-table th { background: #f0f0f0; }
+  .fee-table td.amt { text-align: right; }
+  .fee-table tr.total td { font-weight: bold; background: #fafafa; border-top: 1.5px solid #000; }
+
+  .signatures { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 10px; }
+  .sig-line { border-top: 1px solid #555; width: 45%; text-align: center; font-size: 9px; padding-top: 2px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .print-actions { display: none; }
+    .challan-page { box-shadow: none; padding: 0; margin-bottom: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-actions">
+  <button class="btn-print-action" onclick="window.print()">🖨️ Print / Download PDF Challans ({{ challans|length }})</button>
+</div>
+
+{% for item in challans %}
+<div class="challan-page">
+  {% for copy in copies %}
+  <div class="challan-copy">
+    <div>
+      <div class="c-header">
+        <h2>{{ school_name }}</h2>
+        <p>{{ school_address }}</p>
+        <span class="copy-tag">{{ copy }}</span>
+      </div>
+
+      <table class="info-table">
+        <tr><td class="lbl">Challan No:</td><td class="val">{{ item.fee.challan_no }}</td></tr>
+        <tr><td class="lbl">Student Name:</td><td class="val">{{ item.student.name }}</td></tr>
+        <tr><td class="lbl">Father Name:</td><td class="val">{{ item.student.father_name }}</td></tr>
+        <tr><td class="lbl">Class & Roll:</td><td class="val">{{ item.student.student_class }} (Roll #{{ item.student.roll_no }})</td></tr>
+        <tr><td class="lbl">Billing Month:</td><td class="val">{{ item.month_name }} {{ item.fee.fee_year }}</td></tr>
+        <tr><td class="lbl">Due Date:</td><td class="val" style="color:red;">{{ item.fee.due_date|date:"d-M-Y" }}</td></tr>
+      </table>
+
+      <table class="fee-table">
+        <thead>
+          <tr><th>Description</th><th style="text-align:right;">Amount (Rs.)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Tuition Fee</td><td class="amt">{{ item.fee.tuition_fee }}</td></tr>
+          {% if item.fee.transport_fee > 0 %}<tr><td>Transport Charges</td><td class="amt">{{ item.fee.transport_fee }}</td></tr>{% endif %}
+          {% if item.fee.admission_fee > 0 %}<tr><td>Admission Charges</td><td class="amt">{{ item.fee.admission_fee }}</td></tr>{% endif %}
+          {% if item.fee.other_charges > 0 %}<tr><td>Other/Annual Funds</td><td class="amt">{{ item.fee.other_charges }}</td></tr>{% endif %}
+          {% if item.fee.arrears > 0 %}<tr><td>Previous Arrears</td><td class="amt">{{ item.fee.arrears }}</td></tr>{% endif %}
+          <tr class="total"><td>Total Payable</td><td class="amt">Rs. {{ item.fee.total_amount }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div>
+      <div style="font-size:8.5px;color:#666;line-height:1.2;margin-top:4px;">
+        * Please deposit fee on or before due date.<br>
+        * Late fee fine of Rs. 100/- applies after due date.
+      </div>
+      <div class="signatures">
+        <div class="sig-line">Cashier Stamp</div>
+        <div class="sig-line">Principal / Admin</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+</body>
+</html>

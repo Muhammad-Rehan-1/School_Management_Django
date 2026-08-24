@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Add Fees & Challan{% endblock %}
+{% block page_title %}Add Fees & Challan Generation{% endblock %}
+{% block accounts_open %}open{% endblock %}
+{% block nav_add_fees %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root { --green: #3E9E6B; --orange: #F08A5D; --blue: #3E6FB0; }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card-box {
+    background: var(--card); border-radius: 16px; padding: 18px;
+    box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card-head h3 { font-size: 15px; font-weight: 600; }
+
+  .grid-two { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .form-row input, .form-row select {
+    flex: 1; min-width: 140px; padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none;
+  }
+  .btn-primary {
+    padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:hover { background: #328357; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-blue:hover { background: #2f568a; }
+
+  .text-green { color: var(--green); font-weight: 700; }
+  .text-red { color: var(--red); font-weight: 700; }
+
+  .badge-paid {
+    font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    background: #E8F7EF; color: #3E9E6B; display: inline-block;
+  }
+  .badge-unpaid {
+    font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+    background: #FDECEC; color: #E15C5C; display: inline-block;
+  }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 860px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 520px; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal-close { background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="background:#E8F7EF;color:var(--green);padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="grid-two">
+    <!-- Box 1: Search Student & Collect Fee -->
+    <div class="card-box">
+      <div class="card-head">
+        <h3>🔍 Search Student to Collect Fee / Receive Advance</h3>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">Search by name or roll number to see current unpaid balance or collect advance fee</p>
+      
+      <form method="get" class="form-row">
+        <input type="text" name="q" placeholder="Enter Name or Roll No..." value="{{ search_query }}">
+        <select name="class">
+          <option value="">All Classes</option>
+          <option value="PG" {% if selected_class == 'PG' %}selected{% endif %}>PG</option>
+          <option value="Nursery" {% if selected_class == 'Nursery' %}selected{% endif %}>Nursery</option>
+          <option value="Prep" {% if selected_class == 'Prep' %}selected{% endif %}>Prep</option>
+          <option value="One" {% if selected_class == 'One' %}selected{% endif %}>Class 1</option>
+          <option value="Two" {% if selected_class == 'Two' %}selected{% endif %}>Class 2</option>
+          <option value="Three" {% if selected_class == 'Three' %}selected{% endif %}>Class 3</option>
+          <option value="Four" {% if selected_class == 'Four' %}selected{% endif %}>Class 4</option>
+          <option value="Five" {% if selected_class == 'Five' %}selected{% endif %}>Class 5</option>
+          <option value="Six" {% if selected_class == 'Six' %}selected{% endif %}>Class 6</option>
+          <option value="Seven" {% if selected_class == 'Seven' %}selected{% endif %}>Class 7</option>
+          <option value="Eight" {% if selected_class == 'Eight' %}selected{% endif %}>Class 8</option>
+          <option value="Nine" {% if selected_class == 'Nine' %}selected{% endif %}>Class 9</option>
+          <option value="Ten" {% if selected_class == 'Ten' %}selected{% endif %}>Class 10</option>
+        </select>
+        <button type="submit" class="btn-primary">Search</button>
+      </form>
+    </div>
+
+    <!-- Box 2: Bulk Generate Class Challans (Direct PDF Output) -->
+    <div class="card-box" style="background:#2C3752;color:#fff;">
+      <div class="card-head">
+        <h3 style="color:#fff;">⚡ Generate Class Challans (Bulk PDF)</h3>
+      </div>
+      <p style="font-size:12px;color:#B7BEDA;">Creates and displays printable PDF vouchers for all enrolled students of class</p>
+      
+      <form method="post" action="{% url 'generate_class_challans' %}" target="_blank" style="margin-top:10px;">
+        {% csrf_token %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <select name="student_class" required style="padding:9px;border-radius:8px;border:none;font-size:12px;">
+            <option value="">Select Class</option>
+            <option value="PG">PG</option><option value="Nursery">Nursery</option><option value="Prep">Prep</option>
+            <option value="One">Class 1</option><option value="Two">Class 2</option><option value="Three">Class 3</option>
+            <option value="Four">Class 4</option><option value="Five">Class 5</option><option value="Six">Class 6</option>
+            <option value="Seven">Class 7</option><option value="Eight">Class 8</option><option value="Nine">Class 9</option><option value="Ten">Class 10</option>
+          </select>
+          <select name="fee_month" required style="padding:9px;border-radius:8px;border:none;font-size:12px;">
+            {% for m_val, m_name in months.items %}
+              <option value="{{ m_val }}" {% if m_val == current_month %}selected{% endif %}>{{ m_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <input type="hidden" name="fee_year" value="{{ current_year }}">
+        <button type="submit" class="btn-primary" style="width:100%;margin-top:10px;background:var(--orange);">
+          Generate & View All Class Challans (PDF)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Search Results Table -->
+  {% if students_data %}
+  <div class="table-card">
+    <div style="padding:12px 16px;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);">
+      Search Results ({{ students_data|length }} Records)
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Class & Roll</th>
+          <th>Monthly Standard Fee</th>
+          <th>Unpaid Balance (Rs.)</th>
+          <th>Current Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in students_data %}
+        <tr>
+          <td>
+            <b>{{ item.student.name }}</b>
+            <div style="font-size:11px;color:var(--muted);">Father: {{ item.student.father_name }}</div>
+          </td>
+          <td><b>{{ item.student.student_class }}</b> #{{ item.student.roll_no }}</td>
+          <td>Rs. {{ item.monthly_total }}</td>
+          <td>
+            {% if item.unpaid == 0 %}
+              <span class="text-green">Rs. {{ item.unpaid }}</span>
+            {% else %}
+              <span class="text-red">Rs. {{ item.unpaid }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if item.status == 'Paid' %}
+              <span class="badge-paid">{{ item.status }}</span>
+            {% else %}
+              <span class="badge-unpaid">{{ item.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:8px;">
+              {% if item.unpaid == 0 %}
+                <button type="button" class="btn-primary btn-blue open-pay-modal"
+                  data-id="{{ item.student.id }}"
+                  data-name="{{ item.student.name }}"
+                  data-class="{{ item.student.student_class }}"
+                  data-fee="{{ item.monthly_total }}"
+                  data-advance="1">
+                  💰 Receive Advance Fee
+                </button>
+              {% else %}
+                <button type="button" class="btn-primary btn-green open-pay-modal"
+                  data-id="{{ item.student.id }}"
+                  data-name="{{ item.student.name }}"
+                  data-class="{{ item.student.student_class }}"
+                  data-fee="{{ item.unpaid }}"
+                  data-advance="0">
+                  Receive Fee
+                </button>
+              {% endif %}
+
+              <a href="{% url 'generate_challan' item.student.id %}" target="_blank" class="btn-primary" style="text-decoration:none;background:#3E6FB0;">
+                📄 View Challan
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">No students found matching your search.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 id="modalStudentName" style="font-size:16px;">Record Payment</h3>
+      <button class="modal-close" onclick="document.getElementById('payModal').classList.remove('show')">✕</button>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="submit_payment" value="1">
+      <input type="hidden" name="student_id" id="modalStudentId">
+      <input type="hidden" name="is_advance" id="modalIsAdvance" value="0">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div>
+          <label style="font-size:11.5px;font-weight:600;">Billing Month</label>
+          <select name="fee_month" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);margin-top:4px;">
+            {% for m_val, m_name in months.items %}
+              <option value="{{ m_val }}" {% if m_val == current_month %}selected{% endif %}>{{ m_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:600;">Year</label>
+          <input type="number" name="fee_year" value="{{ current_year }}" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);margin-top:4px;">
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-size:11.5px;font-weight:600;" id="amountLabel">Amount Received (Rs.)</label>
+        <input type="number" step="0.01" name="paid_amount" id="modalPaidAmount" required style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);margin-top:4px;font-size:14px;font-weight:700;">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+        <div>
+          <label style="font-size:11.5px;font-weight:600;">Payment Mode</label>
+          <select name="payment_method" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);margin-top:4px;">
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>EasyPaisa / JazzCash</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:600;">Payment Date</label>
+          <input type="date" name="payment_date" value="{% now 'Y-m-d' %}" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);margin-top:4px;">
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label style="font-size:11.5px;font-weight:600;">Notes (Optional)</label>
+        <input type="text" name="notes" placeholder="e.g. Received in advance for next term" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);margin-top:4px;">
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
+        <button type="button" class="btn-primary" style="background:#fff;color:var(--muted);border:1px solid var(--line);" onclick="document.getElementById('payModal').classList.remove('show')">Cancel</button>
+        <button type="submit" class="btn-primary btn-green" id="modalSubmitBtn">Save Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.open-pay-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const isAdvance = btn.dataset.advance === '1';
+      document.getElementById('modalStudentId').value = btn.dataset.id;
+      document.getElementById('modalIsAdvance').value = btn.dataset.advance;
+      
+      if (isAdvance) {
+        document.getElementById('modalStudentName').textContent = `Receive Advance Fee: ${btn.dataset.name} (${btn.dataset.class})`;
+        document.getElementById('amountLabel').textContent = 'Advance Fee Amount (Rs.)';
+        document.getElementById('modalSubmitBtn').textContent = 'Save Advance Payment';
+      } else {
+        document.getElementById('modalStudentName').textContent = `Record Regular Fee: ${btn.dataset.name} (${btn.dataset.class})`;
+        document.getElementById('amountLabel').textContent = 'Amount Received (Rs.)';
+        document.getElementById('modalSubmitBtn').textContent = 'Save Payment & Mark Paid';
+      }
+
+      document.getElementById('modalPaidAmount').value = btn.dataset.fee;
+      document.getElementById('payModal').classList.add('show');
+    });
+  });
+</script>
+{% endblock %}
