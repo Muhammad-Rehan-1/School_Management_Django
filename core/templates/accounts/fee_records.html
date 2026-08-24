@@ -16,21 +16,14 @@
     box-shadow: 0 2px 8px rgba(30,40,80,.04);
   }
   .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .filter-card select {
+  .filter-card select, .filter-card input {
     padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line);
     background: #F8F9FC; font-size: 13px; font-weight: 500; outline: none;
   }
   
-  .class-tabs-card {
-    background: var(--card); border-radius: 16px; padding: 10px 14px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
-    display: flex; align-items: center; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: thin;
-  }
-  .tab-item {
-    display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 9px; font-size: 12.5px;
-    font-weight: 500; color: var(--muted); text-decoration: none; background: #F8F9FC; transition: .2s;
-  }
-  .tab-item:hover { background: #F1F2F7; color: var(--text); }
-  .tab-item.active { background: var(--primary); color: #fff; font-weight: 600; }
+  .status-pills { display: flex; gap: 6px; background: #F1F2F7; padding: 4px; border-radius: 10px; }
+  .status-pill { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: var(--muted); }
+  .status-pill.active { background: #fff; color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
 
   .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
   .stats-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -57,9 +50,6 @@
   .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .donut-center b { font-size: 16px; }
   .donut-center span { font-size: 10px; color: var(--muted); }
-  .donut-legend { display: flex; gap: 16px; font-size: 11.5px; margin-top: 4px; }
-  .donut-legend span { display: flex; align-items: center; gap: 5px; }
-  .donut-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 
   .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; min-width: 1050px; }
@@ -72,27 +62,38 @@
   .badge-status.unpaid { background: #FDECEC; color: var(--red); }
   .badge-status.partial { background: #FFF4E5; color: var(--orange); }
 
-  .btn-action-view {
-    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff;
-    color: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
-  }
-  .btn-action-view:hover { background: #E8F1FC; }
+  .row-actions { display: flex; gap: 6px; }
+  .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.view svg { stroke: var(--blue); }
+  .icon-action.view:hover { background: #E8F1FC; }
+  .icon-action.edit-fee svg { stroke: var(--orange); }
+  .icon-action.edit-fee:hover { background: #FDEDE4; }
 
-  /* Modal */
+  .btn-pdf {
+    padding: 8px 14px; border-radius: 9px; border: none; background: #E15C5C; color: #fff;
+    font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-pdf:hover { background: #cf4949; }
+
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
   .modal-overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 780px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
-  .modal-close { background: none; border: none; font-size: 18px; color: var(--muted); cursor: pointer; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 820px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field input, .field select { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; outline: none; width: 100%; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="content">
 
-  <!-- Billing Period Filter -->
   <div class="filter-card">
     <form method="get" class="filter-group" id="monthForm">
-      {% if selected_class %}<input type="hidden" name="class" value="{{ selected_class }}">{% endif %}
       <label style="font-size:13px;font-weight:600;">Billing Period:</label>
       <select name="month" onchange="document.getElementById('monthForm').submit()">
         {% for m_val, m_name in months.items %}
@@ -104,31 +105,38 @@
           <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
         {% endfor %}
       </select>
+
+      <select name="class" onchange="document.getElementById('monthForm').submit()">
+        <option value="">All Classes (PG - Ten)</option>
+        <option value="PG" {% if selected_class == 'PG' %}selected{% endif %}>PG</option>
+        <option value="Nursery" {% if selected_class == 'Nursery' %}selected{% endif %}>Nursery</option>
+        <option value="Prep" {% if selected_class == 'Prep' %}selected{% endif %}>Prep</option>
+        <option value="One" {% if selected_class == 'One' %}selected{% endif %}>Class One</option>
+        <option value="Two" {% if selected_class == 'Two' %}selected{% endif %}>Class Two</option>
+        <option value="Three" {% if selected_class == 'Three' %}selected{% endif %}>Class Three</option>
+        <option value="Four" {% if selected_class == 'Four' %}selected{% endif %}>Class Four</option>
+        <option value="Five" {% if selected_class == 'Five' %}selected{% endif %}>Class Five</option>
+        <option value="Six" {% if selected_class == 'Six' %}selected{% endif %}>Class Six</option>
+        <option value="Seven" {% if selected_class == 'Seven' %}selected{% endif %}>Class Seven</option>
+        <option value="Eight" {% if selected_class == 'Eight' %}selected{% endif %}>Class Eight</option>
+        <option value="Nine" {% if selected_class == 'Nine' %}selected{% endif %}>Class Nine</option>
+        <option value="Ten" {% if selected_class == 'Ten' %}selected{% endif %}>Class Ten</option>
+      </select>
+
+      <div class="status-pills">
+        <a href="?month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=all" class="status-pill {% if status_filter == 'all' or not status_filter %}active{% endif %}">All</a>
+        <a href="?month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=paid" class="status-pill {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
+        <a href="?month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=unpaid" class="status-pill {% if status_filter == 'unpaid' %}active{% endif %}">Unpaid</a>
+      </div>
     </form>
-    <div style="font-size:13px;color:var(--muted);">
-      Viewing record for: <b>{{ selected_month_name }} {{ selected_year }}</b>
+
+    <div>
+      <a href="{% url 'download_defaulters_pdf' %}?month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}" target="_blank" class="btn-pdf">
+        📄 Download Unpaid Defaulters PDF
+      </a>
     </div>
   </div>
 
-  <!-- Class Filter Pills -->
-  <div class="class-tabs-card">
-    <a href="?month={{ selected_month }}&year={{ selected_year }}" class="tab-item {% if not selected_class %}active{% endif %}">All School Classes</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=PG" class="tab-item {% if selected_class == 'PG' %}active{% endif %}">PG</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Nursery" class="tab-item {% if selected_class == 'Nursery' %}active{% endif %}">Nursery</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Prep" class="tab-item {% if selected_class == 'Prep' %}active{% endif %}">Prep</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=One" class="tab-item {% if selected_class == 'One' %}active{% endif %}">Class 1</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Two" class="tab-item {% if selected_class == 'Two' %}active{% endif %}">Class 2</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Three" class="tab-item {% if selected_class == 'Three' %}active{% endif %}">Class 3</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Four" class="tab-item {% if selected_class == 'Four' %}active{% endif %}">Class 4</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Five" class="tab-item {% if selected_class == 'Five' %}active{% endif %}">Class 5</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Six" class="tab-item {% if selected_class == 'Six' %}active{% endif %}">Class 6</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Seven" class="tab-item {% if selected_class == 'Seven' %}active{% endif %}">Class 7</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Eight" class="tab-item {% if selected_class == 'Eight' %}active{% endif %}">Class 8</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Nine" class="tab-item {% if selected_class == 'Nine' %}active{% endif %}">Class 9</a>
-    <a href="?month={{ selected_month }}&year={{ selected_year }}&class=Ten" class="tab-item {% if selected_class == 'Ten' %}active{% endif %}">Class 10</a>
-  </div>
-
-  <!-- Analytics Banner + Donut -->
   <div class="analytics-grid">
     <div class="stats-banner">
       <div class="stat-box">
@@ -144,7 +152,7 @@
         <span class="val">Rs. {{ total_advance }}</span>
       </div>
       <div class="stat-box red">
-        <span class="lbl">Pending Amount</span>
+        <span class="lbl">Unpaid Defaulters</span>
         <span class="val">Rs. {{ total_pending }}</span>
       </div>
     </div>
@@ -158,14 +166,14 @@
           <span>Paid</span>
         </div>
       </div>
-      <div class="donut-legend">
-        <span><i style="background:var(--green)"></i> Paid: {{ paid_count }}</span>
-        <span><i style="background:var(--red)"></i> Unpaid: {{ unpaid_count }}</span>
-      </div>
     </div>
   </div>
 
-  <!-- Fee Table -->
+  <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px 18px;border-radius:14px;">
+    <input type="text" id="liveFeeSearch" placeholder="⚡ Live search student name or roll no..." style="width:300px;padding:8px 12px;border-radius:8px;border:1px solid #ECEEF3;font-size:13px;outline:none;">
+    <span style="font-size:12px;color:var(--muted);">Showing <b>{{ fees.count }}</b> records</span>
+  </div>
+
   <div class="table-card">
     <table>
       <thead>
@@ -175,24 +183,23 @@
           <th>Class & Roll</th>
           <th>Total (Rs.)</th>
           <th>Paid (Rs.)</th>
-          <th>Advance (Rs.)</th>
-          <th>Balance (Rs.)</th>
+          <th>Advance</th>
+          <th>Balance</th>
           <th>Status</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for f in fees %}
-        <tr>
+        <tr class="fee-row">
           <td><b>{{ f.challan_no }}</b></td>
           <td>
-            <b>{{ f.student.name }}</b>
+            <b class="f-name">{{ f.student.name }}</b>
             <div style="font-size:11px;color:var(--muted);">Father: {{ f.student.father_name }}</div>
           </td>
           <td>
-            <span style="background:#F1F2F7;padding:3px 8px;border-radius:12px;font-size:11.5px;font-weight:600;">
-              {{ f.student.student_class }}
-            </span> #{{ f.student.roll_no }}
+            <span style="background:#F1F2F7;padding:3px 8px;border-radius:12px;font-size:11.5px;font-weight:600;">{{ f.student.student_class }}</span> 
+            <span class="f-roll">#{{ f.student.roll_no }}</span>
           </td>
           <td><b>{{ f.total_amount }}</b></td>
           <td style="color:var(--green);font-weight:600;">{{ f.paid_amount }}</td>
@@ -204,54 +211,130 @@
             </span>
           </td>
           <td>
-            <button type="button" class="btn-action-view open-ledger-btn" data-id="{{ f.student.id }}" data-year="{{ selected_year }}">
-              🔍 View Detail
-            </button>
+            <div class="row-actions">
+              <button type="button" class="icon-action view open-ledger-btn" data-id="{{ f.student.id }}" data-year="{{ selected_year }}" title="View 12-Month Detailed History">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              </button>
+
+              <button type="button" class="icon-action edit-fee open-edit-fee-btn"
+                data-url="{% url 'update_fee_record' f.id %}"
+                data-challan="{{ f.challan_no }}"
+                data-name="{{ f.student.name }}"
+                data-class="{{ f.student.student_class }}"
+                data-tuition="{{ f.tuition_fee }}"
+                data-transport="{{ f.transport_fee }}"
+                data-other="{{ f.other_charges }}"
+                data-fine="{{ f.fine }}"
+                data-paid="{{ f.paid_amount }}"
+                data-advance="{{ f.advance_fee }}"
+                data-payment-date="{{ f.payment_date|date:'Y-m-d' }}"
+                data-method="{{ f.payment_method|default:'Cash' }}"
+                data-notes="{{ f.notes|default:'' }}"
+                title="Edit Fee Record">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+            </div>
           </td>
         </tr>
         {% empty %}
-        <tr>
-          <td colspan="9" style="text-align:center;padding:36px;color:var(--muted);">
-            No fee records found for {{ selected_month_name }} {{ selected_year }}.
-          </td>
-        </tr>
+        <tr><td colspan="9" style="text-align:center;padding:36px;color:var(--muted);">No records found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
 </div>
 
-<!-- Yearly Ledger Modal -->
+<div class="modal-overlay" id="editFeeModal">
+  <div class="modal" style="max-width:620px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+      <div>
+        <h3 id="ef-title" style="font-size:16px;color:var(--primary);">Edit Student Fee Record</h3>
+        <p id="ef-sub" style="font-size:12px;color:var(--muted);margin-top:2px;"></p>
+      </div>
+      <button onclick="document.getElementById('editFeeModal').classList.remove('show')" style="border:none;background:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+
+    <form class="modal-form" method="post" id="editFeeForm" action="">
+      {% csrf_token %}
+      <div class="field"><label>Tuition Fee (Rs.)</label><input type="number" step="0.01" name="tuition_fee" id="ef-tuition" required></div>
+      <div class="field"><label>Transport Fee (Rs.)</label><input type="number" step="0.01" name="transport_fee" id="ef-transport"></div>
+      <div class="field"><label>Other / Annual Charges (Rs.)</label><input type="number" step="0.01" name="other_charges" id="ef-other"></div>
+      <div class="field"><label>Fine / Late Surcharge (Rs.)</label><input type="number" step="0.01" name="fine" id="ef-fine"></div>
+      
+      <div class="field"><label>Amount Paid (Rs.)</label><input type="number" step="0.01" name="paid_amount" id="ef-paid" required></div>
+      <div class="field"><label>Advance Amount (Rs.)</label><input type="number" step="0.01" name="advance_fee" id="ef-advance"></div>
+
+      <div class="field">
+        <label>Payment Method</label>
+        <select name="payment_method" id="ef-method">
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="EasyPaisa / JazzCash">EasyPaisa / JazzCash</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="field"><label>Payment Date</label><input type="date" name="payment_date" id="ef-date"></div>
+
+      <div class="field full"><label>Remarks / Notes</label><input type="text" name="notes" id="ef-notes" placeholder="e.g. Concession applied or paid via Bank"></div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('editFeeModal').classList.remove('show')">Cancel</button>
+        <button type="button" class="btn-primary" id="triggerFeeConfirmBtn">Update Fee Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="feeConfirmOverlay" style="z-index:600;">
+  <div class="modal" style="max-width:440px;text-align:center;padding:26px 20px;">
+    <div style="width:50px;height:50px;border-radius:50%;background:#FDEDE4;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--orange)" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <h3 style="font-size:17px;font-weight:600;margin-bottom:6px;">Confirm Fee Record Update</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;">Are you sure you want to save these fee and payment changes for this student?</p>
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button type="button" class="btn-secondary" onclick="document.getElementById('feeConfirmOverlay').classList.remove('show')">Cancel</button>
+      <button type="button" class="btn-primary" id="finalFeeSubmitBtn">Yes, Update Record</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="ledgerModal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
       <div>
-        <h3 id="ledgerTitle" style="font-size:16px;">Student Fee History</h3>
+        <h3 id="ledgerTitle" style="font-size:16px;color:var(--primary);">Student 12-Month Fee Ledger</h3>
         <p id="ledgerSub" style="font-size:12px;color:var(--muted);margin-top:2px;"></p>
       </div>
-      <button class="modal-close" onclick="document.getElementById('ledgerModal').classList.remove('show')">✕</button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a id="downloadLedgerPdfBtn" href="#" target="_blank" class="btn-pdf" style="padding:6px 12px;">
+          🖨️ Download PDF Ledger
+        </a>
+        <button onclick="document.getElementById('ledgerModal').classList.remove('show')" style="border:none;background:none;font-size:18px;cursor:pointer;">✕</button>
+      </div>
     </div>
 
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:12.5px;" id="ledgerTable">
-        <thead>
-          <tr style="background:#F8F9FC;border-bottom:1px solid var(--line);">
-            <th style="padding:10px;text-align:left;">Month</th>
-            <th style="padding:10px;text-align:left;">Total</th>
-            <th style="padding:10px;text-align:left;">Paid</th>
-            <th style="padding:10px;text-align:left;">Advance</th>
-            <th style="padding:10px;text-align:left;">Balance</th>
-            <th style="padding:10px;text-align:left;">Date Paid</th>
-            <th style="padding:10px;text-align:left;">Method</th>
-            <th style="padding:10px;text-align:left;">Status</th>
-          </tr>
-        </thead>
-        <tbody id="ledgerBody">
-          <!-- Populated by JS -->
-        </tbody>
-      </table>
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:14px;background:#F8F9FC;padding:12px;border-radius:10px;">
+      <div><span style="font-size:11px;color:gray;">Total Billed:</span> <b id="sumBilled" style="display:block;">Rs. 0</b></div>
+      <div><span style="font-size:11px;color:gray;">Total Paid:</span> <b id="sumPaid" style="display:block;color:var(--green);">Rs. 0</b></div>
+      <div><span style="font-size:11px;color:gray;">Total Unpaid / Balance:</span> <b id="sumBalance" style="display:block;color:var(--red);">Rs. 0</b></div>
     </div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:12px;" id="ledgerTable">
+      <thead>
+        <tr style="background:#ECEEF3;">
+          <th style="padding:8px;text-align:left;">Month</th>
+          <th style="padding:8px;text-align:right;">Total</th>
+          <th style="padding:8px;text-align:right;">Paid</th>
+          <th style="padding:8px;text-align:right;">Advance</th>
+          <th style="padding:8px;text-align:right;">Balance</th>
+          <th style="padding:8px;text-align:center;">Date Paid</th>
+          <th style="padding:8px;text-align:center;">Method</th>
+          <th style="padding:8px;text-align:center;">Status</th>
+        </tr>
+      </thead>
+      <tbody id="ledgerBody"></tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
@@ -265,7 +348,48 @@
       donut.style.background = `conic-gradient(var(--green) 0 ${paid}%, var(--red) ${paid}% 100%)`;
     }
 
-    // Ledger Detail API Fetcher
+    // Live search table rows
+    document.getElementById('liveFeeSearch').addEventListener('input', function() {
+      const val = this.value.toLowerCase().trim();
+      document.querySelectorAll('.fee-row').forEach(row => {
+        const name = row.querySelector('.f-name').textContent.toLowerCase();
+        const roll = row.querySelector('.f-roll').textContent.toLowerCase();
+        row.style.display = (name.includes(val) || roll.includes(val)) ? '' : 'none';
+      });
+    });
+
+    // 1. Edit Fee Record Modal Opener
+    document.querySelectorAll('.open-edit-fee-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('editFeeForm').action = btn.dataset.url;
+        document.getElementById('ef-title').textContent = `Edit Fee: ${btn.dataset.name} (${btn.dataset.class})`;
+        document.getElementById('ef-sub').textContent = `Challan No: ${btn.dataset.challan}`;
+
+        document.getElementById('ef-tuition').value = btn.dataset.tuition || '0.00';
+        document.getElementById('ef-transport').value = btn.dataset.transport || '0.00';
+        document.getElementById('ef-other').value = btn.dataset.other || '0.00';
+        document.getElementById('ef-fine').value = btn.dataset.fine || '0.00';
+        document.getElementById('ef-paid').value = btn.dataset.paid || '0.00';
+        document.getElementById('ef-advance').value = btn.dataset.advance || '0.00';
+        document.getElementById('ef-method').value = btn.dataset.method || 'Cash';
+        document.getElementById('ef-date').value = btn.dataset.paymentDate || '';
+        document.getElementById('ef-notes').value = btn.dataset.notes || '';
+
+        document.getElementById('editFeeModal').classList.add('show');
+      });
+    });
+
+    // Confirmation on Edit Fee Form Submission
+    document.getElementById('triggerFeeConfirmBtn').addEventListener('click', () => {
+      document.getElementById('feeConfirmOverlay').classList.add('show');
+    });
+
+    document.getElementById('finalFeeSubmitBtn').addEventListener('click', () => {
+      document.getElementById('feeConfirmOverlay').classList.remove('show');
+      document.getElementById('editFeeForm').submit();
+    });
+
+    // 2. 12-Month Ledger Fetcher
     document.querySelectorAll('.open-ledger-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const studentId = this.dataset.id;
@@ -275,30 +399,31 @@
           .then(res => res.json())
           .then(data => {
             document.getElementById('ledgerTitle').textContent = `${data.student_name} (${data.student_class} #${data.roll_no})`;
-            document.getElementById('ledgerSub').textContent = `Father: ${data.father_name} | Full Year ${data.year} Record`;
+            document.getElementById('ledgerSub').textContent = `Father: ${data.father_name} | Full Year ${data.year} Statements`;
+            document.getElementById('downloadLedgerPdfBtn').href = `/accounts/pdf/ledger/${studentId}/?year=${year}`;
             
+            document.getElementById('sumBilled').textContent = `Rs. ${data.total_billed}`;
+            document.getElementById('sumPaid').textContent = `Rs. ${data.total_paid}`;
+            document.getElementById('sumBalance').textContent = `Rs. ${data.total_balance}`;
+
             const tbody = document.getElementById('ledgerBody');
             tbody.innerHTML = '';
 
-            if (data.ledger.length === 0) {
-              tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:gray;">No payment record for this year.</td></tr>';
-            } else {
-              data.ledger.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = '1px solid #ECEEF3';
-                tr.innerHTML = `
-                  <td style="padding:10px;font-weight:600;">${row.month}</td>
-                  <td style="padding:10px;">Rs. ${row.total}</td>
-                  <td style="padding:10px;color:var(--green);font-weight:600;">Rs. ${row.paid}</td>
-                  <td style="padding:10px;color:var(--blue);font-weight:600;">Rs. ${row.advance}</td>
-                  <td style="padding:10px;color:var(--red);font-weight:600;">Rs. ${row.balance}</td>
-                  <td style="padding:10px;">${row.payment_date}</td>
-                  <td style="padding:10px;">${row.payment_method}</td>
-                  <td style="padding:10px;"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${row.status === 'Paid' ? '#E8F7EF;color:#3E9E6B;' : '#FDECEC;color:#E15C5C;'}">${row.status}</span></td>
-                `;
-                tbody.appendChild(tr);
-              });
-            }
+            data.ledger.forEach(row => {
+              const tr = document.createElement('tr');
+              tr.style.borderBottom = '1px solid #ECEEF3';
+              tr.innerHTML = `
+                <td style="padding:8px;font-weight:600;">${row.month}</td>
+                <td style="padding:8px;text-align:right;">Rs. ${row.total}</td>
+                <td style="padding:8px;text-align:right;color:var(--green);font-weight:600;">Rs. ${row.paid}</td>
+                <td style="padding:8px;text-align:right;color:var(--blue);font-weight:600;">Rs. ${row.advance}</td>
+                <td style="padding:8px;text-align:right;color:var(--red);font-weight:600;">Rs. ${row.balance}</td>
+                <td style="padding:8px;text-align:center;">${row.payment_date}</td>
+                <td style="padding:8px;text-align:center;">${row.payment_method}</td>
+                <td style="padding:8px;text-align:center;"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;background:${row.status === 'Paid' ? '#E8F7EF;color:#3E9E6B;' : '#FDECEC;color:#E15C5C;'}">${row.status}</span></td>
+              `;
+              tbody.appendChild(tr);
+            });
             document.getElementById('ledgerModal').classList.add('show');
           });
       });
