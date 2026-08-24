@@ -5,7 +5,13 @@ from .models import CoreTeacher as Teacher
 
 def teacher_list(request):
     search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
     teachers = Teacher.objects.all().order_by('-id')
+
+    if status_filter == 'active':
+        teachers = teachers.filter(is_active=True)
+    elif status_filter == 'inactive':
+        teachers = teachers.filter(is_active=False)
 
     if search_query:
         teachers = teachers.filter(
@@ -18,6 +24,7 @@ def teacher_list(request):
     context = {
         "teachers": teachers,
         "search_query": search_query,
+        "status_filter": status_filter,
     }
     return render(request, "teachers.html", context)
 
@@ -35,6 +42,7 @@ def teacher_create(request):
             contact=request.POST.get('contact') or None,
             emergency_contact=request.POST.get('emergency_contact') or None,
             email=request.POST.get('email') or None,
+            is_active=request.POST.get('is_active') == '1',
         )
         if 'photo' in request.FILES:
             teacher.photo = request.FILES['photo']
@@ -59,6 +67,7 @@ def teacher_update(request, pk):
         teacher.contact = request.POST.get('contact') or None
         teacher.emergency_contact = request.POST.get('emergency_contact') or None
         teacher.email = request.POST.get('email') or None
+        teacher.is_active = request.POST.get('is_active') == '1'
 
         if 'photo' in request.FILES:
             teacher.photo = request.FILES['photo']
@@ -67,6 +76,14 @@ def teacher_update(request, pk):
 
         teacher.save()
         messages.success(request, f'Teacher "{teacher.name}" updated successfully!')
+    return redirect("teacher_list")
+
+def teacher_toggle_status(request, pk):
+    teacher = get_object_or_404(Teacher, pk=pk)
+    teacher.is_active = not teacher.is_active
+    teacher.save()
+    status_str = "Active" if teacher.is_active else "Deactivated"
+    messages.success(request, f'Teacher "{teacher.name}" is now {status_str}.')
     return redirect("teacher_list")
 
 def teacher_delete(request, pk):
