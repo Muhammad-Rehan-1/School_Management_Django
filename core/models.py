@@ -170,3 +170,16 @@ class CoreStudentFee(models.Model):
 
     def __str__(self):
         return f"{self.challan_no} - {self.student.name} ({self.status})"
+
+class ClassDefination(models.Model):
+    class_field = models.CharField(db_column='class', max_length=50)
+    section = models.CharField(max_length=50)
+    room_number = models.CharField(max_length=50)
+    max_capacity = models.CharField(max_length=50)
+    status = models.CharField(max_length=50)
+    created_at = models.DateField()
+
+    class Meta:
+        managed = False
+        db_table = 'Class_defination'
+    

@@ -1,8 +1,14 @@
 from django.urls import path
-from . import views, students, teachers, staff, accounts
+from . import views, students, teachers, staff, accounts, class_defination
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+
+    # Class Defination
+    path('classes/', class_defination.class_section_list, name='class_section_list'),
+    path('classes/delete/', class_defination.delete_class_section, name='delete_class_section'),
+    path('classes/update/', class_defination.update_class_section, name='update_class_section'),
+    path('classes/toggle-status/', class_defination.toggle_status, name='toggle_status'),
 
     # Students
     path("students/", students.student_list, name="student_list"),
@@ -26,4 +32,7 @@ urlpatterns = [
     path("accounts/challan/<int:student_id>/", accounts.generate_challan, name="generate_challan"),
     path("accounts/challans/bulk/", accounts.generate_class_challans, name="generate_class_challans"),
     path("accounts/api/ledger/<int:student_id>/", accounts.student_fee_ledger_api, name="student_fee_ledger_api"),
+    
+    # Timetable
+    #path("timetable/", views.timetable, name="timetable"),
 ]

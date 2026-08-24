@@ -78,7 +78,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'SM_DB',
-        'HOST': 'REHAN-1',
+        'HOST': r'DESKTOP-82H9J8V',
         'PORT': '',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
