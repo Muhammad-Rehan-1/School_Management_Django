@@ -145,6 +145,7 @@
       <a href="{% url 'dashboard' %}" class="{% block nav_dashboard %}{% endblock %}">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard
       </a>
+      
       <a href="{% url 'student_list' %}" class="{% block nav_students %}{% endblock %}">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Students
       </a>
@@ -177,7 +178,11 @@
       </div>
     </div>
 
-        <a href="#"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19a2 2 0 012-2h13"/></svg>Class</a>
+        <!-- Purane Class link ki jagah yeh paste karo -->
+        <a href="{% url 'class_section_list' %}" class="{% block nav_class %}{% endblock %}">
+            <svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2z"/><path d="M4 19a2 2 0 012-2h13"/></svg>
+            Class Defination
+        </a>
         <a href="#"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a2 2 0 014 0 2 2 0 014 0"/><path d="M9 11h6M9 15h4"/></svg>Exam</a>
         <a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="13" rx="2"/><path d="M4 10h16"/><circle cx="8" cy="19" r="1.6"/><circle cx="16" cy="19" r="1.6"/></svg>Transport</a>
         <a href="#"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 004 0"/></svg>Notice</a>
@@ -195,7 +200,6 @@
       <button class="menu-btn" id="menuBtn">
         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <h1>{% block page_title %}Dashboard{% endblock %}</h1>
       <div class="search">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input type="text" placeholder="Search">

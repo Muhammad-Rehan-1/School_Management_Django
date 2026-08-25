@@ -11,5 +11,3 @@ def dashboard(request):
         # "total_employees": Employee.objects.count(),
     }
     return render(request, "dashboard.html", context)
-
-

@@ -1,0 +1,1046 @@
+{% extends 'base.html' %}
+
+{% block title %}Timetable Management - D Zone{% endblock %}
+{% block page_title %}Timetable Management{% endblock %}
+
+{% block nav_dashboard %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* =========================================
+     PAGE HEADER & BUTTONS
+     ========================================= */
+  .page-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 16px;
+    padding: 0 26px;
+  }
+  .page-header h2 { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .page-header p { font-size: 12.5px; color: var(--muted); margin: 0; }
+  
+  .page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  
+  .btn {
+    padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 8px;
+    cursor: pointer; border: none; font-family: inherit; transition: .2s;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--orange); color: #fff; }
+  .btn-primary:hover { background: var(--orange-soft); }
+  .btn-outline { background: #fff; color: var(--text); border: 1px solid var(--line); }
+  .btn-outline:hover { background: #F5F6FA; }
+  .btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+  /* =========================================
+     STATS CARDS
+     ========================================= */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; padding: 0 26px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card); border-radius: 14px; padding: 16px 18px;
+    border: 1px solid var(--line); display: flex; align-items: center; gap: 14px;
+  }
+  .stat-icon {
+    width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat-icon svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .stat-icon.blue { background: #3B82F6; }
+  .stat-icon.green { background: #10B981; }
+  .stat-icon.purple { background: #8B5CF6; }
+  .stat-icon.orange { background: var(--orange); }
+  .stat-info h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .stat-info p { font-size: 11.5px; color: var(--muted); margin: 0; }
+
+  /* =========================================
+     FILTER BAR
+     ========================================= */
+  .filter-bar {
+    background: var(--card); border-radius: 14px; padding: 14px 18px;
+    border: 1px solid var(--line); margin: 0 26px 20px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .filter-select {
+    padding: 8px 32px 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 13px; color: var(--text); outline: none; background: #fff;
+    font-family: inherit; appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239AA1B2' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .filter-select:focus { border-color: var(--orange); }
+
+  /* =========================================
+     TIMETABLE GRID
+     ========================================= */
+  .timetable-card {
+    background: var(--card); border-radius: 14px; border: 1px solid var(--line);
+    margin: 0 26px 26px; overflow: hidden;
+  }
+  .timetable-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .timetable-header h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
+  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .week-nav button {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: .2s;
+  }
+  .week-nav button:hover { background: #F5F6FA; }
+  .week-nav button svg { width: 14px; height: 14px; stroke: var(--text); fill: none; stroke-width: 2; }
+  .week-nav span { font-size: 13px; font-weight: 500; color: var(--text); min-width: 160px; text-align: center; }
+
+  .timetable-scroll { overflow-x: auto; }
+  .timetable {
+    width: 100%; border-collapse: collapse; min-width: 900px;
+  }
+  .timetable th, .timetable td {
+    border: 1px solid var(--line); padding: 0; text-align: center;
+    vertical-align: top;
+  }
+  .timetable thead th {
+    background: #F8F9FB; padding: 12px 8px;
+    font-size: 12px; font-weight: 600; color: var(--text);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .timetable thead th.today {
+    background: var(--orange); color: #fff;
+  }
+  .timetable thead th .day-name { display: block; font-size: 12px; }
+  .timetable thead th .day-date { display: block; font-size: 10px; font-weight: 400; margin-top: 2px; opacity: 0.8; }
+  
+  .timetable .time-cell {
+    background: #F8F9FB; padding: 10px 8px;
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    white-space: nowrap; min-width: 80px;
+  }
+  .timetable .time-cell .time-range { display: block; color: var(--text); font-size: 12px; margin-top: 2px; }
+
+  .timetable td { height: 80px; position: relative; }
+  .timetable td.break-cell {
+    background: repeating-linear-gradient(45deg, #F8F9FB, #F8F9FB 5px, #F0F2F6 5px, #F0F2F6 10px);
+    height: 40px;
+  }
+  .break-label {
+    font-size: 10px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* Slot Card inside cell */
+  .slot-card {
+    margin: 4px; padding: 8px 10px; border-radius: 8px;
+    text-align: left; cursor: pointer; transition: .2s;
+    border-left: 3px solid;
+    position: relative;
+  }
+  .slot-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30,40,80,.08); }
+  .slot-card .slot-subject {
+    font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .slot-card .slot-teacher {
+    font-size: 10.5px; color: var(--muted); margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .slot-card .slot-room {
+    font-size: 10px; color: var(--muted); font-weight: 500;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .slot-card .slot-room svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* Slot Colors */
+  .slot-math { background: #EEF2FF; border-left-color: #4F46E5; }
+  .slot-science { background: #ECFDF5; border-left-color: #10B981; }
+  .slot-english { background: #FFF7ED; border-left-color: #F97316; }
+  .slot-urdu { background: #FDF2F8; border-left-color: #EC4899; }
+  .slot-islamiat { background: #FFFBEB; border-left-color: #F59E0B; }
+  .slot-computer { background: #F0F9FF; border-left-color: #0EA5E9; }
+  .slot-arts { background: #FDF4FF; border-left-color: #D946EF; }
+
+  .empty-cell {
+    width: 100%; height: 100%; min-height: 72px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--line); font-size: 18px; cursor: pointer;
+  }
+  .empty-cell:hover { color: var(--orange); background: #FFFBF5; }
+
+  /* =========================================
+     ADD SLOT MODAL
+     ========================================= */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(20, 24, 40, 0.5); z-index: 500;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.active { display: flex; }
+  
+  .modal-box {
+    background: var(--card); border-radius: 14px;
+    width: 92%; max-width: 560px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 20px 50px rgba(20,24,40,.25);
+  }
+  .modal-head {
+    padding: 18px 22px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-head h3 { font-size: 16px; font-weight: 600; color: var(--text); margin: 0; }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 8px; border: none;
+    background: #F5F6FA; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: .2s;
+  }
+  .modal-close:hover { background: var(--line); }
+  .modal-close svg { width: 14px; height: 14px; stroke: var(--muted); fill: none; stroke-width: 2; }
+  
+  .modal-body { padding: 22px; }
+  
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label {
+    font-size: 12px; font-weight: 500; color: var(--text);
+  }
+  .form-group label .req { color: var(--orange); }
+  .form-control {
+    padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 13px; color: var(--text); outline: none;
+    background: #fff; font-family: inherit; transition: .2s;
+  }
+  .form-control:focus { border-color: var(--orange); }
+  select.form-control {
+    appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239AA1B2' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+    padding-right: 32px;
+  }
+
+  .color-options { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-option {
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    border: 2px solid transparent; transition: .2s;
+  }
+  .color-option:hover { transform: scale(1.1); }
+  .color-option.selected { border-color: var(--text); box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--text); }
+  .color-option[data-color="math"] { background: #4F46E5; }
+  .color-option[data-color="science"] { background: #10B981; }
+  .color-option[data-color="english"] { background: #F97316; }
+  .color-option[data-color="urdu"] { background: #EC4899; }
+  .color-option[data-color="islamiat"] { background: #F59E0B; }
+  .color-option[data-color="computer"] { background: #0EA5E9; }
+  .color-option[data-color="arts"] { background: #D946EF; }
+
+  .modal-foot {
+    padding: 16px 22px; border-top: 1px solid var(--line);
+    display: flex; justify-content: flex-end; gap: 10px;
+    background: #F8F9FB;
+  }
+
+  /* Conflict Warning */
+  .conflict-warning {
+    background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: #92400E;
+    display: none; align-items: flex-start; gap: 8px; margin-top: 10px;
+  }
+  .conflict-warning.show { display: flex; }
+  .conflict-warning svg { width: 16px; height: 16px; stroke: #92400E; fill: none; stroke-width: 2; flex-shrink: 0; margin-top: 1px; }
+
+  @media (max-width: 760px) {
+    .page-header, .stats-row, .filter-bar, .timetable-card { margin-left: 16px; margin-right: 16px; padding-left: 0; padding-right: 0; }
+    .page-header { padding: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+  <div>
+    <h2>Weekly Timetable</h2>
+    <p>Assign teachers to classes and manage weekly schedules</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-outline" id="printBtn">
+      <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print
+    </button>
+    <button class="btn btn-primary" id="openModalBtn">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Time Slot
+    </button>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon blue">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    </div>
+    <div class="stat-info">
+      <h3>42</h3>
+      <p>Total Slots / Week</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </div>
+    <div class="stat-info">
+      <h3>18</h3>
+      <p>Teachers Assigned</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    </div>
+    <div class="stat-info">
+      <h3>8</h3>
+      <p>Classes Scheduled</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">
+      <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    </div>
+    <div class="stat-info">
+      <h3>12</h3>
+      <p>Subjects Covered</p>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <select class="filter-select" id="filterClass">
+    <option>All Classes</option>
+    <option>Class 10 - A</option>
+    <option>Class 10 - B</option>
+    <option>Class 9 - A</option>
+    <option>Class 9 - B</option>
+    <option>Class 8 - A</option>
+  </select>
+  <select class="filter-select" id="filterTeacher">
+    <option>All Teachers</option>
+    <option>Mr. Ahmed Khan</option>
+    <option>Ms. Fatima Noor</option>
+    <option>Mr. Usman Ghani</option>
+    <option>Ms. Ayesha Siddiqui</option>
+  </select>
+  <select class="filter-select" id="filterSubject">
+    <option>All Subjects</option>
+    <option>Mathematics</option>
+    <option>Science</option>
+    <option>English</option>
+    <option>Urdu</option>
+    <option>Islamiat</option>
+    <option>Computer Science</option>
+  </select>
+  <button class="btn btn-outline" style="padding: 8px 14px;">
+    <svg viewBox="0 0 24 24" style="width:13px;height:13px;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Apply
+  </button>
+</div>
+
+<!-- Timetable Card -->
+<div class="timetable-card">
+  <div class="timetable-header">
+    <h3>Class 10 - A · Weekly Schedule</h3>
+    <div class="week-nav">
+      <button id="prevWeek">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span>17 Mar - 22 Mar 2025</span>
+      <button id="nextWeek">
+        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="timetable-scroll">
+    <table class="timetable">
+      <thead>
+        <tr>
+          <th style="min-width: 80px;">Time</th>
+          <th class="today">
+            <span class="day-name">Monday</span>
+            <span class="day-date">17 Mar</span>
+          </th>
+          <th>
+            <span class="day-name">Tuesday</span>
+            <span class="day-date">18 Mar</span>
+          </th>
+          <th>
+            <span class="day-name">Wednesday</span>
+            <span class="day-date">19 Mar</span>
+          </th>
+          <th>
+            <span class="day-name">Thursday</span>
+            <span class="day-date">20 Mar</span>
+          </th>
+          <th>
+            <span class="day-name">Friday</span>
+            <span class="day-date">21 Mar</span>
+          </th>
+          <th>
+            <span class="day-name">Saturday</span>
+            <span class="day-date">22 Mar</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 8:00 - 9:00 -->
+        <tr>
+          <td class="time-cell">
+            Period 1
+            <span class="time-range">08:00 - 09:00</span>
+          </td>
+          <td>
+            <div class="slot-card slot-math">
+              <div class="slot-subject">Mathematics</div>
+              <div class="slot-teacher">Mr. Ahmed Khan</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-english">
+              <div class="slot-subject">English</div>
+              <div class="slot-teacher">Ms. Fatima Noor</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 2
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-urdu">
+              <div class="slot-subject">Urdu</div>
+              <div class="slot-teacher">Ms. Ayesha Siddiqui</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-islamiat">
+              <div class="slot-subject">Islamiat</div>
+              <div class="slot-teacher">Molvi Sahib</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 9:00 - 10:00 -->
+        <tr>
+          <td class="time-cell">
+            Period 2
+            <span class="time-range">09:00 - 10:00</span>
+          </td>
+          <td>
+            <div class="slot-card slot-english">
+              <div class="slot-subject">English</div>
+              <div class="slot-teacher">Ms. Fatima Noor</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-math">
+              <div class="slot-subject">Mathematics</div>
+              <div class="slot-teacher">Mr. Ahmed Khan</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-arts">
+              <div class="slot-subject">Arts & Craft</div>
+              <div class="slot-teacher">Ms. Zainab Malik</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Art Room
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-urdu">
+              <div class="slot-subject">Urdu</div>
+              <div class="slot-teacher">Ms. Ayesha Siddiqui</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 10:00 - 10:30 BREAK -->
+        <tr>
+          <td class="time-cell">
+            Break
+            <span class="time-range">10:00 - 10:30</span>
+          </td>
+          <td colspan="6" class="break-cell">
+            <span class="break-label"> Morning Break</span>
+          </td>
+        </tr>
+
+        <!-- 10:30 - 11:30 -->
+        <tr>
+          <td class="time-cell">
+            Period 3
+            <span class="time-range">10:30 - 11:30</span>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 2
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-math">
+              <div class="slot-subject">Mathematics</div>
+              <div class="slot-teacher">Mr. Ahmed Khan</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-english">
+              <div class="slot-subject">English</div>
+              <div class="slot-teacher">Ms. Fatima Noor</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-islamiat">
+              <div class="slot-subject">Islamiat</div>
+              <div class="slot-teacher">Molvi Sahib</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-arts">
+              <div class="slot-subject">Physical Edu.</div>
+              <div class="slot-teacher">Mr. Hamza Ali</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Sports Ground
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 11:30 - 12:30 -->
+        <tr>
+          <td class="time-cell">
+            Period 4
+            <span class="time-range">11:30 - 12:30</span>
+          </td>
+          <td>
+            <div class="slot-card slot-urdu">
+              <div class="slot-subject">Urdu</div>
+              <div class="slot-teacher">Ms. Ayesha Siddiqui</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-islamiat">
+              <div class="slot-subject">Islamiat</div>
+              <div class="slot-teacher">Molvi Sahib</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-english">
+              <div class="slot-subject">English</div>
+              <div class="slot-teacher">Ms. Fatima Noor</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-math">
+              <div class="slot-subject">Mathematics</div>
+              <div class="slot-teacher">Mr. Ahmed Khan</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 2
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 12:30 - 1:30 LUNCH -->
+        <tr>
+          <td class="time-cell">
+            Lunch
+            <span class="time-range">12:30 - 01:30</span>
+          </td>
+          <td colspan="6" class="break-cell">
+            <span class="break-label">🍽️ Lunch Break</span>
+          </td>
+        </tr>
+
+        <!-- 1:30 - 2:30 -->
+        <tr>
+          <td class="time-cell">
+            Period 5
+            <span class="time-range">01:30 - 02:30</span>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-urdu">
+              <div class="slot-subject">Urdu</div>
+              <div class="slot-teacher">Ms. Ayesha Siddiqui</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-arts">
+              <div class="slot-subject">Arts & Craft</div>
+              <div class="slot-teacher">Ms. Zainab Malik</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Art Room
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-english">
+              <div class="slot-subject">English</div>
+              <div class="slot-teacher">Ms. Fatima Noor</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-math">
+              <div class="slot-subject">Mathematics</div>
+              <div class="slot-teacher">Mr. Ahmed Khan</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 2:30 - 3:30 -->
+        <tr>
+          <td class="time-cell">
+            Period 6
+            <span class="time-range">02:30 - 03:30</span>
+          </td>
+          <td>
+            <div class="slot-card slot-arts">
+              <div class="slot-subject">Physical Edu.</div>
+              <div class="slot-teacher">Mr. Hamza Ali</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Sports Ground
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-computer">
+              <div class="slot-subject">Computer Sci.</div>
+              <div class="slot-teacher">Mr. Bilal Ahmed</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 1
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-islamiat">
+              <div class="slot-subject">Islamiat</div>
+              <div class="slot-teacher">Molvi Sahib</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-urdu">
+              <div class="slot-subject">Urdu</div>
+              <div class="slot-teacher">Ms. Ayesha Siddiqui</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Room 101
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="slot-card slot-science">
+              <div class="slot-subject">Science</div>
+              <div class="slot-teacher">Mr. Usman Ghani</div>
+              <div class="slot-room">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Lab 2
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="empty-cell" title="Click to add slot">+</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Add Time Slot Modal -->
+<div class="modal-overlay" id="addSlotModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Add New Time Slot</h3>
+      <button class="modal-close" id="closeModalBtn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="addSlotForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Class <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Class</option>
+              <option>Class 10 - A</option>
+              <option>Class 10 - B</option>
+              <option>Class 9 - A</option>
+              <option>Class 9 - B</option>
+              <option>Class 8 - A</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Section <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Section</option>
+              <option>A</option>
+              <option>B</option>
+              <option>C</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Subject <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Subject</option>
+              <option>Mathematics</option>
+              <option>Science</option>
+              <option>English</option>
+              <option>Urdu</option>
+              <option>Islamiat</option>
+              <option>Computer Science</option>
+              <option>Arts & Craft</option>
+              <option>Physical Education</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Teacher <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Teacher</option>
+              <option>Mr. Ahmed Khan</option>
+              <option>Ms. Fatima Noor</option>
+              <option>Mr. Usman Ghani</option>
+              <option>Ms. Ayesha Siddiqui</option>
+              <option>Mr. Bilal Ahmed</option>
+              <option>Ms. Zainab Malik</option>
+              <option>Mr. Hamza Ali</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Day <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Day</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Room / Classroom <span class="req">*</span></label>
+            <select class="form-control" required>
+              <option value="">Select Room</option>
+              <option>Room 101</option>
+              <option>Room 102</option>
+              <option>Room 103</option>
+              <option>Lab 1 (Computer)</option>
+              <option>Lab 2 (Science)</option>
+              <option>Art Room</option>
+              <option>Sports Ground</option>
+              <option>Auditorium</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Time <span class="req">*</span></label>
+            <input type="time" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>End Time <span class="req">*</span></label>
+            <input type="time" class="form-control" required>
+          </div>
+          <div class="form-group full">
+            <label>Color Tag</label>
+            <div class="color-options">
+              <div class="color-option selected" data-color="math" title="Mathematics"></div>
+              <div class="color-option" data-color="science" title="Science"></div>
+              <div class="color-option" data-color="english" title="English"></div>
+              <div class="color-option" data-color="urdu" title="Urdu"></div>
+              <div class="color-option" data-color="islamiat" title="Islamiat"></div>
+              <div class="color-option" data-color="computer" title="Computer"></div>
+              <div class="color-option" data-color="arts" title="Arts"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="conflict-warning" id="conflictWarning">
+          <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          <div>
+            <strong>Schedule Conflict!</strong><br>
+            <span>Mr. Ahmed Khan is already assigned to Class 9-A at this time.</span>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="cancelModalBtn" type="button">Cancel</button>
+      <button class="btn btn-primary" id="saveSlotBtn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Slot
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('addSlotModal');
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelModalBtn');
+    const saveBtn = document.getElementById('saveSlotBtn');
+    const form = document.getElementById('addSlotForm');
+    const conflictWarning = document.getElementById('conflictWarning');
+
+    function openModal() {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      form.reset();
+      conflictWarning.classList.remove('show');
+      // Reset color selection
+      document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+      document.querySelector('.color-option[data-color="math"]').classList.add('selected');
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', function(e) { e.preventDefault(); closeModal(); });
+    if (cancelBtn) cancelBtn.addEventListener('click', function(e) { e.preventDefault(); closeModal(); });
+    if (modal) modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+
+    // Color selection
+    document.querySelectorAll('.color-option').forEach(opt => {
+      opt.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
+
+    // Dummy conflict detection
+    const teacherSelect = form.querySelector('select:nth-of-type(2)');
+    if (teacherSelect) {
+      teacherSelect.addEventListener('change', function() {
+        if (this.value === 'Mr. Ahmed Khan') {
+          conflictWarning.classList.add('show');
+        } else {
+          conflictWarning.classList.remove('show');
+        }
+      });
+    }
+
+    // Save slot (demo)
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (form.checkValidity()) {
+          if (typeof showToast === 'function') {
+            showToast('Time slot added successfully!');
+          }
+          closeModal();
+        } else {
+          form.reportValidity();
+        }
+      });
+    }
+
+    // Empty cell click
+    document.querySelectorAll('.empty-cell').forEach(cell => {
+      cell.addEventListener('click', function() {
+        openModal();
+      });
+    });
+
+    // Week navigation (demo)
+    const prevWeek = document.getElementById('prevWeek');
+    const nextWeek = document.getElementById('nextWeek');
+    if (prevWeek) prevWeek.addEventListener('click', function() {
+      if (typeof showToast === 'function') showToast('Previous week loaded');
+    });
+    if (nextWeek) nextWeek.addEventListener('click', function() {
+      if (typeof showToast === 'function') showToast('Next week loaded');
+    });
+
+    // Print button
+    const printBtn = document.getElementById('printBtn');
+    if (printBtn) printBtn.addEventListener('click', function() {
+      window.print();
+    });
+  });
+</script>
+{% endblock %}
