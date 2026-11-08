@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Fee Records{% endblock %}
+{% block page_title %}Fee Records & Accounts{% endblock %}
+{% block accounts_open %}open{% endblock %}
+{% block nav_fee_records %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --green: #3E9E6B;
+    --green-soft: #E8F7EF;
+    --red: #E15C5C;
+    --red-soft: #FDECEC;
+    --orange: #F08A5D;
+    --orange-soft: #FDEDE4;
+    --blue: #3E6FB0;
+    --blue-soft: #E8F1FC;
+    --line: #E5E7EB;
+    --card: #FFFFFF;
+    --primary: #1E2740;
+    --muted: #6B7280;
+  }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+
+  .filter-card {
+    background: var(--card); border-radius: 16px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    box-shadow: 0 2px 8px rgba(30,40,80,.04); border: 1px solid var(--line);
+  }
+  .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-card select, .filter-card input {
+    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; font-weight: 500; outline: none;
+  }
+
+  .status-pills { display: flex; gap: 6px; background: #F1F2F7; padding: 4px; border-radius: 10px; }
+  .status-pill { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; color: var(--muted); }
+  .status-pill.active { background: #fff; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
+
+  .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+  .stats-banner { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat-box {
+    background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; flex-direction: column; justify-content: center; border: 1px solid var(--line);
+  }
+  .stat-box .lbl { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  .stat-box .val { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .stat-box.green .val { color: var(--green); }
+  .stat-box.red .val { color: var(--red); }
+  .stat-box.blue .val { color: var(--blue); }
+
+  .donut-card {
+    background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid var(--line);
+  }
+  .donut-wrap { position: relative; width: 120px; height: 120px; margin: 8px 0; }
+  .donut-ring {
+    width: 100%; height: 100%; border-radius: 50%;
+    -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+            mask: radial-gradient(circle, transparent 58%, #000 60%);
+  }
+  .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .donut-center b { font-size: 16px; }
+  .donut-center span { font-size: 10px; color: var(--muted); }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFBFD; }
+
+  .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 700; display: inline-block; }
+  .badge-status.paid { background: var(--green-soft); color: var(--green); }
+  .badge-status.unpaid { background: var(--red-soft); color: var(--red); }
+  .badge-status.partial { background: #FFF4E5; color: var(--orange); }
+
+  .row-actions { display: flex; gap: 6px; }
+  .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.view svg { stroke: var(--blue); }
+  .icon-action.view:hover { background: var(--blue-soft); }
+  .icon-action.edit-fee svg { stroke: var(--orange); }
+  .icon-action.edit-fee:hover { background: var(--orange-soft); }
+
+  .btn-pdf {
+    padding: 8px 14px; border-radius: 9px; border: none; background: #E15C5C; color: #fff;
+    font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-pdf:hover { background: #cf4949; }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 820px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 600; }
+  .field input, .field select { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <div class="filter-card">
+    <form method="get" class="filter-group" id="monthForm">
+
+      <label style="font-size:13px;font-weight:600;">Billing Period:</label>
+
+      <select name="month" onchange="document.getElementById('monthForm').submit()">
+        {% for m_val, m_name in months.items %}
+          <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="session" onchange="document.getElementById('monthForm').submit()">
+        {% for s in all_academic_sessions %}
+          <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="class" onchange="document.getElementById('monthForm').submit()">
+        <option value="">All Classes</option>
+        {% for cls in available_classes %}
+          <option value="{{ cls }}" {% if selected_class == cls %}selected{% endif %}>{{ cls }}</option>
+        {% endfor %}
+      </select>
+
+      <div class="status-pills">
+        <a href="?session={{ selected_session }}&month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=all"
+           class="status-pill {% if status_filter == 'all' or not status_filter %}active{% endif %}">All</a>
+
+        <a href="?session={{ selected_session }}&month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=paid"
+           class="status-pill {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
+
+        <a href="?session={{ selected_session }}&month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}&status=unpaid"
+           class="status-pill {% if status_filter == 'unpaid' %}active{% endif %}">Unpaid</a>
+      </div>
+    </form>
+
+    {% if perms.can_print or user.is_superuser %}
+    <div>
+      <a href="{% url 'download_defaulters_pdf' %}?session={{ selected_session }}&month={{ selected_month }}&year={{ selected_year }}&class={{ selected_class }}"
+         target="_blank" class="btn-pdf">
+        📄 Download Unpaid Defaulters PDF
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="analytics-grid">
+    <div class="stats-banner">
+      <div class="stat-box">
+        <span class="lbl">Total Receivable</span>
+        <span class="val">Rs. {{ total_receivable }}</span>
+      </div>
+      <div class="stat-box green">
+        <span class="lbl">Collected (Paid)</span>
+        <span class="val">Rs. {{ total_collected }}</span>
+      </div>
+      <div class="stat-box blue">
+        <span class="lbl">Advance Received</span>
+        <span class="val">Rs. {{ total_advance }}</span>
+      </div>
+      <div class="stat-box red">
+        <span class="lbl">Unpaid Defaulters</span>
+        <span class="val">Rs. {{ total_pending }}</span>
+      </div>
+    </div>
+
+    <div class="donut-card">
+      <div style="font-size:12px;font-weight:600;">Payment Ratio</div>
+      <div class="donut-wrap">
+        <div class="donut-ring" id="donutRing" data-paid="{{ paid_percentage|default:0 }}"></div>
+        <div class="donut-center">
+          <b>{{ paid_percentage|default:0 }}%</b>
+          <span>Paid</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px 18px;border-radius:14px;border:1px solid var(--line);">
+    <input type="text" id="liveFeeSearch" placeholder="⚡ Live search student name or roll no..." style="width:700px;padding:8px 12px;border-radius:8px;border:1px solid #ECEEF3;font-size:13px;outline:none;">
+    <span style="font-size:12px;color:var(--muted);">Showing <b>{{ fees|length }}</b> records</span>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Challan No.</th>
+          <th>Student</th>
+          <th>Class & Roll</th>
+          <th>Total (Rs.)</th>
+          <th style="color:var(--green);">Paid (Rs.)</th>
+          <th style="color:var(--blue);">Advance (Rs.)</th>
+          <th style="color:var(--red);">Outstanding (Arrears + Current)</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for f in fees %}
+        <tr class="fee-row">
+          <td><b>{{ f.challan_no }}</b></td>
+
+          <td>
+            <b class="f-name">{{ f.student.name }}</b>
+            <div style="font-size:11px;color:var(--muted);">Father: {{ f.student.father_name }} | Reg: {{ f.student.reg_no|default:'—' }}</div>
+          </td>
+
+          <td>
+            <span style="background:#F1F2F7;padding:3px 8px;border-radius:12px;font-size:11.5px;font-weight:600;">
+              {{ f.class_field|default:f.student.student_class }}
+            </span>
+            <span class="f-roll">#{{ f.roll_no|default:f.student.roll_no }}</span>
+          </td>
+
+          <td><b>{{ f.total_amount }}</b></td>
+          <td style="color:var(--green);font-weight:700;">{{ f.paid_amount }}</td>
+
+          <td style="color:var(--blue);font-weight:700;">{{ f.net_advance|default:"0.00" }}</td>
+          <td style="color:var(--red);font-weight:700;">{{ f.display_total_due|default:"0.00" }}</td>
+
+          <td>
+            <span class="badge-status
+              {% if f.display_total_due|default:0 <= 0 %}paid
+              {% elif f.paid_amount|default:0 > 0 %}partial
+              {% else %}unpaid{% endif %}">
+              {% if f.display_total_due|default:0 <= 0 %}Paid
+              {% elif f.paid_amount|default:0 > 0 %}Partial
+              {% else %}Unpaid{% endif %}
+            </span>
+          </td>
+
+          <td>
+            <div class="row-actions" style="white-space:nowrap;">
+              <button type="button"
+                      class="icon-action view open-ledger-btn"
+                      data-id="{{ f.student.id }}"
+                      data-year="{{ selected_year }}"
+                      title="View Detailed History">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              </button>
+
+              {% if perms.can_edit or user.is_superuser %}
+              <button type="button"
+                      class="icon-action edit-fee open-edit-fee-btn"
+                      data-url="{% url 'update_fee_record' f.id %}"
+                      data-challan="{{ f.challan_no|escape }}"
+                      data-name="{{ f.student.name|escape }}"
+                      data-class="{{ f.class_field|default:f.student.student_class|escape }}"
+                      data-tuition="{{ f.tuition_fee }}"
+                      data-transport="{{ f.transport_fee }}"
+                      data-other="{{ f.other_charges }}"
+                      data-fine="{{ f.fine }}"
+                      data-paid="{{ f.paid_amount }}"
+                      data-advance="{{ f.net_advance|default:'0.00' }}"
+                      data-payment-date="{{ f.payment_date|date:'Y-m-d' }}"
+                      data-method="{{ f.payment_method|default:'Cash'|escape }}"
+                      title="Edit Fee Record">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" style="text-align:center;padding:36px;color:var(--muted);">No records found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================= EDIT FEE MODAL ================= -->
+<div class="modal-overlay" id="editFeeModal">
+  <div class="modal" style="max-width:620px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+      <div>
+        <h3 id="ef-title" style="font-size:16px;color:var(--primary);">Edit Student Fee Record</h3>
+        <p id="ef-sub" style="font-size:12px;color:var(--muted);margin-top:2px;"></p>
+      </div>
+      <button onclick="document.getElementById('editFeeModal').classList.remove('show')" style="border:none;background:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+
+    <form class="modal-form" method="post" id="editFeeForm" action="">
+      {% csrf_token %}
+
+      <div class="field"><label>Tuition Fee (Rs.)</label><input type="number" step="1" name="tuition_fee" id="ef-tuition" required></div>
+      <div class="field"><label>Transport Fee (Rs.)</label><input type="number" step="1" name="transport_fee" id="ef-transport"></div>
+      <div class="field"><label>Other / Annual Charges (Rs.)</label><input type="number" step="1" name="other_charges" id="ef-other"></div>
+      <div class="field"><label>Fine / Late Surcharge (Rs.)</label><input type="number" step="1" name="fine" id="ef-fine"></div>
+
+      <div class="field"><label>Amount Paid (Rs.)</label><input type="number" step="1" name="paid_amount" id="ef-paid" required></div>
+
+      <div class="field"><label>Advance Amount (Future Paid Total) (Rs.)</label><input type="number" step="1" name="advance_fee" id="ef-advance"></div>
+
+      <div class="field">
+        <label>Payment Method</label>
+        <select name="payment_method" id="ef-method">
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="EasyPaisa / JazzCash">EasyPaisa / JazzCash</option>
+        </select>
+      </div>
+      <div class="field"><label>Payment Date</label><input type="date" name="payment_date" id="ef-date"></div>
+
+      <div class="field full">
+        <label>Edit Reason (Required)</label>
+        <input type="text" name="edit_reason" id="ef-reason" required placeholder="e.g. Admin correction: advance entry mistake">
+      </div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button type="button" class="btn-secondary" onclick="document.getElementById('editFeeModal').classList.remove('show')">Cancel</button>
+        <button type="submit" class="btn-primary">Update Fee Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= 12-MONTH LEDGER MODAL (WITH RANGE FILTER) ================= -->
+<div class="modal-overlay" id="ledgerModal">
+  <div class="modal" style="max-width:960px;width:96%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+      <div>
+        <h3 id="ledgerTitle" style="font-size:16.5px;color:var(--primary);font-weight:700;">Student Fee Ledger</h3>
+        <p id="ledgerSub" style="font-size:12px;color:var(--muted);margin-top:2px;"></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <select id="ledgerRangeFilter" style="padding:6px 12px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:600;background:#F8F9FC;outline:none;">
+          <option value="all" selected>All Active Months (Enrolment to Date)</option>
+          <option value="current">Current Month Only</option>
+          <option value="5months">Last 5 Months</option>
+          <option value="10months">Last 10 Months</option>
+        </select>
+
+        {% if perms.can_print or user.is_superuser %}
+        <a id="downloadLedgerPdfBtn" href="#" target="_blank" class="btn-pdf" style="padding:6px 14px;font-size:12px;">
+          🖨️ Download PDF
+        </a>
+        {% endif %}
+
+        <button onclick="document.getElementById('ledgerModal').classList.remove('show')" style="border:none;background:none;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:14px;background:#F8F9FC;padding:12px 16px;border-radius:12px;border:1px solid var(--line);">
+      <div><span style="font-size:11px;color:gray;text-transform:uppercase;font-weight:600;">Total Standard Billed:</span> <b id="sumBilled" style="display:block;font-size:16px;margin-top:2px;">Rs. 0</b></div>
+      <div><span style="font-size:11px;color:gray;text-transform:uppercase;font-weight:600;">Total Amount Paid:</span> <b id="sumPaid" style="display:block;font-size:16px;color:var(--green);margin-top:2px;">Rs. 0</b></div>
+      <div><span style="font-size:11px;color:gray;text-transform:uppercase;font-weight:600;">Current Outstanding Balance:</span> <b id="sumBalance" style="display:block;font-size:16px;color:var(--red);margin-top:2px;">Rs. 0</b></div>
+    </div>
+
+    <div style="overflow-x:auto;max-height:55vh;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;" id="ledgerTable">
+        <thead>
+          <tr style="background:#ECEEF3;border-bottom:1.5px solid #D1D5DB;">
+            <th style="padding:10px 8px;text-align:left;">Month</th>
+            <th style="padding:10px 8px;text-align:right;">Prev. Arrears</th>
+            <th style="padding:10px 8px;text-align:right;">Month Fee</th>
+            <th style="padding:10px 8px;text-align:right;font-weight:700;">Total Payable</th>
+            <th style="padding:10px 8px;text-align:right;color:var(--green);">Paid</th>
+            <th style="padding:10px 8px;text-align:right;color:var(--blue);">Advance</th>
+            <th style="padding:10px 8px;text-align:right;color:var(--red);font-weight:700;">Closing Balance</th>
+            <th style="padding:10px 8px;text-align:center;">Date Paid</th>
+            <th style="padding:10px 8px;text-align:center;">Method</th>
+            <th style="padding:10px 8px;text-align:center;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let activeLedgerStudentId = null;
+  let activeLedgerYear = null;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const donut = document.getElementById('donutRing');
+    if (donut) {
+      const paid = parseInt(donut.dataset.paid, 10) || 0;
+      donut.style.background = `conic-gradient(var(--green) 0 ${paid}%, var(--red) ${paid}% 100%)`;
+    }
+
+    document.getElementById('liveFeeSearch').addEventListener('input', function() {
+      const val = this.value.toLowerCase().trim();
+      document.querySelectorAll('.fee-row').forEach(row => {
+        const name = row.querySelector('.f-name').textContent.toLowerCase();
+        const roll = row.querySelector('.f-roll').textContent.toLowerCase();
+        row.style.display = (name.includes(val) || roll.includes(val)) ? '' : 'none';
+      });
+    });
+
+    document.querySelectorAll('.open-edit-fee-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('editFeeForm').action = btn.dataset.url;
+        document.getElementById('ef-title').textContent = `Edit Fee: ${btn.dataset.name} (${btn.dataset.class})`;
+        document.getElementById('ef-sub').textContent = `Challan No: ${btn.dataset.challan}`;
+
+        document.getElementById('ef-tuition').value = Math.round(parseFloat(btn.dataset.tuition) || 0);
+        document.getElementById('ef-transport').value = Math.round(parseFloat(btn.dataset.transport) || 0);
+        document.getElementById('ef-other').value = Math.round(parseFloat(btn.dataset.other) || 0);
+        document.getElementById('ef-fine').value = Math.round(parseFloat(btn.dataset.fine) || 0);
+        document.getElementById('ef-paid').value = Math.round(parseFloat(btn.dataset.paid) || 0);
+        document.getElementById('ef-advance').value = Math.round(parseFloat(btn.dataset.advance) || 0);
+        document.getElementById('ef-method').value = btn.dataset.method || 'Cash';
+        document.getElementById('ef-date').value = btn.dataset.paymentDate || '';
+        document.getElementById('ef-reason').value = '';
+
+        document.getElementById('editFeeModal').classList.add('show');
+      });
+    });
+
+    function loadStudentLedger(studentId, year, rangeFilter) {
+      fetch(`/accounts/api/ledger/${studentId}/?year=${year}&range=${rangeFilter}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('ledgerTitle').textContent =
+            `${data.student_name} (Class: ${data.student_class} · Roll #${data.roll_no})`;
+          document.getElementById('ledgerSub').textContent =
+            `Father's Name: ${data.father_name} | Statement`;
+          document.getElementById('downloadLedgerPdfBtn').href =
+            `/accounts/pdf/ledger/${studentId}/?year=${year}`;
+
+          document.getElementById('sumBilled').textContent = `Rs. ${data.total_billed}`;
+          document.getElementById('sumPaid').textContent = `Rs. ${data.total_paid}`;
+          document.getElementById('sumBalance').textContent = `Rs. ${data.total_balance}`;
+
+          const tbody = document.getElementById('ledgerBody');
+          tbody.innerHTML = '';
+
+          if (!data.ledger || data.ledger.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--muted);">No billing records found for the selected period.</td></tr>';
+          } else {
+            data.ledger.forEach(row => {
+              const tr = document.createElement('tr');
+              tr.style.borderBottom = '1px solid #ECEEF3';
+              tr.innerHTML = `
+                <td style="padding:10px 8px;font-weight:600;">${row.month}</td>
+                <td style="padding:10px 8px;text-align:right;color:gray;">Rs. ${row.prev_balance}</td>
+                <td style="padding:10px 8px;text-align:right;">Rs. ${row.month_fee}</td>
+                <td style="padding:10px 8px;text-align:right;font-weight:700;">Rs. ${row.total}</td>
+                <td style="padding:10px 8px;text-align:right;color:var(--green);font-weight:700;">Rs. ${row.paid}</td>
+                <td style="padding:10px 8px;text-align:right;color:var(--blue);font-weight:600;">Rs. ${row.advance}</td>
+                <td style="padding:10px 8px;text-align:right;color:var(--red);font-weight:700;">Rs. ${row.balance}</td>
+                <td style="padding:10px 8px;text-align:center;font-size:11px;">${row.payment_date}</td>
+                <td style="padding:10px 8px;text-align:center;">${row.payment_method}</td>
+                <td style="padding:10px 8px;text-align:center;">
+                  <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:12px;background:${
+                    row.status === 'Paid' ? '#E8F7EF;color:#3E9E6B;'
+                    : (row.status === 'Partial' ? '#FFF4E5;color:#F08A5D;'
+                    : '#FDECEC;color:#E15C5C;')
+                  }">
+                    ${row.status}
+                  </span>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+
+          document.getElementById('ledgerModal').classList.add('show');
+        });
+    }
+
+    document.querySelectorAll('.open-ledger-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        activeLedgerStudentId = this.dataset.id;
+        activeLedgerYear = this.dataset.year;
+        const currentRange = document.getElementById('ledgerRangeFilter').value;
+        loadStudentLedger(activeLedgerStudentId, activeLedgerYear, currentRange);
+      });
+    });
+
+    document.getElementById('ledgerRangeFilter').addEventListener('change', function() {
+      if (activeLedgerStudentId && activeLedgerYear) {
+        loadStudentLedger(activeLedgerStudentId, activeLedgerYear, this.value);
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,2784 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ student.name }} — Student Dashboard {% endblock %}
+{% block nav_student_dashboard %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  @property --p {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
+  :root {
+    --dash-bg:#f5f7fb;
+    --dash-surface:rgba(255,255,255,.88);
+    --dash-border:rgba(25,32,56,.08);
+    --dash-text:#182033;
+    --dash-muted:#7b8498;
+
+    --dash-primary:#f07f4f;
+    --dash-primary-soft:#fff0e8;
+
+    --dash-green:#2fa36b;
+    --dash-green-soft:#e9f7ef;
+
+    --dash-blue:#4776d0;
+    --dash-blue-soft:#ebf1ff;
+
+    --dash-purple:#745fd0;
+    --dash-purple-soft:#f0edff;
+
+    --dash-pink:#c05786;
+    --dash-pink-soft:#fbeaf2;
+
+    --dash-teal:#168f8a;
+    --dash-teal-soft:#e6f8f6;
+
+    --dash-yellow:#d79222;
+    --dash-yellow-soft:#fff4de;
+
+    --dash-red:#d65a5a;
+    --dash-red-soft:#fdecec;
+
+    --lift-1:
+      0 10px 24px rgba(35,43,71,.07),
+      0 2px 6px rgba(35,43,71,.05);
+
+    --lift-2:
+      0 22px 48px rgba(30,37,62,.11),
+      0 6px 16px rgba(30,37,62,.06);
+
+    --lift-3:
+      0 32px 70px rgba(24,32,51,.16),
+      0 10px 22px rgba(24,32,51,.08);
+
+    --dash-radius-xl:28px;
+    --dash-radius-lg:22px;
+    --dash-radius-md:16px;
+  }
+
+  /* =====================================================
+     ROOT
+  ===================================================== */
+
+  .student-dashboard,
+  .student-dashboard * {
+    box-sizing:border-box;
+  }
+
+  .student-dashboard {
+    width:100%;
+    max-width:1800px;
+    min-width:0;
+
+    margin:0 auto;
+    padding:4px 26px 42px;
+
+    color:var(--dash-text);
+
+    overflow-x:hidden;
+  }
+
+  /* =====================================================
+     HERO
+  ===================================================== */
+
+  .student-hero {
+    position:relative;
+    overflow:hidden;
+
+    width:100%;
+    min-height:176px;
+
+    border-radius:30px;
+
+    padding:30px 32px;
+    margin-bottom:20px;
+
+    background:
+      radial-gradient(
+        circle at 86% 22%,
+        rgba(255,255,255,.30),
+        transparent 25%
+      ),
+      linear-gradient(
+        135deg,
+        #20283a 0%,
+        #303b55 55%,
+        #46536f 100%
+      );
+
+    color:#fff;
+
+    box-shadow:var(--lift-3);
+  }
+
+  .student-hero::before,
+  .student-hero::after {
+    content:"";
+
+    position:absolute;
+
+    border-radius:999px;
+
+    border:
+      1px solid
+      rgba(255,255,255,.10);
+
+    pointer-events:none;
+  }
+
+  .student-hero::before {
+    width:260px;
+    height:260px;
+
+    right:-90px;
+    top:-105px;
+  }
+
+  .student-hero::after {
+    width:170px;
+    height:170px;
+
+    right:70px;
+    bottom:-120px;
+
+    opacity:.6;
+  }
+
+  .hero-layout {
+    position:relative;
+    z-index:2;
+
+    display:grid;
+
+    grid-template-columns:
+      minmax(0,1fr) auto;
+
+    align-items:center;
+
+    gap:25px;
+  }
+
+  .hero-main {
+    min-width:0;
+  }
+
+  .hero-title {
+    margin:0 0 9px;
+
+    font-size:clamp(27px,3vw,38px);
+    font-weight:700;
+
+    letter-spacing:-.03em;
+    line-height:1.08;
+
+    overflow-wrap:anywhere;
+  }
+
+  .hero-title span {
+    color:var(--dash-primary);
+  }
+
+  .hero-meta {
+    display:flex;
+    flex-wrap:wrap;
+
+    gap:8px;
+
+    margin-top:16px;
+  }
+
+  .hero-pill {
+    min-width:0;
+
+    padding:6px 11px;
+
+    border-radius:999px;
+
+    border:
+      1px solid
+      rgba(255,255,255,.12);
+
+    background:
+      rgba(255,255,255,.08);
+
+    color:
+      rgba(255,255,255,.85);
+
+    font-size:11px;
+    font-weight:600;
+
+    overflow-wrap:anywhere;
+  }
+
+  .hero-date {
+    min-width:180px;
+
+    padding:18px 20px;
+
+    border-radius:22px;
+
+    background:
+      rgba(255,255,255,.10);
+
+    border:
+      1px solid
+      rgba(255,255,255,.12);
+
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+  }
+
+  .hero-date span {
+    display:block;
+
+    color:
+      rgba(255,255,255,.58);
+
+    font-size:10px;
+    font-weight:700;
+
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+
+  .hero-date strong {
+    display:block;
+
+    margin-top:7px;
+
+    font-size:17px;
+  }
+
+  .hero-date small {
+    display:block;
+
+    margin-top:3px;
+
+    color:
+      rgba(255,255,255,.7);
+
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  /* =====================================================
+     GENERAL CARD
+  ===================================================== */
+
+  .student-card {
+    position:relative;
+
+    min-width:0;
+
+    background:
+      var(--dash-surface);
+
+    border:
+      1px solid
+      rgba(255,255,255,.72);
+
+    box-shadow:
+      var(--lift-1);
+
+    backdrop-filter:
+      blur(18px);
+
+    -webkit-backdrop-filter:
+      blur(18px);
+
+    transition:
+      transform .3s ease,
+      box-shadow .3s ease;
+  }
+
+  @media (hover:hover) {
+    .student-card:hover {
+      transform:translateY(-3px);
+      box-shadow:var(--lift-2);
+    }
+  }
+
+  /* =====================================================
+     KPI
+  ===================================================== */
+
+  .student-kpi-grid {
+    display:grid;
+
+    grid-template-columns:
+      repeat(6,minmax(0,1fr));
+
+    gap:14px;
+
+    margin-bottom:20px;
+  }
+
+  .student-kpi {
+    position:relative;
+
+    min-width:0;
+    min-height:126px;
+
+    padding:18px;
+
+    border-radius:
+      var(--dash-radius-lg);
+
+    overflow:hidden;
+  }
+
+  .student-kpi::after {
+    content:"";
+
+    position:absolute;
+
+    width:78px;
+    height:78px;
+
+    right:-28px;
+    bottom:-32px;
+
+    border-radius:50%;
+
+    background:currentColor;
+
+    opacity:.045;
+
+    pointer-events:none;
+  }
+
+  .kpi-head {
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:10px;
+  }
+
+  .kpi-icon {
+    width:42px;
+    height:42px;
+
+    flex:0 0 auto;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:14px;
+
+    font-size:18px;
+  }
+
+  .student-kpi h3 {
+    margin:15px 0 3px;
+
+    color:var(--dash-text);
+
+    font-size:25px;
+    line-height:1;
+
+    font-weight:800;
+
+    overflow-wrap:anywhere;
+  }
+
+  .student-kpi p {
+    margin:0;
+
+    color:var(--dash-muted);
+
+    font-size:11px;
+    font-weight:600;
+
+    overflow-wrap:anywhere;
+  }
+
+  .kpi-green {color:var(--dash-green);}
+  .kpi-orange{color:var(--dash-primary);}
+  .kpi-blue  {color:var(--dash-blue);}
+  .kpi-teal  {color:var(--dash-teal);}
+  .kpi-purple{color:var(--dash-purple);}
+  .kpi-pink  {color:var(--dash-pink);}
+
+  .kpi-green .kpi-icon {
+    color:var(--dash-green);
+    background:var(--dash-green-soft);
+  }
+
+  .kpi-orange .kpi-icon {
+    color:var(--dash-primary);
+    background:var(--dash-primary-soft);
+  }
+
+  .kpi-blue .kpi-icon {
+    color:var(--dash-blue);
+    background:var(--dash-blue-soft);
+  }
+
+  .kpi-teal .kpi-icon {
+    color:var(--dash-teal);
+    background:var(--dash-teal-soft);
+  }
+
+  .kpi-purple .kpi-icon {
+    color:var(--dash-purple);
+    background:var(--dash-purple-soft);
+  }
+
+  .kpi-pink .kpi-icon {
+    color:var(--dash-pink);
+    background:var(--dash-pink-soft);
+  }
+
+  /* =====================================================
+     MAIN GRID
+  ===================================================== */
+
+  .student-main-grid {
+    display:grid;
+
+    grid-template-columns:
+      minmax(0,1.7fr)
+      minmax(300px,.95fr);
+
+    gap:20px;
+
+    align-items:start;
+  }
+
+  .student-left,
+  .student-right {
+    min-width:0;
+  }
+
+  .student-panel {
+    min-width:0;
+
+    padding:22px;
+
+    margin-bottom:20px;
+
+    border-radius:
+      var(--dash-radius-xl);
+  }
+
+  .student-panel-header {
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:15px;
+
+    margin-bottom:20px;
+  }
+
+  .student-panel-title {
+    min-width:0;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:11px;
+  }
+
+  .student-panel-title > div:last-child {
+    min-width:0;
+  }
+
+  .student-panel-icon {
+    width:38px;
+    height:38px;
+
+    flex:0 0 auto;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:13px;
+
+    background:#f6f7fa;
+
+    color:#566179;
+  }
+
+  .student-panel-title h2 {
+    margin:0;
+
+    color:var(--dash-text);
+
+    font-size:15px;
+    line-height:1.3;
+
+    font-weight:800;
+
+    overflow-wrap:anywhere;
+  }
+
+  .student-panel-title p {
+    margin:3px 0 0;
+
+    color:var(--dash-muted);
+
+    font-size:11px;
+    line-height:1.5;
+  }
+
+  /* =====================================================
+     TABLE
+  ===================================================== */
+
+  .student-table-wrap {
+    width:100%;
+
+    min-width:0;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    -webkit-overflow-scrolling:touch;
+
+    scrollbar-width:thin;
+    scrollbar-color:#d8dce6 transparent;
+  }
+
+  .student-table-wrap::-webkit-scrollbar {
+    height:6px;
+  }
+
+  .student-table-wrap::-webkit-scrollbar-thumb {
+    background:#d8dce6;
+
+    border-radius:10px;
+  }
+
+  .student-table {
+    width:100%;
+
+    min-width:600px;
+
+    border-collapse:collapse;
+  }
+
+  .student-table th {
+    padding:11px 12px;
+
+    text-align:left;
+
+    color:#9aa1af;
+
+    font-size:10px;
+    font-weight:800;
+
+    text-transform:uppercase;
+
+    white-space:nowrap;
+  }
+
+  .student-table td {
+    padding:13px 12px;
+
+    border-top:
+      1px solid #eff1f5;
+
+    color:#4b5365;
+
+    font-size:12px;
+    line-height:1.45;
+
+    vertical-align:middle;
+  }
+
+  .student-table td strong {
+    color:var(--dash-text);
+  }
+
+  @media (hover:hover) {
+    .student-table tbody tr:hover {
+      background:#fafbfd;
+    }
+  }
+
+  .period-badge {
+    display:inline-flex;
+
+    padding:5px 9px;
+
+    border-radius:8px;
+
+    background:#f1f3f7;
+
+    color:var(--dash-text);
+
+    font-size:10px;
+    font-weight:700;
+
+    white-space:nowrap;
+  }
+
+  .status-pass,
+  .status-fail {
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:5px 9px;
+
+    border-radius:999px;
+
+    font-size:10px;
+    font-weight:700;
+
+    white-space:nowrap;
+  }
+
+  .status-pass {
+    color:var(--dash-green);
+    background:var(--dash-green-soft);
+  }
+
+  .status-fail {
+    color:var(--dash-red);
+    background:var(--dash-red-soft);
+  }
+
+  /* =====================================================
+     MOBILE TABLE CARDS
+  ===================================================== */
+
+  .mobile-schedule,
+  .mobile-results {
+    display:none;
+  }
+
+  .mobile-list {
+    display:grid;
+
+    gap:10px;
+  }
+
+  .mobile-card {
+    min-width:0;
+
+    padding:13px;
+
+    border:
+      1px solid
+      var(--dash-border);
+
+    border-radius:15px;
+
+    background:#fafbfd;
+  }
+
+  .mobile-card-head {
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:10px;
+
+    margin-bottom:10px;
+  }
+
+  .mobile-card-title {
+    min-width:0;
+
+    color:var(--dash-text);
+
+    font-size:13px;
+    font-weight:800;
+
+    overflow-wrap:anywhere;
+  }
+
+  .mobile-card-grid {
+    display:grid;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+    gap:8px;
+  }
+
+  .mobile-info {
+    min-width:0;
+
+    padding:9px 10px;
+
+    border:
+      1px solid
+      var(--dash-border);
+
+    border-radius:11px;
+
+    background:#fff;
+  }
+
+  .mobile-info span {
+    display:block;
+
+    color:var(--dash-muted);
+
+    font-size:8.5px;
+    font-weight:700;
+
+    text-transform:uppercase;
+  }
+
+  .mobile-info strong {
+    display:block;
+
+    margin-top:3px;
+
+    color:var(--dash-text);
+
+    font-size:10.5px;
+    line-height:1.4;
+
+    overflow-wrap:anywhere;
+  }
+
+  /* =====================================================
+     ATTENDANCE
+  ===================================================== */
+
+  .attendance-layout {
+    display:grid;
+
+    grid-template-columns:
+      135px minmax(0,1fr);
+
+    align-items:center;
+
+    gap:18px;
+  }
+
+  .attendance-ring {
+    --p:{{ attendance_percentage|default:"0" }};
+
+    width:130px;
+    height:130px;
+
+    flex:0 0 auto;
+
+    border-radius:50%;
+
+    display:grid;
+    place-items:center;
+
+    background:
+      radial-gradient(
+        closest-side,
+        white 77%,
+        transparent 78%
+      ),
+      conic-gradient(
+        var(--dash-green)
+        calc(var(--p) * 1%),
+        #edf0f4 0
+      );
+
+    box-shadow:var(--lift-1);
+  }
+
+  .attendance-ring-content {
+    text-align:center;
+  }
+
+  .attendance-ring strong {
+    display:block;
+
+    color:var(--dash-text);
+
+    font-size:27px;
+    line-height:1;
+
+    font-weight:800;
+  }
+
+  .attendance-ring span {
+    display:block;
+
+    margin-top:4px;
+
+    color:var(--dash-muted);
+
+    font-size:9px;
+    font-weight:700;
+  }
+
+  .attendance-stats {
+    min-width:0;
+
+    display:grid;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+    gap:8px;
+  }
+
+  .attendance-stat {
+    min-width:0;
+
+    padding:11px;
+
+    border-radius:13px;
+
+    border:
+      1px solid
+      var(--dash-border);
+
+    background:#fafbfd;
+  }
+
+  .attendance-stat span {
+    display:block;
+
+    color:var(--dash-muted);
+
+    font-size:10px;
+  }
+
+  .attendance-stat strong {
+    display:block;
+
+    margin-top:3px;
+
+    color:var(--dash-text);
+
+    font-size:15px;
+
+    overflow-wrap:anywhere;
+  }
+
+  /* =====================================================
+     INFO BOXES
+  ===================================================== */
+
+  .info-grid {
+    display:grid;
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+    gap:9px;
+  }
+
+  .info-box {
+    min-width:0;
+
+    padding:12px;
+
+    border:
+      1px solid
+      var(--dash-border);
+
+    border-radius:14px;
+
+    background:#fafbfd;
+  }
+
+  .info-box span {
+    display:block;
+
+    color:var(--dash-muted);
+
+    font-size:10px;
+    line-height:1.4;
+  }
+
+  .info-box strong {
+    display:block;
+
+    margin-top:4px;
+
+    color:var(--dash-text);
+
+    font-size:12px;
+    line-height:1.45;
+
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+
+  /* =====================================================
+     NOTICE
+  ===================================================== */
+
+  .notice-list {
+    min-width:0;
+  }
+
+  .notice-item {
+    min-width:0;
+
+    display:flex;
+
+    gap:10px;
+
+    padding:13px 0;
+
+    border-bottom:
+      1px solid #eff1f5;
+  }
+
+  .notice-item:last-child {
+    border-bottom:none;
+  }
+
+  .notice-dot {
+    width:8px;
+    height:8px;
+
+    margin-top:5px;
+
+    flex:0 0 auto;
+
+    border-radius:50%;
+
+    background:var(--dash-primary);
+  }
+
+  .notice-body {
+    min-width:0;
+
+    flex:1;
+  }
+
+  .notice-item strong {
+    display:block;
+
+    color:var(--dash-text);
+
+    font-size:12px;
+    line-height:1.45;
+
+    overflow-wrap:anywhere;
+  }
+
+  .notice-item p {
+    margin:3px 0 0;
+
+    color:var(--dash-muted);
+
+    font-size:10px;
+    line-height:1.55;
+
+    overflow-wrap:anywhere;
+  }
+
+  .notice-open {
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    margin-top:6px;
+
+    color:var(--dash-primary);
+
+    font-size:10px;
+    font-weight:700;
+  }
+
+  /* =====================================================
+     EMPTY
+  ===================================================== */
+
+  .empty-state {
+    width:100%;
+
+    padding:24px 10px;
+
+    color:var(--dash-muted);
+
+    text-align:center;
+
+    font-size:11px;
+    line-height:1.6;
+  }
+
+  /* =====================================================
+     LARGE LAPTOP
+  ===================================================== */
+
+  @media(max-width:1450px) {
+    .student-dashboard {
+      padding-left:22px;
+      padding-right:22px;
+    }
+
+    .student-kpi-grid {
+      gap:12px;
+    }
+
+    .student-kpi {
+      padding:16px;
+    }
+
+    .student-kpi h3 {
+      font-size:23px;
+    }
+  }
+
+  /* =====================================================
+     SMALL LAPTOP
+  ===================================================== */
+
+  @media(max-width:1280px) {
+    .student-kpi-grid {
+      grid-template-columns:
+        repeat(3,minmax(0,1fr));
+    }
+
+    .student-main-grid {
+      grid-template-columns:
+        minmax(0,1.55fr)
+        minmax(290px,.9fr);
+    }
+  }
+
+  /* =====================================================
+     TABLET LANDSCAPE
+  ===================================================== */
+
+  @media(max-width:1050px) {
+    .student-dashboard {
+      padding:
+        4px 20px 36px;
+    }
+
+    .student-main-grid {
+      grid-template-columns:1fr;
+    }
+
+    .student-right {
+      display:grid;
+
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+      gap:18px;
+
+      align-items:start;
+    }
+
+    .student-right .student-panel {
+      margin-bottom:0;
+    }
+
+    .student-right .student-panel:last-child:nth-child(odd) {
+      grid-column:1 / -1;
+    }
+  }
+
+  /* =====================================================
+     TABLET PORTRAIT
+  ===================================================== */
+
+  @media(max-width:860px) {
+    .student-dashboard {
+      padding:
+        2px 16px 32px;
+    }
+
+    .student-hero {
+      min-height:0;
+
+      padding:24px;
+
+      border-radius:24px;
+    }
+
+    .hero-layout {
+      grid-template-columns:1fr;
+      gap:17px;
+    }
+
+    .hero-date {
+      min-width:0;
+      width:100%;
+
+      display:grid;
+
+      grid-template-columns:
+        1fr auto;
+
+      align-items:center;
+
+      gap:4px 15px;
+
+      padding:13px 16px;
+
+      border-radius:16px;
+    }
+
+    .hero-date span {
+      grid-column:1;
+    }
+
+    .hero-date strong {
+      grid-column:1;
+
+      margin-top:0;
+    }
+
+    .hero-date small {
+      grid-column:2;
+      grid-row:1 / 3;
+
+      text-align:right;
+    }
+
+    .hero-title {
+      font-size:27px;
+    }
+
+    .student-kpi-grid {
+      grid-template-columns:
+        repeat(3,minmax(0,1fr));
+
+      gap:10px;
+    }
+
+    .student-panel {
+      padding:19px;
+
+      border-radius:22px;
+    }
+
+    .student-right {
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+      gap:14px;
+    }
+  }
+
+  /* =====================================================
+     MOBILE
+  ===================================================== */
+
+  @media(max-width:680px) {
+    .student-dashboard {
+      padding:
+        0 12px 28px;
+    }
+
+    /* Hero */
+
+    .student-hero {
+      padding:20px 17px;
+
+      margin-bottom:14px;
+
+      border-radius:21px;
+
+      box-shadow:
+        0 14px 32px
+        rgba(24,32,51,.14);
+    }
+
+    .student-hero::before {
+      width:200px;
+      height:200px;
+
+      right:-95px;
+      top:-90px;
+    }
+
+    .student-hero::after {
+      display:none;
+    }
+
+    .hero-layout {
+      gap:12px;
+    }
+
+    .hero-title {
+      margin-bottom:5px;
+
+      font-size:21px;
+      line-height:1.2;
+    }
+
+    .hero-meta {
+      margin-top:11px;
+
+      gap:6px;
+    }
+
+    .hero-pill {
+      padding:5px 8px;
+
+      font-size:9px;
+    }
+
+    .hero-date {
+      grid-template-columns:
+        minmax(0,1fr) auto;
+
+      padding:11px 12px;
+    }
+
+    .hero-date strong {
+      font-size:14px;
+    }
+
+    .hero-date small {
+      max-width:145px;
+
+      font-size:9px;
+    }
+
+    /* KPI */
+
+    .student-kpi-grid {
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+      gap:9px;
+
+      margin-bottom:14px;
+    }
+
+    .student-kpi {
+      min-height:110px;
+
+      padding:14px;
+
+      border-radius:17px;
+    }
+
+    .kpi-icon {
+      width:36px;
+      height:36px;
+
+      border-radius:11px;
+
+      font-size:15px;
+    }
+
+    .student-kpi h3 {
+      margin-top:12px;
+
+      font-size:20px;
+    }
+
+    .student-kpi p {
+      font-size:9.5px;
+    }
+
+    /* Main */
+
+    .student-main-grid {
+      gap:0;
+    }
+
+    .student-panel {
+      padding:16px;
+
+      margin-bottom:13px;
+
+      border-radius:19px;
+    }
+
+    .student-panel-header {
+      align-items:center;
+
+      gap:10px;
+
+      margin-bottom:15px;
+    }
+
+    .student-panel-icon {
+      width:35px;
+      height:35px;
+
+      border-radius:11px;
+
+      font-size:13px;
+    }
+
+    .student-panel-title {
+      gap:9px;
+    }
+
+    .student-panel-title h2 {
+      font-size:13px;
+    }
+
+    .student-panel-title p {
+      font-size:9px;
+    }
+
+    /*
+      Tables mobile par cards ban jayengi.
+    */
+
+    .desktop-timetable,
+    .desktop-results {
+      display:none;
+    }
+
+    .mobile-schedule,
+    .mobile-results {
+      display:block;
+    }
+
+    .mobile-card {
+      padding:12px;
+
+      border-radius:14px;
+    }
+
+    /* Attendance */
+
+    .attendance-layout {
+      grid-template-columns:
+        108px minmax(0,1fr);
+
+      gap:12px;
+    }
+
+    .attendance-ring {
+      width:104px;
+      height:104px;
+    }
+
+    .attendance-ring strong {
+      font-size:21px;
+    }
+
+    .attendance-stats {
+      gap:7px;
+    }
+
+    .attendance-stat {
+      padding:9px;
+
+      border-radius:11px;
+    }
+
+    .attendance-stat span {
+      font-size:9px;
+    }
+
+    .attendance-stat strong {
+      font-size:14px;
+    }
+
+    /* Right side becomes normal stack */
+
+    .student-right {
+      display:block;
+    }
+
+    .student-right .student-panel {
+      margin-bottom:13px;
+    }
+
+    /* Information */
+
+    .info-grid {
+      gap:8px;
+    }
+
+    .info-box {
+      padding:10px;
+
+      border-radius:12px;
+    }
+
+    .info-box span {
+      font-size:9px;
+    }
+
+    .info-box strong {
+      font-size:10.5px;
+    }
+
+    /* Notices */
+
+    .notice-item {
+      padding:10px 0;
+    }
+
+    .notice-item strong {
+      font-size:11px;
+    }
+
+    .notice-item p {
+      font-size:9.5px;
+    }
+
+    .empty-state {
+      padding:19px 8px;
+
+      font-size:10px;
+    }
+  }
+
+  /* =====================================================
+     SMALL MOBILE
+  ===================================================== */
+
+  @media(max-width:430px) {
+    .student-dashboard {
+      padding-left:10px;
+      padding-right:10px;
+    }
+
+    .student-hero {
+      padding:17px 14px;
+    }
+
+    .hero-title {
+      font-size:19px;
+    }
+
+    .hero-pill {
+      font-size:8.5px;
+    }
+
+    .hero-date {
+      display:block;
+    }
+
+    .hero-date small {
+      max-width:none;
+
+      margin-top:4px;
+
+      text-align:left;
+    }
+
+    .student-kpi-grid {
+      gap:7px;
+    }
+
+    .student-kpi {
+      min-height:104px;
+
+      padding:12px;
+    }
+
+    .kpi-icon {
+      width:33px;
+      height:33px;
+    }
+
+    .student-kpi h3 {
+      font-size:18px;
+    }
+
+    .student-panel {
+      padding:14px;
+    }
+
+    .mobile-card-grid {
+      grid-template-columns:1fr;
+    }
+
+    .attendance-layout {
+      grid-template-columns:1fr;
+
+      justify-items:center;
+    }
+
+    .attendance-stats {
+      width:100%;
+    }
+
+    .info-grid {
+      grid-template-columns:
+        1fr 1fr;
+    }
+  }
+
+  /* =====================================================
+     VERY SMALL PHONE
+  ===================================================== */
+
+  @media(max-width:350px) {
+    .student-kpi-grid {
+      grid-template-columns:1fr;
+    }
+
+    .info-grid {
+      grid-template-columns:1fr;
+    }
+
+    .attendance-stats {
+      grid-template-columns:1fr 1fr;
+    }
+  }
+
+  /* =====================================================
+     LANDSCAPE MOBILE
+  ===================================================== */
+
+  @media(max-width:900px) and (orientation:landscape) {
+    .student-kpi-grid {
+      grid-template-columns:
+        repeat(3,minmax(0,1fr));
+    }
+
+    .student-right {
+      display:grid;
+
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+      gap:12px;
+    }
+
+    .student-right .student-panel {
+      margin-bottom:0;
+    }
+  }
+
+  @media(prefers-reduced-motion:reduce) {
+    .student-card {
+      transition:none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="student-dashboard">
+
+
+  <!-- =====================================================
+       HERO
+  ===================================================== -->
+
+  <section class="student-hero">
+
+    <div class="hero-layout">
+
+
+      <div class="hero-main">
+
+        <h1 class="hero-title">
+
+          Welcome back,
+          <span>{{ student.name }}</span>
+
+        </h1>
+
+
+        <div class="hero-meta">
+
+          <span class="hero-pill">
+
+            Reg:
+            {{ student.reg_no|default:"—" }}
+
+          </span>
+
+
+          <span class="hero-pill">
+
+            Roll:
+            {{ student.roll_no|default:"—" }}
+
+          </span>
+
+
+          <span class="hero-pill">
+
+            Class
+            {{ student.student_class }}
+
+          </span>
+
+
+          <span class="hero-pill">
+
+            Section
+            {{ student.section|default:"—" }}
+
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="hero-date">
+
+        <span>
+          Current Session
+        </span>
+
+        <strong>
+          {{ active_session }}
+        </strong>
+
+        <small>
+
+          {{ today_name }},
+          {{ today_date|date:"d F Y" }}
+
+        </small>
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       KPI
+  ===================================================== -->
+
+  <section class="student-kpi-grid">
+
+
+    <div class="student-card student-kpi kpi-green">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          ✓
+        </div>
+
+      </div>
+
+      <h3>
+        {{ attendance_percentage }}%
+      </h3>
+
+      <p>
+        Attendance
+      </p>
+
+    </div>
+
+
+    <div class="student-card student-kpi kpi-orange">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          ₨
+        </div>
+
+      </div>
+
+      <h3>
+        Rs {{ total_pending_balance }}
+      </h3>
+
+      <p>
+        Pending Fee
+      </p>
+
+    </div>
+
+
+    <div class="student-card student-kpi kpi-blue">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          ★
+        </div>
+
+      </div>
+
+      <h3>
+        {{ recent_marks|length }}
+      </h3>
+
+      <p>
+        Recent Results
+      </p>
+
+    </div>
+
+
+    <div class="student-card student-kpi kpi-teal">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          ▣
+        </div>
+
+      </div>
+
+      <h3>
+        {{ total_periods_today }}
+      </h3>
+
+      <p>
+        Classes Today
+      </p>
+
+    </div>
+
+
+    <div class="student-card student-kpi kpi-purple">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          ⌁
+        </div>
+
+      </div>
+
+      <h3>
+
+        {% if transport %}
+
+          {{ transport.route.code }}
+
+        {% else %}
+
+          —
+
+        {% endif %}
+
+      </h3>
+
+      <p>
+        Transport Route
+      </p>
+
+    </div>
+
+
+    <div class="student-card student-kpi kpi-pink">
+
+      <div class="kpi-head">
+
+        <div class="kpi-icon">
+          !
+        </div>
+
+      </div>
+
+      <h3>
+        {{ notices|length }}
+      </h3>
+
+      <p>
+        Recent Notices
+      </p>
+
+    </div>
+
+
+  </section>
+
+
+  <!-- =====================================================
+       MAIN
+  ===================================================== -->
+
+  <div class="student-main-grid">
+
+
+    <!-- ===================================================
+         LEFT
+    =================================================== -->
+
+    <div class="student-left">
+
+
+      <!-- =================================================
+           TIMETABLE
+      ================================================== -->
+      {% if perms_timetable.can_view or user.is_superuser %}
+      <section class="student-card student-panel">
+
+
+        <div class="student-panel-header">
+
+          <div class="student-panel-title">
+
+            <div class="student-panel-icon">
+              ▣
+            </div>
+
+            <div>
+
+              <h2>
+                Today's Timetable
+              </h2>
+
+              <p>
+                {{ today_name }} class schedule
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- DESKTOP / TABLET -->
+
+        <div class="student-table-wrap desktop-timetable">
+
+          <table class="student-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Period</th>
+                <th>Time</th>
+                <th>Subject</th>
+                <th>Teacher</th>
+                <th>Room</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+              {% for slot in timetable %}
+
+
+                <tr>
+
+                  <td>
+
+                    <span class="period-badge">
+
+                      Period {{ slot.period_no }}
+
+                    </span>
+
+                  </td>
+
+                  <td>
+                    {{ slot.time_str }}
+                  </td>
+
+                  <td>
+
+                    <strong>
+                      {{ slot.subject }}
+                    </strong>
+
+                  </td>
+
+                  <td>
+                    {{ slot.teacher }}
+                  </td>
+
+                  <td>
+                    {{ slot.room }}
+                  </td>
+
+                </tr>
+
+
+              {% empty %}
+
+
+                <tr>
+
+                  <td colspan="5">
+
+                    <div class="empty-state">
+
+                      No classes scheduled today.
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+
+              {% endfor %}
+
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- MOBILE -->
+
+        <div class="mobile-schedule">
+
+
+          {% if timetable %}
+
+            <div class="mobile-list">
+
+
+              {% for slot in timetable %}
+
+
+                <article class="mobile-card">
+
+
+                  <div class="mobile-card-head">
+
+                    <div class="mobile-card-title">
+
+                      {{ slot.subject }}
+
+                    </div>
+
+
+                    <span class="period-badge">
+
+                      Period {{ slot.period_no }}
+
+                    </span>
+
+                  </div>
+
+
+                  <div class="mobile-card-grid">
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Time
+                      </span>
+
+                      <strong>
+                        {{ slot.time_str }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Teacher
+                      </span>
+
+                      <strong>
+                        {{ slot.teacher|default:"—" }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Room
+                      </span>
+
+                      <strong>
+                        {{ slot.room|default:"—" }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Class
+                      </span>
+
+                      <strong>
+
+                        {{ student.student_class }}
+                        -
+                        {{ student.section|default:"—" }}
+
+                      </strong>
+
+                    </div>
+
+
+                  </div>
+
+
+                </article>
+
+
+              {% endfor %}
+
+
+            </div>
+
+
+          {% else %}
+
+
+            <div class="empty-state">
+
+              No classes scheduled today.
+
+            </div>
+
+
+          {% endif %}
+
+
+        </div>
+
+
+      </section>
+
+      {% endif %}
+      <!-- =================================================
+           RESULTS
+      ================================================== -->
+      {% if perms_results.can_view or user.is_superuser %}
+      <section class="student-card student-panel">
+
+
+        <div class="student-panel-header">
+
+          <div class="student-panel-title">
+
+            <div class="student-panel-icon">
+              ★
+            </div>
+
+            <div>
+
+              <h2>
+                Recent Examination Results
+              </h2>
+
+              <p>
+                Your latest academic performance
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- DESKTOP / TABLET -->
+
+        <div class="student-table-wrap desktop-results">
+
+          <table class="student-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Subject</th>
+                <th>Total</th>
+                <th>Obtained</th>
+                <th>Grade</th>
+                <th>Status</th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+              {% for mark in recent_marks %}
+
+
+                <tr>
+
+                  <td>
+
+                    <strong>
+                      {{ mark.exam.subject }}
+                    </strong>
+
+                  </td>
+
+                  <td>
+                    {{ mark.exam.total_marks }}
+                  </td>
+
+                  <td>
+                    {{ mark.obtained_marks }}
+                  </td>
+
+                  <td>
+
+                    <strong>
+                      {{ mark.grade }}
+                    </strong>
+
+                  </td>
+
+                  <td>
+
+
+                    {% if mark.remarks == "Pass" %}
+
+                      <span class="status-pass">
+
+                        Passed
+
+                      </span>
+
+                    {% else %}
+
+                      <span class="status-fail">
+
+                        Failed
+
+                      </span>
+
+                    {% endif %}
+
+
+                  </td>
+
+                </tr>
+
+
+              {% empty %}
+
+
+                <tr>
+
+                  <td colspan="5">
+
+                    <div class="empty-state">
+
+                      No examination results available.
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+
+              {% endfor %}
+
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+        <!-- MOBILE RESULTS -->
+
+        <div class="mobile-results">
+
+
+          {% if recent_marks %}
+
+            <div class="mobile-list">
+
+
+              {% for mark in recent_marks %}
+
+
+                <article class="mobile-card">
+
+
+                  <div class="mobile-card-head">
+
+                    <div class="mobile-card-title">
+
+                      {{ mark.exam.subject }}
+
+                    </div>
+
+
+                    {% if mark.remarks == "Pass" %}
+
+                      <span class="status-pass">
+
+                        Passed
+
+                      </span>
+
+                    {% else %}
+
+                      <span class="status-fail">
+
+                        Failed
+
+                      </span>
+
+                    {% endif %}
+
+
+                  </div>
+
+
+                  <div class="mobile-card-grid">
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Total Marks
+                      </span>
+
+                      <strong>
+                        {{ mark.exam.total_marks }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Obtained
+                      </span>
+
+                      <strong>
+                        {{ mark.obtained_marks }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Grade
+                      </span>
+
+                      <strong>
+                        {{ mark.grade }}
+                      </strong>
+
+                    </div>
+
+
+                    <div class="mobile-info">
+
+                      <span>
+                        Term
+                      </span>
+
+                      <strong>
+                        {{ mark.exam.term|default:"—" }}
+                      </strong>
+
+                    </div>
+
+
+                  </div>
+
+
+                </article>
+
+
+              {% endfor %}
+
+
+            </div>
+
+
+          {% else %}
+
+
+            <div class="empty-state">
+
+              No examination results available.
+
+            </div>
+
+
+          {% endif %}
+
+
+        </div>
+
+
+      </section>
+      {% endif %}
+
+    </div>
+
+
+    <!-- ===================================================
+         RIGHT
+    =================================================== -->
+
+    <aside class="student-right">
+
+
+      <!-- =================================================
+           ATTENDANCE
+      ================================================== -->
+
+      <section class="student-card student-panel">
+
+
+        <div class="student-panel-header">
+
+          <div class="student-panel-title">
+
+            <div class="student-panel-icon">
+              ✓
+            </div>
+
+            <div>
+
+              <h2>
+                Monthly Attendance
+              </h2>
+
+              <p>
+                {{ today_date|date:"F Y" }}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="attendance-layout">
+
+
+          <div class="attendance-ring">
+
+            <div class="attendance-ring-content">
+
+              <strong>
+
+                {{ attendance_percentage }}%
+
+              </strong>
+
+              <span>
+                ATTENDANCE
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div class="attendance-stats">
+
+
+            <div class="attendance-stat">
+
+              <span>
+                Working
+              </span>
+
+              <strong>
+                {{ working_days }}
+              </strong>
+
+            </div>
+
+
+            <div class="attendance-stat">
+
+              <span>
+                Present
+              </span>
+
+              <strong style="
+                color:var(--dash-green);
+              ">
+
+                {{ present_days }}
+
+              </strong>
+
+            </div>
+
+
+            <div class="attendance-stat">
+
+              <span>
+                Absent
+              </span>
+
+              <strong style="
+                color:var(--dash-red);
+              ">
+
+                {{ absent_days }}
+
+              </strong>
+
+            </div>
+
+
+            <div class="attendance-stat">
+
+              <span>
+                Leave
+              </span>
+
+              <strong style="
+                color:var(--dash-yellow);
+              ">
+
+                {{ leave_days }}
+
+              </strong>
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+      <!-- =================================================
+           FEE
+      ================================================== -->
+
+      {% if perms_accounts.can_view or user.is_superuser %}
+        <section class="student-card student-panel">
+          <div class="student-panel-header">
+            <div class="student-panel-title">
+              <div class="student-panel-icon">₨</div>
+              <div>
+                <h2>Fee Information</h2>
+                <p>Latest fee challan</p>
+              </div>
+            </div>
+          </div>
+
+
+        {% if latest_fee %}
+
+
+          <div class="info-grid">
+
+
+            <div class="info-box">
+
+              <span>
+                Challan No
+              </span>
+
+              <strong>
+                {{ latest_fee.challan_no }}
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Total Amount
+              </span>
+
+              <strong>
+                Rs {{ latest_fee.total_amount }}
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Status
+              </span>
+
+              <strong
+                {% if latest_fee.status == "Paid" %}
+                  style="color:var(--dash-green);"
+                {% elif latest_fee.status == "Unpaid" %}
+                  style="color:var(--dash-red);"
+                {% endif %}
+              >
+
+                {{ latest_fee.status }}
+
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Due Date
+              </span>
+
+              <strong>
+                {{ latest_fee.due_date|date:"d M Y" }}
+              </strong>
+
+            </div>
+
+
+          </div>
+
+
+        {% else %}
+
+
+          <div class="empty-state">
+
+            No fee challan available.
+
+          </div>
+
+
+        {% endif %}
+
+
+      </section>
+
+        {% endif %}
+      <!-- =================================================
+           NOTICES
+      ================================================== -->
+      {% if perms_timetable.can_view or user.is_superuser %}
+      <section class="student-card student-panel">
+
+
+        <div class="student-panel-header">
+
+          <div class="student-panel-title">
+
+            <div class="student-panel-icon">
+              !
+            </div>
+
+            <div>
+
+              <h2>
+                Notice Board
+              </h2>
+
+              <p>
+                Latest school announcements
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="notice-list">
+
+
+          {% for notice in notices %}
+
+
+            <a
+              href="{% url 'notice_print' notice.pk %}"
+              target="_blank"
+              class="notice-item"
+              style="
+                text-decoration:none;
+                color:inherit;
+                cursor:pointer;
+              "
+            >
+
+
+              <span class="notice-dot"></span>
+
+
+              <div class="notice-body">
+
+
+                <strong>
+                  {{ notice.title }}
+                </strong>
+
+
+                <p>
+                  {{ notice.body|truncatechars:100 }}
+                </p>
+
+
+                <span class="notice-open">
+
+                  View Notice ↗
+
+                </span>
+
+
+              </div>
+
+
+            </a>
+
+
+          {% empty %}
+
+
+            <div class="empty-state">
+
+              No notices available.
+
+            </div>
+
+
+          {% endfor %}
+
+
+        </div>
+
+
+      </section>
+
+      {% endif %}
+      <!-- =================================================
+           TRANSPORT
+      ================================================== -->
+      {% if perms_timetable.can_view or user.is_superuser %}
+      <section class="student-card student-panel">
+
+
+        <div class="student-panel-header">
+
+          <div class="student-panel-title">
+
+            <div class="student-panel-icon">
+              ⌁
+            </div>
+
+            <div>
+
+              <h2>
+                Transport
+              </h2>
+
+              <p>
+                Assigned route information
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {% if transport %}
+
+
+          <div class="info-grid">
+
+
+            <div class="info-box">
+
+              <span>
+                Route
+              </span>
+
+              <strong>
+                {{ transport.route.name }}
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Vehicle
+              </span>
+
+              <strong>
+                {{ transport.vehicle.reg_no }}
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Stop
+              </span>
+
+              <strong>
+                {{ transport.stop.name|default:"—" }}
+              </strong>
+
+            </div>
+
+
+            <div class="info-box">
+
+              <span>
+                Monthly Fee
+              </span>
+
+              <strong>
+                Rs {{ transport.monthly_fee }}
+              </strong>
+
+            </div>
+
+
+          </div>
+
+
+        {% else %}
+
+
+          <div class="empty-state">
+
+            No transport assigned.
+
+          </div>
+
+
+        {% endif %}
+
+
+      </section>
+
+{% endif %}
+    </aside>
+
+
+  </div>
+
+
+</div>
+
+{% endblock %}

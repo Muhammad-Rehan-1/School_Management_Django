@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Edit Exam{% endblock %}
+{% block page_title %}Edit Exam{% endblock %}
+{% block nav_exam %}active{% endblock %}
+
+{% block content %}
+<div style="padding:6px 26px 26px; display:flex; flex-direction:column; gap:16px;">
+
+  <div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <h2 style="font-size:16px; font-weight:600; margin-bottom:12px;">
+      Edit Exam — {{ exam.student_class }} / {{ exam.subject }}
+    </h2>
+
+    <form method="post" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;">
+      {% csrf_token %}
+
+      <select name="class" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+        <option value="">Select Class</option>
+        {% for c in classes %}
+          {% with val=c.class_field|add:" - "|add:c.section %}
+            <option value="{{ val }}" {% if val == exam.student_class %}selected{% endif %}>
+              {{ c.class_field }} - {{ c.section }}
+            </option>
+          {% endwith %}
+        {% endfor %}
+      </select>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Term</label>
+        <select name="term" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="1st" {% if exam.term == "1st" %}selected{% endif %}>1st Term</option>
+          <option value="2nd" {% if exam.term == "2nd" %}selected{% endif %}>2nd Term</option>
+          <option value="3rd" {% if exam.term == "3rd" %}selected{% endif %}>3rd Term</option>
+        </select>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Subject</label>
+        <select name="subject" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="">Select Subject</option>
+          {% for s in subjects %}
+            <option value="{{ s.subject_name }}" {% if s.subject_name == exam.subject %}selected{% endif %}>
+              {{ s.subject_name }}{% if s.subject_type %} — {{ s.subject_type }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Total Marks</label>
+        <input type="text" name="total_marks" min="0" value="{{ exam.total_marks | floatformat:0 }}"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Passing Marks</label>
+        <input type="text" name="passing_marks" min="0"
+              value="{{ exam.passing_marks|default_if_none:'' }}"
+              placeholder="Auto (50% if empty)"
+              style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Teacher</label>
+        <select name="teacher" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          {% for t in teachers %}
+            <option value="{{ t.id }}" {% if exam.teacher_id == t.id %}selected{% endif %}>
+              {{ t.name }} ({{ t.subject }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Exam Date</label>
+        <input type="date" name="exam_date" value="{{ exam.exam_date|date:'Y-m-d' }}"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Start Time</label>
+        <input type="time" name="start_time" required value="{{ exam.start_time|time:'H:i' }}"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">End Time</label>
+        <input type="time" name="end_time" required value="{{ exam.end_time|time:'H:i' }}"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <div style="grid-column:1/-1; display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
+        <a href="{% url 'exam_list' %}"
+           style="text-decoration:none;padding:10px 18px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--text);font-size:13px;font-weight:600;">
+          Cancel
+        </a>
+        <button type="submit"
+                style="padding:10px 18px;border-radius:9px;border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+          Update Exam
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

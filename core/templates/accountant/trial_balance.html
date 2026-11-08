@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trial Balance{% endblock %}
+{% block coa_open %}open{% endblock %}
+{% block nav_trial_balance %}active{% endblock %}
+
+{% block content %}
+<div class="content" style="padding: 24px 32px; background: #F4F7FE; min-height: 100vh;">
+    <!-- Header Section -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+            <h1 style="font-size: 22px; font-weight: 700; color: #1B2559; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-balance-scale text-indigo-600"></i> Trial Balance
+            </h1>
+            <p style="font-size: 13px; color: #707EAE;">Verify total debits equal total credits — filter by any level</p>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <form method="GET" action="" style="background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03); margin-bottom: 24px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+        
+        <!-- Level Filter -->
+        <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 6px;">Level</label>
+            <select name="level" style="width: 100%; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; font-size: 13px; background: #F8FAFC;">
+                <option value="">All Levels (Posting)</option>
+                <option value="First Level" {% if request.GET.level == 'First Level' %}selected{% endif %}>First Level</option>
+                <option value="Second Level" {% if request.GET.level == 'Second Level' %}selected{% endif %}>Second Level</option>
+                <option value="Third Level" {% if request.GET.level == 'Third Level' %}selected{% endif %}>Third Level</option>
+                <option value="Fourth Level" {% if request.GET.level == 'Fourth Level' %}selected{% endif %}>Fourth Level</option>
+            </select>
+        </div>
+
+        <!-- Head Code Filter -->
+        <div style="flex: 1.2; min-width: 180px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 6px;">Head Code</label>
+            <input type="text" name="head_code" value="{{ request.GET.head_code }}" placeholder="e.g. 01, 0102" style="width: 100%; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; font-size: 13px; background: #F8FAFC;">
+        </div>
+
+        <!-- From Date -->
+        <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 6px;">From</label>
+            <input type="date" name="from_date" value="{{ from_date }}" style="width: 100%; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; font-size: 13px; background: #F8FAFC;">
+        </div>
+
+        <!-- To Date -->
+        <div style="flex: 1; min-width: 150px;">
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 6px;">To</label>
+            <input type="date" name="to_date" value="{{ to_date }}" style="width: 100%; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; font-size: 13px; background: #F8FAFC;">
+        </div>
+
+        <!-- Hide Zero Rows Checkbox -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 18px; padding: 0 10px;">
+            <input type="checkbox" name="hide_zero" id="hide_zero" {% if hide_zero %}checked{% endif %} style="width: 16px; height: 16px; accent-color: #4318FF; cursor: pointer;">
+            <label for="hide_zero" style="font-size: 13px; font-weight: 600; color: #2B3674; cursor: pointer;">Hide Zero Rows</label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 10px; align-items: flex-end; margin-top: auto;">
+            <button type="submit" style="background: #4318FF; color: white; border: none; border-radius: 10px; padding: 10px 22px; font-size: 13px; font-weight: 600; cursor: pointer; height: 42px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-search"></i> Show
+            </button>
+            <button type="button" onclick="window.print()" style="background: #05CD99; color: white; border: none; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; height: 42px; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </form>
+
+    <!-- Summary Cards Dashboard (Matching Pharmacy Layout) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <!-- Card 1: Total Rows -->
+        <div style="background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 4px;">Total Rows</div>
+                <div style="font-size: 22px; font-weight: 700; color: #1B2559;">{{ total_rows }}</div>
+            </div>
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #F4F7FE; display: flex; align-items: center; justify-content: center; color: #4318FF; font-size: 20px;">
+                <i class="fas fa-list-ol"></i>
+            </div>
+        </div>
+
+        <!-- Card 2: Total Closing Dr -->
+        <div style="background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 4px;">Total Closing Dr</div>
+                <div style="font-size: 20px; font-weight: 700; color: #4318FF;">Rs. {{ total_closing_dr|floatformat:2 }}</div>
+            </div>
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #EEF2FF; display: flex; align-items: center; justify-content: center; color: #4318FF; font-size: 20px;">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+        </div>
+
+        <!-- Card 3: Total Closing Cr -->
+        <div style="background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 4px;">Total Closing Cr</div>
+                <div style="font-size: 20px; font-weight: 700; color: #05CD99;">Rs. {{ total_closing_cr|floatformat:2 }}</div>
+            </div>
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; color: #05CD99; font-size: 20px;">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+        </div>
+
+        <!-- Card 4: Balance Status Badge -->
+        <div style="background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; margin-bottom: 4px;">Status</div>
+                <div>
+                    {% if is_balanced %}
+                        <span style="background: #DCFCE7; color: #15803D; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;">✓ BALANCED</span>
+                    {% else %}
+                        <span style="background: #FEE2E2; color: #DC2626; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;">✕ UNBALANCED</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trial Balance Table Card (Advanced Multi-Column Layout) -->
+    <div style="background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0px 4px 20px rgba(0,0,0,0.03);">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 950px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #E2E8F0; color: #707EAE; font-size: 11px; text-transform: uppercase; font-weight: 700;">
+                        <th style="padding: 12px 14px; width: 60px;">SR#</th>
+                        <th style="padding: 12px 14px; width: 120px;">Code</th>
+                        <th style="padding: 12px 14px;">Name</th>
+                        <th style="padding: 12px 14px; text-align: right;">Opening Dr</th>
+                        <th style="padding: 12px 14px; text-align: right;">Opening Cr</th>
+                        <th style="padding: 12px 14px; text-align: right;">Dr Balance</th>
+                        <th style="padding: 12px 14px; text-align: right;">Cr Balance</th>
+                        <th style="padding: 12px 14px; text-align: right;">Closing Dr</th>
+                        <th style="padding: 12px 14px; text-align: right;">Closing Cr</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 13px; color: #2B3674;">
+                    {% for row in tb_rows %}
+                    <tr style="border-bottom: 1px solid #F1F5F9;">
+                        <td style="padding: 12px 14px; color: #707EAE;">{{ forloop.counter }}</td>
+                        <td style="padding: 12px 14px; font-weight: 600; color: #4318FF;">{{ row.account_id }}</td>
+                        <td style="padding: 12px 14px; font-weight: 600;">{{ row.account_name }}</td>
+                        <td style="padding: 12px 14px; text-align: right;">{% if row.opening_dr > 0 %}{{ row.opening_dr|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td style="padding: 12px 14px; text-align: right;">{% if row.opening_cr > 0 %}{{ row.opening_cr|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td style="padding: 12px 14px; text-align: right;">{% if row.period_dr > 0 %}{{ row.period_dr|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td style="padding: 12px 14px; text-align: right;">{% if row.period_cr > 0 %}{{ row.period_cr|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td style="padding: 12px 14px; text-align: right; font-weight: 700; color: #4318FF;">{% if row.closing_dr > 0 %}{{ row.closing_dr|floatformat:2 }}{% else %}0{% endif %}</td>
+                        <td style="padding: 12px 14px; text-align: right; font-weight: 700; color: #05CD99;">{% if row.closing_cr > 0 %}{{ row.closing_cr|floatformat:2 }}{% else %}0{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="padding: 40px; text-align: center; color: #A3AED0; font-style: italic;">
+                            No trial balance records found for the selected criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="border-top: 2px solid #E2E8F0; font-weight: 700; color: #1B2559; background: #F8FAFC;">
+                        <td colspan="3" style="padding: 14px 14px; text-align: right;">Total:</td>
+                        <td style="padding: 14px 14px; text-align: right;">{{ total_opening_dr|floatformat:2 }}</td>
+                        <td style="padding: 14px 14px; text-align: right;">{{ total_opening_cr|floatformat:2 }}</td>
+                        <td style="padding: 14px 14px; text-align: right;">{{ total_period_dr|floatformat:2 }}</td>
+                        <td style="padding: 14px 14px; text-align: right;">{{ total_period_cr|floatformat:2 }}</td>
+                        <td style="padding: 14px 14px; text-align: right; color: #4318FF; font-size: 14px;">{{ total_closing_dr|floatformat:2 }}</td>
+                        <td style="padding: 14px 14px; text-align: right; color: #05CD99; font-size: 14px;">{{ total_closing_cr|floatformat:2 }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

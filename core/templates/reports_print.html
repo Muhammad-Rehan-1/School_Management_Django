@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}{% if subtitle %} · {{ subtitle }}{% endif %} — {{ school.name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --navy:#34405E; --orange:#F08A5D;
+  --line:#ECEEF3; --muted:#8A90A3; --text:#2B3245;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#E9EBF1;color:var(--text);padding:28px 18px 60px;}
+
+/* ══ SCREEN TOOLBAR ══ */
+.bar{
+  position:sticky;top:0;z-index:50;max-width:1100px;margin:0 auto 20px;
+  background:#fff;border-radius:14px;padding:14px 18px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 4px 18px rgba(20,24,40,.09);
+}
+.bar .info{flex:1;min-width:190px;}
+.bar .info b{display:block;font-size:14px;font-weight:600;}
+.bar .info span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;}
+.bar-btn{
+  border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:600;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;font-family:inherit;transition:.15s;
+}
+.b-print{background:#E4605E;color:#fff;box-shadow:0 4px 12px rgba(228,96,94,.3);}
+.b-print:hover{background:#D14F4D;}
+.b-back{background:#F1F2F7;color:var(--text);}
+.b-back:hover{background:#E5E7EE;}
+
+.hint{
+  max-width:1100px;margin:0 auto 18px;background:#FFF7E8;border:1px solid #F5DFA8;
+  border-radius:11px;padding:11px 16px;font-size:12px;color:#8A6D2B;
+}
+.hint b{font-weight:700;}
+
+/* ══ A4 SHEET ══ */
+.sheet{
+  max-width:{% if landscape %}1120px{% else %}820px{% endif %};
+  margin:0 auto;background:#fff;padding:38px 40px 48px;
+  box-shadow:0 6px 30px rgba(20,24,40,.13);border-radius:6px;
+}
+
+/* LETTERHEAD */
+.lh{text-align:center;padding-bottom:16px;border-bottom:3px solid var(--navy);margin-bottom:20px;}
+.lh h1{font-size:23px;font-weight:700;color:var(--navy);letter-spacing:1px;}
+.lh .addr{font-size:11px;color:var(--muted);margin-top:5px;}
+.lh .rt{
+  display:inline-block;background:var(--navy);color:#fff;
+  padding:8px 26px;border-radius:7px;font-size:13px;font-weight:600;
+  margin-top:13px;letter-spacing:.4px;
+}
+
+/* META */
+.meta{
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  font-size:11px;color:var(--muted);margin-bottom:18px;
+  padding-bottom:12px;border-bottom:1px dashed var(--line);
+}
+.meta b{color:var(--text);}
+
+/* SUMMARY */
+.sum{display:grid;grid-template-columns:repeat({{ summary|length|default:4 }},1fr);gap:12px;margin-bottom:22px;}
+.sum-b{border-radius:10px;padding:14px 10px;text-align:center;}
+.sum-b span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;opacity:.82;}
+.sum-b b{display:block;font-size:18px;font-weight:700;margin-top:5px;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:{% if landscape %}9.5px{% else %}10.5px{% endif %};}
+thead th{
+  text-align:left;padding:9px 7px;background:var(--navy);color:#fff;
+  font-size:{% if landscape %}8.5px{% else %}9.5px{% endif %};
+  text-transform:uppercase;letter-spacing:.4px;font-weight:600;
+}
+tbody td{padding:8px 7px;border-bottom:1px solid #EEF0F5;}
+tbody tr:nth-child(even){background:#FBFCFE;}
+tfoot td{
+  padding:10px 7px;font-weight:700;background:#F1F2F7;
+  border-top:2px solid var(--navy);color:var(--navy);
+}
+.num{text-align:right;font-variant-numeric:tabular-nums;}
+
+.tag{display:inline-block;padding:3px 9px;border-radius:20px;font-size:8.5px;font-weight:700;white-space:nowrap;}
+.t-red{background:#FDECEC;color:#C94A48;}
+.t-amber{background:#FEF2E4;color:#C67C2E;}
+.t-green{background:#E5F6EE;color:#2A9364;}
+.t-blue{background:#E9F0FC;color:#3F68B4;}
+.t-purple{background:#F0EDFB;color:#6B5CC4;}
+.t-grey{background:#F1F2F7;color:#7A8194;}
+
+/* SIGNATURES */
+.sign{display:flex;justify-content:space-between;gap:30px;margin-top:52px;padding-top:8px;}
+.sign div{
+  flex:1;text-align:center;font-size:10.5px;color:var(--muted);
+  border-top:1.2px solid var(--text);padding-top:6px;
+}
+
+/* FOOTER */
+.foot{
+  margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted);
+}
+
+.empty{text-align:center;padding:50px;color:var(--muted);font-size:13px;}
+
+/* ══════════ PRINT ══════════ */
+@media print{
+  body{background:#fff;padding:0;}
+  .bar,.hint{display:none !important;}
+  .sheet{max-width:none;margin:0;padding:0;box-shadow:none;border-radius:0;}
+
+  thead{display:table-header-group;}
+  tfoot{display:table-footer-group;}
+  tr{page-break-inside:avoid;}
+  .sign{page-break-inside:avoid;}
+  .sum{page-break-inside:avoid;}
+
+  @page{
+    size:A4 {% if landscape %}landscape{% else %}portrait{% endif %};
+    margin:13mm 12mm 15mm;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ══ TOOLBAR (screen only) ══ -->
+<div class="bar">
+  <div class="info">
+    <b>{{ title }}{% if subtitle %} · {{ subtitle }}{% endif %}</b>
+    <span>{{ period }} &nbsp;·&nbsp; {{ count }} record{{ count|pluralize }}</span>
+  </div>
+
+  <button class="bar-btn b-print" onclick="window.print()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+    </svg>
+    Save as PDF
+  </button>
+
+  <a class="bar-btn b-back" href="{% url 'reports_page' %}">← Back</a>
+</div>
+
+<div class="hint">
+  💡 <b>Tip:</b> In the print dialog choose <b>Destination → Save as PDF</b>.
+  For best results enable <b>Background graphics</b> and set margins to <b>Default</b>.
+</div>
+
+
+<!-- ══ A4 SHEET ══ -->
+<div class="sheet">
+
+  <div class="lh">
+   <h1> <b title="{{ school.school_name }}">{{ school.school_name }}</b></h1>
+    <div class="addr">
+      {{ school.address }} &nbsp;|&nbsp; Ph: {{ school.phone_number }} &nbsp;|&nbsp; {{ school.email }}
+    </div>
+    <div class="rt">{{ title|upper }}{% if subtitle %} · {{ subtitle|upper }}{% endif %}</div>
+  </div>
+
+  <div class="meta">
+    <span><b>Period:</b> {{ period }}</span>
+    <span><b>Total Records:</b> {{ count }}</span>
+    <span><b>Generated:</b> {{ generated|date:"d M Y, h:i A" }}</span>
+  </div>
+
+  {% if summary %}
+  <div class="sum">
+    {% for s in summary %}
+      <div class="sum-b" style="background:{{ s.bg }};color:{{ s.fg }};">
+        <span>{{ s.label }}</span>
+        <b>{{ s.value }}</b>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        {% for c in cols %}
+          <th{% if c.num %} class="num"{% endif %}>{{ c.v }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        {% for c in r %}
+          <td{% if c.num %} class="num"{% endif %}>
+            {% if c.tag %}<span class="tag {{ c.tag }}">{{ c.v }}</span>{% else %}{{ c.v }}{% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+
+    {% if foot %}
+    <tfoot>
+      <tr>
+        {% for c in foot %}
+          <td{% if c.num %} class="num"{% endif %}>{{ c.v }}</td>
+        {% endfor %}
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+  {% else %}
+    <div class="empty">No records found for the selected filters.</div>
+  {% endif %}
+
+  <div class="sign">
+    <div>Prepared By</div>
+    <div>Checked By</div>
+    <div>Principal</div>
+  </div>
+
+  <div class="foot">
+    <span>{{ school.name }} — Confidential Document</span>
+    <span>Report ID: {{ key|upper }}-{{ generated|date:"Ymd-Hi" }}</span>
+  </div>
+
+</div>
+
+{% if auto %}
+{% endif %}
+
+</body>
+</html>

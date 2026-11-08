@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Bank File & Accounts Register{% endblock %}
+
+{% block coa_open %}open{% endblock %}
+{% block nav_bank_file %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .content { padding: 12px 26px 30px; }
+  
+  .card-box { 
+    background: var(--card, #ffffff); 
+    border-radius: 16px; 
+    padding: 24px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+    border: 1px solid rgba(0,0,0,0.04);
+    margin-bottom: 24px; 
+  }
+  .page-title { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; color: var(--text, #1E293B); }
+  .page-subtitle { color: var(--muted, #64748B); font-size: 13px; margin: 0 0 20px 0; }
+
+  /* Grid Layouts */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group label { font-size: 12px; font-weight: 700; color: var(--text, #334155); }
+  .field-group input, .field-group select { 
+    padding: 10px 14px; 
+    border-radius: 10px; 
+    border: 1px solid var(--line, #E2E8F0); 
+    background: #F8FAFC; 
+    font-size: 13px; 
+    outline: none;
+    transition: all 0.2s ease;
+    color: #0F172A;
+  }
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--orange, #F97316);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+  }
+
+  /* Submit Button */
+  .btn-submit { 
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 28px; 
+    border-radius: 10px; 
+    border: none; 
+    background: var(--orange, #F97316); 
+    color: #FFFFFF; 
+    font-size: 13px;
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+  }
+  .btn-submit:hover { 
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
+  }
+
+  /* Table Design */
+  .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .search-input { 
+    padding: 8px 14px; 
+    border-radius: 8px; 
+    border: 1px solid var(--line, #E2E8F0); 
+    width: 260px; 
+    font-size: 13px; 
+    outline: none; 
+    background: #F8FAFC;
+  }
+  .search-input:focus { border-color: var(--orange, #F97316); background: #FFF; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th, td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+  th { font-weight: 700; color: #64748B; background: #F8FAFC; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  th:first-child { border-top-left-radius: 8px; }
+  th:last-child { border-top-right-radius: 8px; }
+
+  tr:hover td { background-color: #F8FAFC; }
+
+  /* Badges */
+  .badge-pill {
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-block;
+  }
+  .badge-bank-type { background: #DBEAFE; color: #1D4ED8; }
+  .badge-active { background: #DCFCE7; color: #15803D; }
+  .badge-inactive { background: #FEE2E2; color: #DC2626; }
+
+  /* Actions */
+  .action-btn { padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; text-decoration: none; font-weight: 600; display: inline-block; }
+  .edit-btn { background: #FEF3C7; color: #D97706; margin-right: 4px; }
+  .edit-btn:hover { background: #FDE68A; }
+  .delete-btn { background: #FEE2E2; color: #DC2626; }
+  .delete-btn:hover { background: #FCA5A5; }
+
+  /* Print / PDF Styles */
+@media print {
+    /* Hide unwanted elements like sidebar, top navbar, and the search form */
+    .sidebar, .topbar, #ledgerForm { 
+        display: none !important; 
+    }
+    
+    /* Reset content area for clean printing */
+    .app, .main, .content { 
+        display: block !important;
+        margin: 0 !important; 
+        padding: 0 !important; 
+        background: #ffffff !important; 
+        width: 100% !important; 
+    }
+    
+    /* Remove shadow and borders from card */
+    .card-box { 
+        box-shadow: none !important; 
+        border: none !important; 
+        padding: 10px 0 !important; 
+    }
+    
+    /* Ensure table headers look good in black/white or color */
+    th { 
+        background-color: #F1F5F9 !important; 
+        color: #1E293B !important; 
+        border-bottom: 2px solid #CBD5E1 !important; 
+    }
+    td { 
+        border-bottom: 1px solid #E2E8F0 !important; 
+    }
+    
+    /* Force background colors to print for stat cards */
+    * { 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  
+  <!-- Add Bank Profile Form -->
+  <div class="card-box">
+    <h3 class="page-title">Bank Accounts & Wallet Directory</h3>
+    <p class="page-subtitle">Configure operational bank credentials, mobile wallet accounts, and initial balances linked to Level 4 posting heads.</p>
+
+    <form method="post" action="{% url 'bank_file' %}">
+      {% csrf_token %}
+      
+      <!-- Row 1: Posting Head & Bank Provider -->
+      <div class="form-grid">
+        <div class="field-group" style="grid-column: span 2;">
+          <label>Level 3 Bank Control Account *</label>
+          <select name="level3_id" id="level3Select" required onchange="updateBankID()">
+            <option value="" selected disabled>Select Level 3 Bank Head (e.g. BANKS)</option>
+            {% for l3 in level3_accounts %}
+              <option value="{{ l3.account_id }}" data-nextid="{{ l3.next_l4_id }}">
+                {{ l3.account_id }} — {{ l3.account_name }}
+              </option>
+            {% empty %}
+              <option disabled>No Level 3 accounts found.</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Auto-Generated Bank ID</label>
+          <input type="text" id="autoBankID" placeholder="Auto Code" readonly style="background: #F1F5F9; font-weight: 700; color: #0F172A;">
+        </div>
+
+        <div class="field" style="flex: 1; min-width: 200px;">
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #1B2559; text-transform: uppercase; margin-bottom: 6px;">Bank / Financial Service *</label>
+    
+          <!-- Input with Datalist for Autocomplete & Custom Entry -->
+          <input list="bank_suggestions" name="bank_name" placeholder="Type or select bank name..." required autocomplete="off" style="width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #2B3674; font-weight: 600; outline: none; background: #F8FAFC;">
+    
+          <!-- Datalist containing suggestions -->
+          <datalist id="bank_suggestions">
+              <option value="Meezan Bank">
+              <option value="Habib Bank Limited (HBL)">
+              <option value="United Bank Limited (UBL)">
+              <option value="Allied Bank Limited (ABL)">
+              <option value="MCB Bank">
+              <option value="National Bank of Pakistan (NBP)">
+              <option value="Bank Alfalah">
+              <option value="Askari Bank">
+              <option value="Bank of Punjab (BOP)">
+              <option value="Faysal Bank">
+              <option value="Standard Chartered Bank">
+              <option value="Meezan Roshan Digital Account">
+              <option value="JazzCash">
+              <option value="EasyPaisa">
+              <option value="SadaPay">
+              <option value="NayaPay">
+          </datalist>
+        </div>
+      </div>
+
+      <!-- Row 2: Account Details & Opening Balance -->
+      <div class="form-grid">
+        <div class="field-group">
+          <label>Account Title *</label>
+          <input name="account_title" placeholder="e.g. D Zone School System Main Account" required>
+        </div>
+
+        <div class="field-group">
+          <label>Account / Wallet Number *</label>
+          <input name="account_number" placeholder="e.g. 01020301020301 or 03001234567" required>
+        </div>
+
+        <div class="field-group">
+          <label>Branch Code / Branch Name</label>
+          <input name="branch_code" placeholder="e.g. 0241 - Sialkot Main Branch">
+        </div>
+
+        <div class="field-group">
+          <label>IBAN Number (Optional)</label>
+          <input name="iban" placeholder="PK00 MEZN 0000 0000 0000 0000">
+        </div>
+
+        <div class="field-group">
+          <label>Opening Balance (PKR)</label>
+          <input type="number" step="0.01" name="opening_balance" placeholder="0.00" value="0.00">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit">+ Save Bank Account Credentials</button>
+    </form>
+  </div>
+
+  <!-- Bank Directory Table -->
+  <div class="card-box">
+    <div class="table-header">
+      <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #1E293B;">Registered Bank Accounts List</h4>
+      <input type="text" id="searchInput" class="search-input" onkeyup="filterTable()" placeholder="Search bank, account # or title...">
+    </div>
+
+    <table id="bankTable">
+      <thead>
+        <tr>
+          <th>LINKED LEVEL 4 ID</th>
+          <th>BANK / PROVIDER</th>
+          <th>ACCOUNT TITLE</th>
+          <th>ACCOUNT / IBAN NUMBER</th>
+          <th>OPENING BAL</th>
+          <th>STATUS</th>
+          <th style="text-align: right; width: 130px;">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bank in bank_records %}
+        <tr>
+          <td><strong style="color: #0F172A;">{{ bank.account.account_id }}</strong></td>
+          <td><span class="badge-pill badge-bank-type">{{ bank.bank_name }}</span></td>
+          <td style="font-weight: 600; color: #334155;">{{ bank.account_title }}</td>
+          <td>
+            <div style="font-size: 12px; font-weight: 600;">{{ bank.account_number }}</div>
+            {% if bank.iban %}<div style="font-size: 10px; color: #64748B;">IBAN: {{ bank.iban }}</div>{% endif %}
+          </td>
+          <td style="font-weight: 700; color: #0F172A;">PKR {{ bank.opening_balance|floatformat:2 }}</td>
+          <td>
+            {% if bank.is_active %}
+              <span class="badge-pill badge-active">Active</span>
+            {% else %}
+              <span class="badge-pill badge-inactive">Disabled</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right;">
+            <a href="{% url 'bank_file_edit' bank.id %}" class="action-btn edit-btn">Edit</a>
+            <a href="{% url 'bank_file_delete' bank.id %}" class="action-btn delete-btn" onclick="return confirm('Delete this bank account setup?');">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--muted, #64748B); padding: 32px;">No bank profiles linked yet. Add a bank account above.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterTable() {
+  const input = document.getElementById('searchInput').value.toUpperCase();
+  const rows = document.getElementById('bankTable').getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const idTd = rows[i].getElementsByTagName('td')[0];
+    const bankTd = rows[i].getElementsByTagName('td')[1];
+    const titleTd = rows[i].getElementsByTagName('td')[2];
+    const accTd = rows[i].getElementsByTagName('td')[3];
+    
+    if (idTd || bankTd || titleTd || accTd) {
+      const txtValue = [
+        idTd?.textContent || '',
+        bankTd?.textContent || '',
+        titleTd?.textContent || '',
+        accTd?.textContent || ''
+      ].join(' ');
+      
+      rows[i].style.display = txtValue.toUpperCase().indexOf(input) > -1 ? '' : 'none';
+    }
+  }
+}
+
+function updateBankID() {
+  const select = document.getElementById('level3Select');
+  const selectedOption = select.options[select.selectedIndex];
+  
+  if (selectedOption && selectedOption.value) {
+    const nextId = selectedOption.getAttribute('data-nextid');
+    document.getElementById('autoBankID').value = nextId || 'Auto Code';
+  } else {
+    document.getElementById('autoBankID').value = '';
+  }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,2321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transport — SchoolIMS{% endblock %}
+{% block page_title %}Transport Management{% endblock %}
+{% block nav_transport %}active{% endblock %}
+{% block extra_css %}
+<style>
+:root{
+  --t-green:#3CB878;
+  --t-red:#E4605E;
+  --t-blue:#5B87D6;
+  --t-purple:#8B7BD8;
+  --t-teal:#2A9D8F;
+}
+
+.page{padding:0 26px 40px;}
+
+/* ══ STATS ══ */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:22px;}
+.stat{background:#fff;border-radius:16px;padding:17px;display:flex;align-items:center;gap:13px;box-shadow:0 4px 18px rgba(20,24,40,.04);transition:.2s;}
+.stat:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(20,24,40,.09);}
+.stat .ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:21px;}
+.stat h3{font-size:22px;font-weight:700;line-height:1.1;}
+.stat p{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.i-green{background:#E5F6EE;}
+.i-orange{background:#FDF0E8;}
+.i-blue{background:#E9F0FC;}
+.i-purple{background:#F0EDFB;}
+.i-teal{background:#E0F2F1;}
+
+/* ══ PANEL / TABS ══ */
+.panel{background:#fff;border-radius:18px;padding:22px;box-shadow:0 4px 18px rgba(20,24,40,.04);margin-bottom:18px;}
+.tabs{display:flex;gap:6px;background:#F3F4F8;padding:5px;border-radius:13px;margin-bottom:20px;overflow-x:auto;}
+.tabs a{padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:7px;transition:.15s;}
+.tabs a:hover{color:var(--text);}
+.tabs a.active{background:#fff;color:var(--text);font-weight:600;box-shadow:0 2px 9px rgba(20,24,40,.08);}
+.tabs a i{font-style:normal;background:#E4E7EF;color:#7A8194;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700;}
+.tabs a.active i{background:#FDF0E8;color:var(--orange);}
+
+.panel-head{display:flex;align-items:center;gap:14px;margin-bottom:17px;flex-wrap:wrap;}
+.panel-head h2{font-size:16px;font-weight:600;}
+.grow{flex:1;}
+
+/* ══ BUTTONS ══ */
+.btn{border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:.15s;font-family:inherit;}
+.btn-primary{background:var(--orange);color:#fff;}
+.btn-primary:hover{background:#E67D50;}
+.btn-primary:disabled{opacity:.42;cursor:not-allowed;}
+.btn-ghost{background:#F1F2F7;color:var(--text);}
+.btn-ghost:hover{background:#E5E7EE;}
+.btn-sm{padding:7px 13px;font-size:12px;}
+.btn-xs{padding:6px 9px;font-size:11.5px;}
+.btn-danger{background:#FDECEC;color:var(--t-red);border:1px solid #F7D4D3;}
+.btn-danger:hover{background:#FCE0E0;}
+.btn-edit,.btn-blue{background:#E9F0FC;color:#3F68B4;border:1px solid #C8D9F0;}
+.btn-edit:hover,.btn-blue:hover{background:#DCE8FA;}
+.btn-green{background:#E5F6EE;color:#2A9364;border:1px solid #C6EAD9;}
+.btn-green:hover{background:#D6F0E4;}
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.42;
+  cursor: not-allowed !important;
+}
+/* ══ FILTERS ══ */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:17px;}
+.filters input,.filters select{padding:9px 13px;border:1px solid var(--line);border-radius:10px;font-size:12.5px;background:#fff;min-width:148px;outline:none;font-family:inherit;}
+.filters input:focus,.filters select:focus{border-color:var(--orange-soft);}
+.chip-info{display:inline-flex;align-items:center;gap:7px;background:#F8F9FC;border:1px solid #EEF0F5;border-radius:20px;padding:7px 13px;font-size:11.5px;color:var(--muted);white-space:nowrap;}
+.chip-info b{color:var(--text);}
+
+/* ══ TABLE ══ */
+.table-wrap{overflow-x:auto;border-radius:12px;}
+.table-wrap table{width:100%;border-collapse:collapse;min-width:900px;}
+.table-wrap thead th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--line);background:#FBFCFE;}
+.table-wrap tbody td{padding:13px 12px;font-size:13px;border-bottom:1px solid #F5F6FA;vertical-align:middle;}
+.table-wrap tbody tr{transition:.12s;}
+.table-wrap tbody tr:hover{background:#FAFBFD;}
+.cell-main{display:flex;align-items:center;gap:11px;}
+.thumb{width:36px;height:36px;border-radius:10px;background:#F1F2F7;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden;}
+.thumb.sm{width:30px;height:30px;font-size:14px;}
+.thumb.big{width:52px;height:52px;font-size:24px;}
+.thumb.circle{border-radius:50%;background:var(--peach);color:#fff;font-weight:700;font-size:14px;}
+.thumb img{width:100%;height:100%;object-fit:cover;}
+.cell-main b{display:block;font-size:13px;}
+.cell-main span,.cell-main small{display:block;font-size:11px;color:var(--muted);}
+.sub-line{display:block;color:var(--muted);font-size:11px;}
+.tbl-strong{font-size:12.5px;}
+.muted-sm{color:var(--muted);font-size:11px;}
+.nowrap{white-space:nowrap;}
+.inline-form{display:inline;}
+
+/* ══ BADGES ══ */
+.badge{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+.badge.mini{margin:2px;}
+.badge.fixed{flex-shrink:0;}
+.b-green{background:#E5F6EE;color:#2A9364;}
+.b-red{background:#FDECEC;color:#C94A48;}
+.b-amber{background:#FEF2E4;color:#C67C2E;}
+.b-blue{background:#E9F0FC;color:#3F68B4;}
+.b-grey{background:#F1F2F7;color:#7A8194;}
+.b-purple{background:#F0EDFB;color:#6B5CC4;}
+
+/* ══ OCCUPANCY ══ */
+.occ{min-width:94px;}
+.occ b{font-size:12px;}
+.occ-bar{height:6px;border-radius:6px;background:#EEF0F5;overflow:hidden;margin-top:5px;}
+.occ-bar.tall{height:9px;margin-top:0;}
+.occ-bar i{display:block;height:100%;border-radius:6px;width:0;transition:width .35s;}
+.lvl-low i{background:#3CB878;}
+.lvl-mid i{background:#F0A85D;}
+.lvl-high i{background:#E4605E;}
+
+/* ══ ROUTE CARDS ══ */
+.route-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(305px,1fr));gap:16px;}
+.route-card{border:1px solid var(--line);border-radius:16px;padding:17px;background:#fff;transition:.2s;}
+.route-card:hover{box-shadow:0 10px 28px rgba(20,24,40,.08);transform:translateY(-3px);}
+.route-card-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.route-icon{width:44px;height:44px;border-radius:13px;background:#FDF0E8;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.route-title{min-width:0;flex:1;}
+.route-code{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.4px;margin-bottom:2px;}
+.route-title h4{font-size:14.5px;font-weight:600;margin:0;}
+.rc-sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
+.route-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.route-info-item{display:flex;flex-direction:column;gap:3px;}
+.route-info-label{font-size:10.5px;color:var(--muted);}
+.route-info-item strong{font-size:12.5px;}
+.route-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:9px;}
+.route-section-title i{font-style:normal;background:#F1F2F7;color:#7A8194;border-radius:20px;padding:1px 7px;font-size:9.5px;}
+.route-vehicle{padding:13px 0;}
+.veh-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.veh-chip{display:inline-flex;flex-direction:column;gap:2px;background:#F8F9FC;border:1px solid #EEF0F5;border-radius:10px;padding:7px 11px;font-size:11.5px;font-weight:700;color:#5C6479;}
+.veh-chip small{font-weight:500;color:var(--muted);font-size:10px;}
+.no-assignment{font-size:11.5px;color:var(--muted);padding:5px 0;}
+.route-stops{padding:13px 0;border-top:1px solid var(--line);}
+.rstop{display:flex;align-items:center;gap:9px;padding:5px 0;}
+.rstop-dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--orange-soft);background:#fff;flex-shrink:0;}
+.rstop-name{flex:1;font-size:11.5px;color:#5C6479;}
+.rstop-time{font-size:10.5px;color:var(--muted);white-space:nowrap;}
+.rstop.hidden-stop{display:none;}
+.route-stops.expanded .rstop.hidden-stop{display:flex;}
+.more-stops{background:none;border:none;padding:4px 0 0;font-size:10.5px;color:var(--orange);font-weight:700;cursor:pointer;}
+.route-card-footer{display:flex;align-items:center;justify-content:flex-end;gap:6px;border-top:1px solid var(--line);padding-top:12px;}
+.route-card-footer .btn{padding:6px 11px;font-size:11px;}
+
+/* ══ WIZARD ══ */
+.wizard{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:20px;}
+.wstep{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--line);border-radius:13px;background:#FBFCFE;transition:.22s;}
+.wstep.done{background:#F3FBF7;border-color:#C6EAD9;}
+.wstep.active{background:#FFF7F1;border-color:var(--orange-soft);box-shadow:0 4px 15px rgba(240,138,93,.14);}
+.wnum{width:29px;height:29px;border-radius:50%;background:#E4E7EF;color:#7A8194;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0;}
+.wstep.done .wnum{background:var(--t-green);color:#fff;}
+.wstep.active .wnum{background:var(--orange);color:#fff;}
+.wtxt b{display:block;font-size:12.5px;font-weight:600;}
+.wtxt span{display:block;font-size:10.5px;color:var(--muted);margin-top:1px;}
+
+/* ══ BLOCKS ══ */
+.block{border:1px solid var(--line);border-radius:14px;padding:17px;margin-bottom:15px;background:#FBFCFE;transition:.25s;}
+.block.locked{display:none;}   /* ← HIDDEN until student is selected */
+.block-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.block-title .n{width:19px;height:19px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;}
+
+/* ══ FORM ══ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field.full{grid-column:1/-1;}
+.field label{font-size:12px;font-weight:500;color:#6C7386;}
+.field input,.field select,.field textarea{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:13px;outline:none;background:#fff;font-family:inherit;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--orange-soft);}
+.field input[readonly]{background:#F1F2F7;color:#5C6479;}
+.id-preview{display:inline-block;background:#FDF0E8;color:#D97706;font-weight:700;font-size:12px;padding:8px 13px;border-radius:8px;}
+.hint-lite{color:var(--muted);font-weight:400;font-size:11px;}
+.opt-tag{background:#F1F2F7;color:#7A8194;font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:5px;}
+.stop-row{display:grid;grid-template-columns:1fr 150px auto;gap:8px;margin-bottom:8px;align-items:center;}
+.stop-row input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:12.5px;background:#FBFCFE;}
+
+/* ══ STUDENT LOOKUP + SUGGESTIONS ══ */
+.roll-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.roll-wrap{flex:1;min-width:230px;position:relative;}
+.roll-wrap>label{font-size:12px;font-weight:500;color:#6C7386;display:block;margin-bottom:6px;}
+.roll-wrap input{width:100%;font-weight:700;letter-spacing:.6px;text-transform:uppercase;font-size:14.5px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;outline:none;background:#fff;font-family:inherit;}
+.roll-wrap input:focus{border-color:var(--orange-soft);}
+.suggest{position:absolute;top:calc(100% - 16px);left:0;right:0;margin-top:5px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(20,24,40,.14);max-height:290px;overflow-y:auto;z-index:60;display:none;}
+.suggest.show{display:block;}
+.sg-item{display:flex;align-items:center;gap:11px;padding:10px 13px;cursor:pointer;border-bottom:1px solid #F5F6FA;transition:.12s;}
+.sg-item:last-child{border-bottom:none;}
+.sg-item:hover,.sg-item.hi{background:#FFF7F1;}
+.sg-item.taken{opacity:.5;cursor:not-allowed;}
+.sg-item.taken:hover{background:#FAFBFC;}
+.sg-av{width:34px;height:34px;border-radius:50%;background:var(--peach);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.sg-av img{width:100%;height:100%;object-fit:cover;}
+.sg-meta{flex:1;min-width:0;}
+.sg-meta b{display:block;font-size:12.5px;}
+.sg-meta small{display:block;font-size:10.5px;color:var(--muted);}
+.sg-empty{padding:16px;text-align:center;font-size:12px;color:var(--muted);}
+
+.stu-card{display:none;align-items:center;gap:15px;padding:15px;background:#fff;border:1px solid #C6EAD9;border-radius:13px;margin-top:13px;}
+.stu-card.show{display:flex;}
+.stu-av{width:52px;height:52px;border-radius:50%;background:var(--peach);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0;}
+.stu-av img{width:100%;height:100%;object-fit:cover;}
+.stu-meta{flex:1;min-width:0;}
+.stu-meta h4{font-size:15px;font-weight:600;margin-bottom:3px;}
+.stu-sub{font-size:11.5px;color:var(--muted);}
+.stu-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.lookup-msg{display:none;margin-top:11px;padding:11px 14px;border-radius:10px;font-size:12.5px;}
+.lookup-msg.show{display:block;}
+.lookup-msg.err{background:#FDECEC;color:#C94A48;}
+.lookup-msg.warn{background:#FEF2E4;color:#C67C2E;}
+
+/* ══ ROUTE INFO STRIP ══ */
+.rinfo{display:none;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px;margin-top:13px;}
+.rinfo.show{display:grid;}
+.ri{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;}
+.ri span{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.ri strong{font-size:13px;}
+
+/* ══ VEHICLE CARDS ══ */
+.veh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:12px;}
+.veh-opt{position:relative;border:2px solid var(--line);border-radius:14px;padding:14px;background:#fff;cursor:pointer;transition:.18s;display:block;}
+.veh-opt:hover{border-color:#DDE1EA;transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,24,40,.07);}
+.veh-opt.sel{border-color:var(--orange);background:#FFF9F5;box-shadow:0 8px 22px rgba(240,138,93,.16);}
+.veh-opt.full{opacity:.5;cursor:not-allowed;background:#FAFBFC;}
+.veh-opt.full:hover{transform:none;box-shadow:none;border-color:var(--line);}
+.veh-opt input{position:absolute;opacity:0;pointer-events:none;}
+.vo-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.vo-ic{width:38px;height:38px;border-radius:11px;background:#F1F2F7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.veh-opt.sel .vo-ic{background:#FDF0E8;}
+.vo-t{flex:1;min-width:0;}
+.vo-t b{display:block;font-size:13.5px;}
+.vo-t small{display:block;font-size:10.5px;color:var(--muted);}
+.vo-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;}
+.veh-opt.sel .vo-check{background:var(--orange);border-color:var(--orange);color:#fff;}
+.vo-bar{height:7px;border-radius:7px;background:#EEF0F5;overflow:hidden;margin-bottom:7px;}
+.vo-bar i{display:block;height:100%;border-radius:7px;width:0;transition:width .3s;}
+.vo-stats{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--muted);}
+.vo-stats b{font-size:11.5px;}
+.vo-drv{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);font-size:10.5px;color:var(--muted);}
+.veh-empty{grid-column:1/-1;text-align:center;padding:34px;color:var(--muted);font-size:12.5px;background:#fff;border:1px dashed var(--line);border-radius:12px;}
+.veh-empty.error{color:var(--t-red);}
+
+/* ══ SEARCHABLE PICKER ══ */
+.picker{border:1px solid var(--line);border-radius:12px;background:#FBFCFE;overflow:hidden;}
+.pk-head{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line);background:#fff;}
+.pk-search{flex:1;padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:#FBFCFE;outline:none;font-family:inherit;}
+.pk-search:focus{border-color:var(--orange-soft);}
+.pk-count{font-size:10.5px;font-weight:700;color:var(--orange);background:#FDF0E8;padding:5px 10px;border-radius:20px;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;}
+.pk-clear{background:none;border:none;font-size:11px;color:var(--muted);cursor:pointer;font-weight:600;white-space:nowrap;}
+.pk-clear:hover{color:var(--t-red);}
+.pk-list{max-height:230px;overflow-y:auto;padding:6px;}
+.pk-opt{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:.15s;}
+.pk-opt:hover{background:#fff;border-color:var(--line);}
+.pk-opt.sel{background:#FFF7F1;border-color:var(--orange-soft);}
+.pk-opt input{width:16px;height:16px;accent-color:var(--orange);cursor:pointer;flex-shrink:0;}
+.pk-ic{width:31px;height:31px;border-radius:9px;background:#F1F2F7;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.pk-opt.sel .pk-ic{background:#FDF0E8;}
+.pk-meta{flex:1;min-width:0;}
+.pk-meta b{display:block;font-size:12px;}
+.pk-meta small{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pk-flag{font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.f-free{background:#E5F6EE;color:#2A9364;}
+.f-taken{background:#FDECEC;color:#C94A48;}
+.f-mine{background:#E9F0FC;color:#3F68B4;}
+.pk-opt.locked{opacity:.5;cursor:not-allowed;}
+.pk-opt.locked:hover{background:transparent;border-color:transparent;}
+.pk-opt.none-opt{border:1px dashed var(--line);margin-bottom:5px;}
+.pk-hint{display:block;padding:8px 11px;font-size:10.5px;color:var(--muted);border-top:1px solid var(--line);background:#fff;}
+.pk-empty{padding:18px;text-align:center;font-size:12px;color:var(--muted);}
+
+/* ══ MODALS ══ */
+.overlay{position:fixed;inset:0;background:rgba(20,24,40,.5);display:none;align-items:center;justify-content:center;z-index:500;padding:18px;}
+.overlay.show{display:flex;}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 25px 60px rgba(20,24,40,.3);}
+.modal.sm{max-width:440px;}
+.modal.lg{max-width:770px;}
+.modal-head{display:flex;align-items:center;margin-bottom:18px;}
+.modal-head h3{font-size:17px;font-weight:600;}
+.modal-head button{margin-left:auto;background:none;border:none;font-size:19px;color:var(--muted);cursor:pointer;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap;}
+.modal-loading{text-align:center;padding:30px;color:var(--muted);}
+
+.detail-head{display:flex;align-items:center;gap:14px;padding-bottom:17px;border-bottom:1px solid var(--line);margin-bottom:17px;}
+.detail-head h3{font-size:17px;}
+.detail-head .code{font-size:12px;color:var(--muted);margin-top:3px;}
+.detail-head .right{margin-left:auto;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.detail-box{background:#F8F9FC;border:1px solid #EEF0F5;border-radius:11px;padding:12px 14px;}
+.detail-box.wide{grid-column:1/-1;}
+.detail-box span{display:block;font-size:10.5px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+.detail-box strong{display:block;font-size:13px;font-weight:600;}
+.detail-box strong.soft{font-weight:500;white-space:pre-wrap;}
+.detail-box .inner{margin-top:4px;}
+.occ-panel{background:#F8F9FC;border:1px solid #EEF0F5;border-radius:12px;padding:14px;margin-bottom:14px;}
+.occ-panel .row{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;font-weight:700;}
+.occ-panel .foot{font-size:11px;color:var(--muted);margin-top:6px;}
+.staff-hero{text-align:center;margin-bottom:18px;}
+.staff-hero .av{
+  width:82px;height:82px;border-radius:50%;background:#E9F0FC;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:30px;overflow:hidden;border:3px solid #fff;
+  box-shadow:0 5px 18px rgba(20,24,40,.12);
+}
+.staff-hero .av img{width:100%;height:100%;object-fit:cover;display:block;}
+.staff-hero h3{margin-top:10px;}
+.staff-hero .sub{font-size:12px;color:var(--muted);}
+
+.staff-docs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:0 0 17px;
+}
+.staff-doc{
+  border:1px solid #EEF0F5;
+  background:#F8F9FC;
+  border-radius:13px;
+  padding:10px;
+}
+.staff-doc-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+  font-size:10.5px;
+  color:var(--muted);
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+.staff-doc-img{
+  width:100%;
+  height:145px;
+  border-radius:9px;
+  background:#EEF0F5;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:11px;
+  text-align:center;
+}
+.staff-doc-img img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#fff;
+  display:block;
+  cursor:zoom-in;
+}
+.staff-doc.no-image .staff-doc-img{background:#F1F2F7;}
+@media(max-width:560px){
+  .staff-docs{grid-template-columns:1fr;}
+}
+.ea-bar{display:flex;align-items:center;gap:12px;padding:13px;background:#F8F9FC;border:1px solid #EEF0F5;border-radius:12px;margin-bottom:16px;}
+
+.empty{text-align:center;padding:52px 14px;color:var(--muted);font-size:13px;}
+.flash{margin:0 0 18px;padding:12px 15px;border-radius:10px;font-size:13px;}
+.flash.ok{background:#E5F6EE;color:#2A9364;}
+.flash.err{background:#FDECEC;color:#C94A48;}
+.assign-list{border-top:1px solid var(--line);margin-top:26px;padding-top:22px;}
+
+@media(max-width:760px){
+  .page{padding:0 16px 40px;}
+  .form-grid{grid-template-columns:1fr;}
+  .field.full{grid-column:auto;}
+  .route-info{grid-template-columns:1fr;}
+  .stop-row{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="page">
+
+  {% if messages %}
+    {% for m in messages %}
+      <div class="flash {% if 'error' in m.tags %}err{% else %}ok{% endif %}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="stats">
+    <div class="stat"><div class="ic i-green">👨‍✈️</div><div><h3>{{ s_drivers }}</h3><p>Transport Staff</p></div></div>
+    <div class="stat"><div class="ic i-orange">🚍</div><div><h3>{{ s_vehicles }}</h3><p>Total Vehicles</p></div></div>
+    <div class="stat"><div class="ic i-blue">🗺️</div><div><h3>{{ s_routes }}</h3><p>Active Routes</p></div></div>
+    <div class="stat"><div class="ic i-purple">🎓</div><div><h3>{{ s_riders }}</h3><p>Students Riding</p></div></div>
+    <div class="stat"><div class="ic i-teal">💺</div><div><h3>{{ s_free_seats }}</h3><p>Seats Available</p></div></div>
+  </div>
+
+  <div class="panel">
+
+    <div class="tabs">
+      <a href="?tab=drivers"  class="{% if tab == 'drivers' %}active{% endif %}">👨‍✈️ Drivers <i>{{ s_drivers }}</i></a>
+      <a href="?tab=vehicles" class="{% if tab == 'vehicles' %}active{% endif %}">🚍 Vehicles <i>{{ s_vehicles }}</i></a>
+      <a href="?tab=routes"   class="{% if tab == 'routes' %}active{% endif %}">🗺️ Routes <i>{{ s_routes }}</i></a>
+      <a href="?tab=assign"   class="{% if tab == 'assign' %}active{% endif %}">🎓 Student Assignment <i>{{ s_riders }}</i></a>
+    </div>
+
+
+    {# ══════════ DRIVERS ══════════ #}
+    {% if tab == 'drivers' %}
+    <div class="panel-head">
+      <h2>Drivers &amp; Conductors</h2>
+      <div class="grow"></div>
+      <span class="chip-info">📋 Managed via Staff module</span>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="fDrvSearch" placeholder="Search name / ID…">
+      <select id="fDrvRole">
+        <option value="">All Roles</option>
+        <option>Driver</option><option>Conductor</option><option>Driver / Conductor</option>
+      </select>
+      <select id="fDrvAssign">
+        <option value="">All Assignments</option>
+        <option value="yes">With Vehicle</option>
+        <option value="no">Unassigned</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>CNIC</th><th>Contact</th><th>Assigned Vehicle</th><th>Actions</th></tr></thead>
+        <tbody id="drvBody">
+          {% for d in drivers %}
+          <tr data-role="{{ d.role }}" data-assigned="{% if d.vehicle %}yes{% else %}no{% endif %}">
+            <td>
+              <div class="cell-main">
+                <div class="thumb">
+                  {% if d.photo %}
+                    <img src="{{ d.photo.url }}" alt="{{ d.name }}">
+                  {% elif 'Driver' in d.role %}
+                    👨‍✈️
+                  {% else %}
+                    🧑
+                  {% endif %}
+                </div>
+                <div><b>{{ d.name }}</b><span>{{ d.emp_id }}</span></div>
+              </div>
+            </td>
+            <td><span class="badge {% if 'Driver' in d.role %}b-blue{% else %}b-grey{% endif %}">{{ d.role }}</span></td>
+            <td>{{ d.cnic|default:"—" }}</td>
+            <td>{{ d.contact|default:"—" }}</td>
+            <td>
+              {% if d.vehicle %}
+                <span class="badge b-blue">
+                  {% if d.vehicle.vtype == 'Van' %}🚐{% elif d.vehicle.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %}
+                  {{ d.vehicle.code }}
+                </span>
+              {% else %}
+                <span class="badge b-grey">Unassigned</span>
+              {% endif %}
+            </td>
+            <td>
+              <button type="button" class="btn btn-sm btn-blue staff-detail"
+                      data-url="{% url 'staff_detail_json' d.pk %}">Details</button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="empty">
+            No transport staff found.<br>
+            Add drivers/conductors in the <b>Staff</b> module with role "Driver" or "Conductor".
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+
+    {# ══════════ VEHICLES ══════════ #}
+    {% if tab == 'vehicles' %}
+    <div class="panel-head">
+      <h2>Vehicle Fleet</h2>
+      <div class="grow"></div>
+      <span class="chip-info">💺 <b>{{ s_riders }}</b> / {{ s_capacity }} seats used</span>
+      {% if perms.can_add or user.is_superuser %}
+    <button type="button" class="btn btn-primary btn-sm" data-open-modal="mVehicle">+ Add Vehicle</button>
+    {% endif %}
+    </div>
+
+    <div class="filters">
+      <input type="text" id="fVehSearch" placeholder="Search bus no / driver…">
+      <select id="fVehType"><option value="">All Types</option><option>Bus</option><option>Van</option><option>Coaster</option></select>
+      <select id="fVehStatus"><option value="">All Status</option><option>Active</option><option>Maintenance</option><option>Inactive</option></select>
+      <select id="fVehDriver"><option value="">All Crew</option><option value="yes">With Driver</option><option value="no">No Driver</option></select>
+      <select id="fVehRoute"><option value="">All Routes</option><option value="yes">On a Route</option><option value="no">Unassigned</option></select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Vehicle</th><th>Type</th><th>Reg No.</th><th>Driver / Crew</th><th>Route</th><th>Occupancy</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="vehBody">
+          {% for v in vehicles %}
+          {% with vr=v.routes.all|first %}
+          <tr data-type="{{ v.vtype }}" data-status="{{ v.status }}"
+              data-hasroute="{% if vr %}yes{% else %}no{% endif %}"
+              data-hasdriver="{% if v.driver %}yes{% else %}no{% endif %}">
+            <td>
+              <div class="cell-main">
+                <div class="thumb">{% if v.vtype == 'Van' %}🚐{% elif v.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %}</div>
+                <div><b>{{ v.name }}</b><span>{{ v.code }}</span></div>
+              </div>
+            </td>
+            <td>{{ v.vtype }}</td>
+            <td>{{ v.reg_no }}</td>
+            <td>
+              {% if v.driver %}
+                <div class="cell-main">
+                  <div class="thumb sm">👨‍✈️</div>
+                  <div><b>{{ v.driver.name }}</b><span>{{ v.driver.emp_id }}</span></div>
+                </div>
+              {% else %}
+                <span class="badge b-amber">No driver</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if vr %}
+                <span class="badge b-blue">{{ vr.code }} — {{ vr.name }}</span>
+              {% else %}
+                <span class="badge b-grey">Unassigned</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="occ">
+                <b>{{ v.used_seats }} / {{ v.capacity }}</b>
+                <div class="occ-bar {% if v.occupancy_percent >= 90 %}lvl-high{% elif v.occupancy_percent >= 70 %}lvl-mid{% else %}lvl-low{% endif %}"
+                     data-pct="{{ v.occupancy_percent }}"><i></i></div>
+              </div>
+            </td>
+            <td>
+              <span class="badge {% if v.status == 'Active' %}b-green{% elif v.status == 'Maintenance' %}b-amber{% else %}b-grey{% endif %}">{{ v.status }}</span>
+            </td>
+            <td class="nowrap">
+              <button type="button" class="btn btn-xs btn-blue view-vehicle"
+                      data-url="{% url 'vehicle_detail' v.pk %}">Details</button>
+
+              {% if perms.can_edit or user.is_superuser %}
+              <button type="button" class="btn btn-xs btn-edit edit-vehicle"
+                      data-id="{{ v.pk }}"
+                      data-edit-url="{% url 'edit_vehicle' v.pk %}"
+                      data-code="{{ v.code }}"
+                      data-name="{{ v.name }}"
+                      data-vtype="{{ v.vtype }}"
+                      data-regno="{{ v.reg_no }}"
+                      data-model="{{ v.model_year }}"
+                      data-capacity="{{ v.capacity }}"
+                      data-driver="{% if v.driver %}{{ v.driver.pk }}{% endif %}"
+                      data-status="{{ v.status }}"
+                      data-notes="{{ v.notes }}">Edit</button>
+                {% endif %}
+
+                {% if perms.can_delete or user.is_superuser %}
+              <form method="post" action="{% url 'delete_vehicle' v.pk %}"
+                    class="confirm-form inline-form" data-confirm="Delete {{ v.code }}?">
+                {% csrf_token %}
+
+                
+                <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+              </form>
+
+              {% endif %}
+
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr><td colspan="8" class="empty">No vehicles yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+
+    {# ══════════ ROUTES ══════════ #}
+    {% if tab == 'routes' %}
+    <div class="panel-head">
+      <h2>Routes &amp; Stops</h2>
+      <div class="grow"></div>
+      {% if perms.can_add or user.is_superuser %}
+    <button type="button" class="btn btn-primary btn-sm" data-open-modal="mRoute">+ Add Route</button>
+    {% endif %}
+    </div>
+
+    <div class="filters">
+      <input type="text" id="fRouteSearch" placeholder="Search route / stop…">
+      <select id="fRouteVeh"><option value="">All Routes</option><option value="yes">With Vehicle</option><option value="no">Without Vehicle</option></select>
+      <div class="grow"></div>
+      <span class="chip-info">🔒 One vehicle = one route</span>
+    </div>
+
+    <div class="route-grid" id="routeGrid">
+      {% for r in routes %}
+      <div class="route-card"
+           data-hasveh="{% if r.vehicles.all %}yes{% else %}no{% endif %}"
+           data-search="{{ r.code|lower }} {{ r.name|lower }}{% for s in r.stops.all %} {{ s.name|lower }}{% endfor %}{% for v in r.vehicles.all %} {{ v.code|lower }}{% endfor %}">
+
+        <div class="route-card-head">
+          <div class="route-icon">🗺️</div>
+          <div class="route-title">
+            <div class="route-code">{{ r.code }}</div>
+            <h4>{{ r.name }}</h4>
+            <div class="rc-sub">{{ r.distance|default:"—" }} • {{ r.stops.count }} stop{{ r.stops.count|pluralize }}</div>
+          </div>
+          {% if r.vehicles.all %}
+            <span class="badge b-green fixed">Active</span>
+          {% else %}
+            <span class="badge b-amber fixed">No Vehicle</span>
+          {% endif %}
+        </div>
+
+        <div class="route-info">
+          <div class="route-info-item">
+            <span class="route-info-label">Pickup Start</span>
+            <strong>{% if r.pickup_start %}{{ r.pickup_start|time:"h:i A" }}{% else %}—{% endif %}</strong>
+          </div>
+          <div class="route-info-item">
+            <span class="route-info-label">Stops</span>
+            <strong>{{ r.stops.count }}</strong>
+          </div>
+        </div>
+
+        <div class="route-vehicle">
+          <div class="route-section-title">Assigned Vehicles <i>{{ r.vehicles.count }}</i></div>
+          <div class="veh-chips">
+            {% for v in r.vehicles.all %}
+              <span class="veh-chip">
+                <span>{% if v.vtype == 'Van' %}🚐{% elif v.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %} {{ v.code }}</span>
+                <small>{{ v.used_seats }}/{{ v.capacity }} seats · {% if v.driver %}{{ v.driver.name }}{% else %}no driver{% endif %}</small>
+              </span>
+            {% empty %}
+              <span class="no-assignment">No vehicle assigned</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="route-stops">
+          <div class="route-section-title">Stops</div>
+          {% for s in r.stops.all %}
+            <div class="rstop {% if forloop.counter > 3 %}hidden-stop{% endif %}">
+              <div class="rstop-dot"></div>
+              <div class="rstop-name">{{ s.name }}</div>
+              <div class="rstop-time">{% if s.time %}{{ s.time|time:"h:i A" }}{% else %}—{% endif %}</div>
+            </div>
+          {% empty %}
+            <div class="no-assignment">No stops defined</div>
+          {% endfor %}
+          {% if r.stops.count > 3 %}
+            <button type="button" class="more-stops toggle-stops"
+                    data-more="+ {{ r.stops.count|add:'-3' }} more stops"
+                    data-less="− Show less">
+              + {{ r.stops.count|add:"-3" }} more stops
+            </button>
+          {% endif %}
+        </div>
+
+        <div class="route-card-footer">
+
+          {% if perms.can_edit or user.is_superuser %}
+          <button type="button" class="btn btn-sm btn-edit edit-route"
+                  data-id="{{ r.pk }}"
+                  data-edit-url="{% url 'edit_route' r.pk %}"
+                  data-code="{{ r.code }}"
+                  data-name="{{ r.name }}"
+                  data-distance="{{ r.distance }}"
+                  data-pickup="{% if r.pickup_start %}{{ r.pickup_start|time:'H:i' }}{% endif %}"
+                  data-vehicles="{% for v in r.vehicles.all %}{{ v.pk }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                  data-stops="{% for s in r.stops.all %}{{ s.name|escape }}~{% if s.time %}{{ s.time|time:'H:i' }}{% endif %}{% if not forloop.last %}|{% endif %}{% endfor %}">Edit</button>
+
+
+                {% endif %}
+
+            {% if perms.can_delete or user.is_superuser %}
+          <form method="post" action="{% url 'delete_route' r.pk %}"
+                class="confirm-form inline-form" data-confirm="Delete {{ r.code }}?">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty">No routes yet</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+
+    {# ══════════ STUDENT ASSIGNMENT ══════════ #}
+    {% if tab == 'assign' %}
+
+    <div class="panel-head">
+      <h2>🚌 Assign Student to Vehicle</h2>
+      <div class="grow"></div>
+      <span class="badge b-amber">Next ID: {{ next_assign_code }}</span>
+    </div>
+
+    <div class="wizard">
+      <div class="wstep active" id="w1"><div class="wnum">1</div><div class="wtxt"><b>Find Student</b><span>Type roll no or name</span></div></div>
+      <div class="wstep" id="w2"><div class="wnum">2</div><div class="wtxt"><b>Choose Route</b><span>Pick a route</span></div></div>
+      <div class="wstep" id="w3"><div class="wnum">3</div><div class="wtxt"><b>Select Vehicle</b><span>Available buses</span></div></div>
+      <div class="wstep" id="w4"><div class="wnum">4</div><div class="wtxt"><b>Confirm</b><span>Fee &amp; dates</span></div></div>
+    </div>
+
+    <form method="post" action="{% url 'assign_student_transport' %}" id="assignForm">
+      {% csrf_token %}
+      <input type="hidden" name="student_id" id="studentId">
+
+      <div class="block" id="blk1">
+        <div class="block-title"><span class="n">1</span> Student Lookup</div>
+
+        <div class="roll-row">
+          <div class="roll-wrap">
+            <label>Roll Number / Name</label>
+            <input type="text" id="rollInput" placeholder="e.g. Ten-24 or Ahmed" autocomplete="off">
+            <div class="suggest" id="rollSuggest"></div>
+            <small class="hint-lite">Start typing — suggestions appear automatically</small>
+          </div>
+          <button type="button" class="btn btn-primary" id="findBtn">🔍 Find</button>
+          <button type="button" class="btn btn-ghost" id="resetBtn">↺ Reset</button>
+        </div>
+
+        <div class="lookup-msg" id="lookupMsg"></div>
+
+        <div class="stu-card" id="stuCard">
+          <div class="stu-av" id="stuAv"></div>
+          <div class="stu-meta">
+            <h4 id="stuName">—</h4>
+            <div class="stu-sub" id="stuSub">—</div>
+            <div class="stu-tags" id="stuTags"></div>
+          </div>
+          <span class="badge b-green">✓ Found</span>
+        </div>
+      </div>
+
+      <!-- These three blocks stay completely hidden until a student is found -->
+      <div class="block locked" id="blk2">
+        <div class="block-title"><span class="n">2</span> Select Route</div>
+        <div class="field">
+          <label>Transport Route</label>
+          <select name="route" id="routeSel">
+            <option value="">— Select a route —</option>
+            {% for r in routes %}
+              <option value="{{ r.pk }}">{{ r.code }} — {{ r.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="rinfo" id="routeInfo">
+          <div class="ri"><span>Route</span><strong id="riCode">—</strong></div>
+          <div class="ri"><span>Distance</span><strong id="riDist">—</strong></div>
+          <div class="ri"><span>Pickup</span><strong id="riPickup">—</strong></div>
+          <div class="ri"><span>Buses</span><strong id="riVeh">—</strong></div>
+        </div>
+      </div>
+
+      <div class="block locked" id="blk3">
+        <div class="block-title"><span class="n">3</span> Available Vehicles on this Route</div>
+        <div class="veh-grid" id="vehGrid">
+          <div class="veh-empty">Select a route first to see available vehicles.</div>
+        </div>
+      </div>
+
+      <div class="block locked" id="blk4">
+        <div class="block-title"><span class="n">4</span> Assignment Details</div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Pickup Stop </label>
+            <select name="stop" id="stopSel" required><option value="">— None —</option></select>
+          </div>
+          <div class="field">
+            <label>Transport Charges (Rs) <span class="hint-lite">(from student profile)</span></label>
+            <input type="number" step="0.01" name="monthly_fee" id="feeInput" readonly required>
+          </div>
+          <div class="field">
+            <label>Start Date</label>
+            <input type="date" name="start_date" id="startInput" value="{{ today }}">
+          </div>
+          <div class="field">
+            <label>End Date <span class="hint-lite">(default: 1 year)</span></label>
+            <input type="date" name="end_date" id="endInput">
+          </div>
+          <div class="field">
+            <label>Guardian Contact <span class="opt-tag">OPTIONAL</span></label>
+            <input type="text" name="guardian_contact" id="guardianInput" placeholder="03xx-xxxxxxx">
+          </div>
+          <div class="field">
+            <label>Pickup Point <span class="opt-tag">OPTIONAL</span></label>
+            <input type="text" name="pickup_point" placeholder="e.g. Near Al-Madina Mosque">
+          </div>
+          <div class="field full">
+            <label>Notes <span class="opt-tag">OPTIONAL</span></label>
+            <textarea name="notes" rows="2" placeholder="Any special instructions…"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="resetBtn2">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>✓ Assign Vehicle</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="assign-list">
+      <div class="panel-head">
+        <h2>📋 Current Assignments</h2>
+        <div class="grow"></div>
+        <span class="badge b-grey">{{ assignments|length }} record{{ assignments|length|pluralize }}</span>
+      </div>
+
+      <form method="get" class="filters">
+        <input type="hidden" name="tab" value="assign">
+        <input type="text" name="aq" value="{{ aq }}" placeholder="Search student / roll / bus…">
+        <select name="aroute">
+          <option value="">All Routes</option>
+          {% for r in routes %}
+            <option value="{{ r.pk }}" {% if a_route == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.code }} — {{ r.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="avehicle">
+          <option value="">All Vehicles</option>
+          {% for v in vehicles %}
+            <option value="{{ v.pk }}" {% if a_vehicle == v.pk|stringformat:"s" %}selected{% endif %}>{{ v.code }} — {{ v.reg_no }}</option>
+          {% endfor %}
+        </select>
+        <select name="astatus">
+          <option value="">All Status</option>
+          <option value="active" {% if a_status == 'active' %}selected{% endif %}>Active</option>
+          <option value="inactive" {% if a_status == 'inactive' %}selected{% endif %}>Unassigned</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" type="submit">Filter</button>
+        <a href="?tab=assign" class="btn btn-ghost btn-sm">Clear</a>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Class</th><th>Route</th><th>Vehicle</th><th>Occupancy</th><th>Period</th><th>Fee</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for a in assignments %}
+            <tr>
+              <td>
+                <div class="cell-main">
+                  <div class="thumb circle">
+                    {% if a.student.photo %}<img src="{{ a.student.photo.url }}" alt="">
+                    {% else %}{{ a.student.name|slice:":1"|upper }}{% endif %}
+                  </div>
+                  <div><b>{{ a.student.name }}</b><small>{{ a.student.roll_no }} · {{ a.code }}</small></div>
+                </div>
+              </td>
+              <td><span class="badge b-purple">{{ a.student.student_class }}</span></td>
+              <td>
+                <b class="tbl-strong">{{ a.route.code }}</b>
+                <small class="sub-line">{{ a.route.name }}</small>
+              </td>
+              <td>
+                <b class="tbl-strong">
+                  {% if a.vehicle.vtype == 'Van' %}🚐{% elif a.vehicle.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %}
+                  {{ a.vehicle.code }}
+                </b>
+                <small class="sub-line">{{ a.vehicle.reg_no }}</small>
+              </td>
+              <td>
+                <div class="occ">
+                  <b>{{ a.vehicle.used_seats }} / {{ a.vehicle.capacity }}</b>
+                  <div class="occ-bar {% if a.vehicle.occupancy_percent >= 90 %}lvl-high{% elif a.vehicle.occupancy_percent >= 70 %}lvl-mid{% else %}lvl-low{% endif %}"
+                       data-pct="{{ a.vehicle.occupancy_percent }}"><i></i></div>
+                </div>
+              </td>
+              <td>
+                <b class="tbl-strong">{% if a.start_date %}{{ a.start_date|date:"d M Y" }}{% else %}—{% endif %}</b>
+                <small class="sub-line">to {% if a.end_date %}{{ a.end_date|date:"d M Y" }}{% else %}open{% endif %}</small>
+              </td>
+              <td><b>Rs {{ a.monthly_fee }}</b></td>
+              <td>
+                {% if a.is_active %}
+                  <span class="badge b-green">Active</span>
+                {% else %}
+                  <span class="badge b-grey">Unassigned</span>
+                {% endif %}
+              </td>
+
+              <td class="nowrap">
+                <button type="button" class="btn btn-xs btn-blue view-assign"
+                        data-url="{% url 'assignment_detail_json' a.pk %}">View</button>
+                {% if perms.can_edit or user.is_superuser %}
+                <button type="button" class="btn btn-xs btn-edit edit-assign"
+                        data-url="{% url 'assignment_detail_json' a.pk %}"
+                        data-edit-url="{% url 'edit_student_transport' a.pk %}">Edit</button>
+
+                {% endif %}
+
+                {% if a.is_active %}
+
+                {% if perms.can_delete or perms.can_edit or user.is_superuser %}
+                  <form method="post" action="{% url 'unassign_student_transport' a.pk %}"
+                        class="confirm-form inline-form"
+                        data-confirm="Remove {{ a.student.name }} from {{ a.vehicle.code }}? This frees a seat.">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-danger">Unassign</button>
+                  </form>
+                  {% endif %}
+                {% else %}
+                  {% if perms.can_edit or user.is_superuser %}
+                  <form method="post" action="{% url 'reactivate_student_transport' a.pk %}"
+                        class="confirm-form inline-form" data-confirm="Re-activate {{ a.code }}?">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-green"
+                          {% if not a.student.is_active %}
+                            disabled
+                            title="Student is deactivated. Activate the student from the Students list first."
+                            style="cursor: not-allowed;"
+                          {% endif %}>
+                    Re-activate
+                  </button>
+                  </form>
+                  {% endif %}
+
+                  {% if perms.can_delete or user.is_superuser %}
+                  <form method="post" action="{% url 'delete_student_transport' a.pk %}"
+                        class="confirm-form inline-form" data-confirm="Permanently delete {{ a.code }}?">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+                  </form>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" class="empty">
+              🚌 No transport assignments yet.<br>Use the wizard above to assign a student.
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+
+{% block modals %}
+
+{# ═══ ADD VEHICLE ═══ #}
+<div class="overlay" id="mVehicle">
+  <div class="modal">
+    <div class="modal-head"><h3>Add Vehicle</h3><button type="button" data-close="mVehicle">✕</button></div>
+    <form method="post" action="{% url 'add_vehicle' %}">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label>Type</label>
+          <select name="vtype" id="vtypeSel" data-bus="{{ next_bus_code }}" data-van="{{ next_van_code }}" data-cstr="{{ next_cstr_code }}">
+            <option value="Bus">Bus → {{ next_bus_code }}</option>
+            <option value="Van">Van → {{ next_van_code }}</option>
+            <option value="Coaster">Coaster → {{ next_cstr_code }}</option>
+          </select>
+        </div>
+        <div class="field"><label>Auto ID</label><div class="id-preview" id="vehPreview">{{ next_bus_code }}</div></div>
+        <div class="field"><label>Display name</label><input name="name"></div>
+        <div class="field"><label>Registration No.</label><input name="reg_no" required></div>
+        <div class="field"><label>Model / Year</label><input name="model_year"></div>
+        <div class="field"><label>Seating Capacity</label><input type="number" name="capacity" min="1" required></div>
+
+        <div class="field full">
+          <label>Assign Driver <span class="hint-lite">(searchable · one person = one vehicle)</span></label>
+          <div class="picker" id="addDrvPicker" data-mode="single">
+            <div class="pk-head">
+              <input type="text" class="pk-search" placeholder="Search name / ID / CNIC…">
+              <span class="pk-count">No driver</span>
+              <button type="button" class="pk-clear">Clear</button>
+            </div>
+            <div class="pk-list">
+              <label class="pk-opt none-opt" data-search="none no driver unassigned">
+                <input type="radio" name="driver" value="" checked>
+                <span class="pk-ic">🚫</span>
+                <span class="pk-meta"><b>No driver</b><small>Leave unassigned for now</small></span>
+              </label>
+              {% for d in transport_staff %}
+                {% with veh=d.vehicle %}
+                <label class="pk-opt {% if veh %}locked{% endif %}"
+                       data-search="{{ d.name|lower }} {{ d.emp_id|lower }} {{ d.cnic|default:''|lower }}"
+                       data-veh="{% if veh %}{{ veh.pk }}{% endif %}"
+                       data-vehcode="{% if veh %}{{ veh.code }}{% endif %}">
+                  <input type="radio" name="driver" value="{{ d.pk }}" {% if veh %}disabled{% endif %}>
+                  <span class="pk-ic">👨‍✈️</span>
+                  <span class="pk-meta">
+                    <b>{{ d.name }}</b>
+                    <small>{{ d.emp_id }} · {{ d.role }}</small>
+                  </span>
+                  {% if veh %}
+                    <span class="pk-flag f-taken">On {{ veh.code }}</span>
+                  {% else %}
+                    <span class="pk-flag f-free">Available</span>
+                  {% endif %}
+                </label>
+                {% endwith %}
+              {% endfor %}
+            </div>
+            <small class="pk-hint">🔒 Locked rows are already driving another vehicle.</small>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Status</label>
+          <select name="status">
+            <option value="Active">Active</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea name="notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="mVehicle">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save Vehicle</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ═══ EDIT VEHICLE ═══ #}
+<div class="overlay" id="editVehicleModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Edit Vehicle</h3><button type="button" data-close="editVehicleModal">✕</button></div>
+    <form method="post" id="editVehicleForm">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field"><label>Code</label><input name="code" readonly></div>
+        <div class="field">
+          <label>Type</label>
+          <select name="vtype">
+            <option value="Bus">Bus</option>
+            <option value="Van">Van</option>
+            <option value="Coaster">Coaster</option>
+          </select>
+        </div>
+        <div class="field"><label>Display name</label><input name="name"></div>
+        <div class="field"><label>Registration No.</label><input name="reg_no" required></div>
+        <div class="field"><label>Model / Year</label><input name="model_year"></div>
+        <div class="field"><label>Seating Capacity</label><input type="number" name="capacity" min="1" required></div>
+
+        <div class="field full">
+          <label>Assign Driver <span class="hint-lite">(searchable · one person = one vehicle)</span></label>
+          <div class="picker" id="editDrvPicker" data-mode="single">
+            <div class="pk-head">
+              <input type="text" class="pk-search" placeholder="Search name / ID / CNIC…">
+              <span class="pk-count">No driver</span>
+              <button type="button" class="pk-clear">Clear</button>
+            </div>
+            <div class="pk-list">
+              <label class="pk-opt none-opt" data-search="none no driver unassigned">
+                <input type="radio" name="driver" value="">
+                <span class="pk-ic">🚫</span>
+                <span class="pk-meta"><b>No driver</b><small>Leave unassigned</small></span>
+              </label>
+              {% for d in transport_staff %}
+                {% with veh=d.vehicle %}
+                <label class="pk-opt"
+                       data-search="{{ d.name|lower }} {{ d.emp_id|lower }} {{ d.cnic|default:''|lower }}"
+                       data-veh="{% if veh %}{{ veh.pk }}{% endif %}"
+                       data-vehcode="{% if veh %}{{ veh.code }}{% endif %}">
+                  <input type="radio" name="driver" value="{{ d.pk }}">
+                  <span class="pk-ic">👨‍✈️</span>
+                  <span class="pk-meta">
+                    <b>{{ d.name }}</b>
+                    <small>{{ d.emp_id }} · {{ d.role }}</small>
+                  </span>
+                  <span class="pk-flag f-free">Available</span>
+                </label>
+                {% endwith %}
+              {% endfor %}
+            </div>
+            <small class="pk-hint">🔒 Locked rows are already driving another vehicle.</small>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Status</label>
+          <select name="status">
+            <option value="Active">Active</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <textarea name="notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="editVehicleModal">Cancel</button>
+        <button class="btn btn-primary" type="submit">Update Vehicle</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ═══ ADD ROUTE ═══ #}
+<div class="overlay" id="mRoute">
+  <div class="modal">
+    <div class="modal-head"><h3>Add Route</h3><button type="button" data-close="mRoute">✕</button></div>
+    <form method="post" action="{% url 'add_route' %}">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field"><label>Auto ID</label><div class="id-preview">{{ next_route_code }}</div></div>
+        <div class="field"><label>Route Name</label><input name="name" required placeholder="e.g. Model Town"></div>
+        <div class="field">
+          <label>Distance</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="number" step="0.01" min="0" id="addDistValue" placeholder="e.g. 14.5" style="flex:1;">
+            <select id="addDistUnit" style="width:90px; padding:10px 8px; border:1px solid var(--line); border-radius:10px; font-size:13px;">
+              <option value="km">km</option>
+              <option value="m">m</option>
+            </select>
+          </div>
+          <input type="hidden" name="distance" id="addDistHidden">
+        </div>
+        <div class="field"><label>Pickup Start</label><input type="time" name="pickup_start" value="07:00"></div>
+
+        <div class="field full">
+          <label>Assign Vehicles <span class="hint-lite">(tick to select · one vehicle = one route)</span></label>
+          <div class="picker" id="addVehPicker" data-mode="multi">
+            <div class="pk-head">
+              <input type="text" class="pk-search" placeholder="Search code / reg no…">
+              <span class="pk-count">0 selected</span>
+              <button type="button" class="pk-clear">Clear all</button>
+            </div>
+            <div class="pk-list">
+              {% for v in all_vehicles %}
+                {% with ar=v.routes.all|first %}
+                <label class="pk-opt {% if ar %}locked{% endif %}"
+                       data-search="{{ v.code|lower }} {{ v.name|lower }} {{ v.reg_no|lower }} {{ v.vtype|lower }}">
+                  <input type="checkbox" name="vehicles" value="{{ v.pk }}" {% if ar %}disabled{% endif %}>
+                  <span class="pk-ic">{% if v.vtype == 'Van' %}🚐{% elif v.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %}</span>
+                  <span class="pk-meta">
+                    <b>{{ v.code }}</b>
+                    <small>{{ v.reg_no }} · {{ v.capacity }} seats · {% if v.driver %}{{ v.driver.name }}{% else %}no driver{% endif %}</small>
+                  </span>
+                  {% if ar %}
+                    <span class="pk-flag f-taken">On {{ ar.code }}</span>
+                  {% else %}
+                    <span class="pk-flag f-free">Available</span>
+                  {% endif %}
+                </label>
+                {% endwith %}
+              {% empty %}
+                <div class="pk-empty">No active vehicles in the fleet.</div>
+              {% endfor %}
+            </div>
+            <small class="pk-hint">🔒 Locked rows already run on another route.</small>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Stops</label>
+          <div id="addStopsContainer">
+            <div class="stop-row">
+              <input type="text" name="stop_name[]" placeholder="Stop name">
+              <input type="time" name="stop_time[]">
+              <button type="button" class="btn btn-sm btn-danger remove-stop">&times;</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="addStopBtn">+ Add Stop</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="mRoute">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save {{ next_route_code }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ═══ EDIT ROUTE ═══ #}
+<div class="overlay" id="editRouteModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Edit Route</h3><button type="button" data-close="editRouteModal">✕</button></div>
+    <form method="post" id="editRouteForm">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field full"><label>Route Code</label><input name="code" readonly></div>
+        <div class="field"><label>Route Name</label><input name="name" required></div>
+        <div class="field">
+            <label>Distance</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="number" step="0.01" min="0" id="editDistValue" placeholder="e.g. 14.5" style="flex:1;">
+              <select id="editDistUnit" style="width:90px; padding:10px 8px; border:1px solid var(--line); border-radius:10px; font-size:13px;">
+                <option value="km">km</option>
+                <option value="m">m</option>
+              </select>
+            </div>
+            <input type="hidden" name="distance" id="editDistHidden">
+          </div>
+        <div class="field"><label>Pickup Start</label><input type="time" name="pickup_start" value="07:00"></div>
+
+        <div class="field full">
+          <label>Assign Vehicles <span class="hint-lite">(untick to unassign · "Clear all" removes every bus)</span></label>
+          <div class="picker" id="editVehPicker" data-mode="multi">
+            <div class="pk-head">
+              <input type="text" class="pk-search" placeholder="Search code / reg no…">
+              <span class="pk-count">0 selected</span>
+              <button type="button" class="pk-clear">Clear all</button>
+            </div>
+            <div class="pk-list">
+              {% for v in all_vehicles %}
+                {% with ar=v.routes.all|first %}
+                <label class="pk-opt"
+                       data-search="{{ v.code|lower }} {{ v.name|lower }} {{ v.reg_no|lower }} {{ v.vtype|lower }}"
+                       data-route-id="{% if ar %}{{ ar.pk }}{% endif %}"
+                       data-route-code="{% if ar %}{{ ar.code }}{% endif %}">
+                  <input type="checkbox" name="vehicles" value="{{ v.pk }}">
+                  <span class="pk-ic">{% if v.vtype == 'Van' %}🚐{% elif v.vtype == 'Coaster' %}🚌{% else %}🚍{% endif %}</span>
+                  <span class="pk-meta">
+                    <b>{{ v.code }}</b>
+                    <small>{{ v.reg_no }} · {{ v.capacity }} seats · {% if v.driver %}{{ v.driver.name }}{% else %}no driver{% endif %}</small>
+                  </span>
+                  <span class="pk-flag f-free">Available</span>
+                </label>
+                {% endwith %}
+              {% endfor %}
+            </div>
+            <small class="pk-hint">🔒 Locked rows already run on another route.</small>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>Stops</label>
+          <div id="editStopsContainer"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="editAddStopBtn">+ Add Stop</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="editRouteModal">Cancel</button>
+        <button class="btn btn-primary" type="submit">Update Route</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ═══ EDIT ASSIGNMENT ═══ #}
+<div class="overlay" id="editAssignModal">
+  <div class="modal lg">
+    <div class="modal-head"><h3>Edit Transport Assignment</h3><button type="button" data-close="editAssignModal">✕</button></div>
+
+    <form method="post" id="editAssignForm">
+      {% csrf_token %}
+
+      <div class="ea-bar">
+        <div class="thumb circle big" id="eaAv"></div>
+        <div class="grow">
+          <b id="eaName">—</b>
+          <div class="muted-sm" id="eaSub">—</div>
+        </div>
+        <span class="badge b-amber" id="eaCode">—</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label>Route</label>
+          <select name="route" id="eaRoute" required>
+            <option value="">— Select a route —</option>
+            {% for r in routes %}
+              <option value="{{ r.pk }}">{{ r.code }} — {{ r.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Pickup Stop</label>
+          <select name="stop" id="eaStop" required><option value="">— None —</option></select>
+        </div>
+
+        <div class="field full">
+          <label>Vehicle <span class="hint-lite">(only buses on the selected route)</span></label>
+          <div class="veh-grid" id="eaVehGrid">
+            <div class="veh-empty">Select a route to load vehicles.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Transport Charges (Rs) <span class="hint-lite">(from student profile)</span></label>
+          <input type="number" step="0.01" name="monthly_fee" id="eaFee" readonly required>
+        </div>
+
+        <div class="field">
+          <label>Guardian Contact <span class="opt-tag">OPTIONAL</span></label>
+          <input type="text" name="guardian_contact" id="eaGuardian">
+        </div>
+
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" name="start_date" id="eaStart">
+        </div>
+
+        <div class="field">
+          <label>End Date <span class="opt-tag">OPTIONAL</span></label>
+          <input type="date" name="end_date" id="eaEnd">
+        </div>
+
+        <div class="field full">
+          <label>Pickup Point <span class="opt-tag">OPTIONAL</span></label>
+          <input type="text" name="pickup_point" id="eaPickup">
+        </div>
+
+        <div class="field full">
+          <label>Notes <span class="opt-tag">OPTIONAL</span></label>
+          <textarea name="notes" id="eaNotes" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="editAssignModal">Cancel</button>
+        <button class="btn btn-primary" type="submit">Update Assignment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+{# ═══ VEHICLE DETAILS ═══ #}
+<div class="overlay" id="vehicleDetailModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Vehicle Details</h3><button type="button" data-close="vehicleDetailModal">✕</button></div>
+    <div id="vehicleDetailContent"><div class="modal-loading">Loading…</div></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close="vehicleDetailModal">Close</button></div>
+  </div>
+</div>
+
+{# ═══ STAFF DETAILS ═══ #}
+<div class="overlay" id="staffDetailModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Staff Details</h3><button type="button" data-close="staffDetailModal">✕</button></div>
+    <div id="staffDetailContent"><div class="modal-loading">Loading…</div></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close="staffDetailModal">Close</button></div>
+  </div>
+</div>
+
+{# ═══ ASSIGNMENT DETAILS ═══ #}
+<div class="overlay" id="assignDetailModal">
+  <div class="modal">
+    <div class="modal-head"><h3>Assignment Details</h3><button type="button" data-close="assignDetailModal">✕</button></div>
+    <div id="assignDetailContent"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-ghost" data-close="assignDetailModal">Close</button></div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  var STU_API     = "{% url 'api_student_by_roll' %}";
+  var SUGGEST_API = "{% url 'api_student_suggest' %}";
+  var ROUTE_API   = "{% url 'api_route_vehicles' 0 %}";
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m];
+    });
+  }
+  function lvl(p) { return p >= 90 ? 'lvl-high' : p >= 70 ? 'lvl-mid' : 'lvl-low'; }
+  function vic(t) { return t === 'Van' ? '🚐' : t === 'Coaster' ? '🚌' : '🚍'; }
+  function openM(id) { var e = document.getElementById(id); if (e) e.classList.add('show'); }
+  function closeM(id) { var e = document.getElementById(id); if (e) e.classList.remove('show'); }
+
+  function paintBars(scope) {
+    (scope || document).querySelectorAll('[data-pct]').forEach(function (b) {
+      var i = b.querySelector('i');
+      if (i) i.style.width = (b.getAttribute('data-pct') || 0) + '%';
+    });
+  }
+  paintBars();
+
+  /* ══ MODALS ══ */
+  document.querySelectorAll('[data-open-modal]').forEach(function (b) {
+    b.addEventListener('click', function () { openM(b.getAttribute('data-open-modal')); });
+  });
+  document.querySelectorAll('[data-close]').forEach(function (b) {
+    b.addEventListener('click', function () { closeM(b.getAttribute('data-close')); });
+  });
+  document.querySelectorAll('.overlay').forEach(function (o) {
+    o.addEventListener('click', function (e) { if (e.target === o) closeM(o.id); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.overlay.show').forEach(function (o) { o.classList.remove('show'); });
+    }
+  });
+
+  /* ══ CONFIRM ══ */
+  document.querySelectorAll('.confirm-form').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      if (!window.confirm(f.getAttribute('data-confirm') || 'Are you sure?')) e.preventDefault();
+    });
+  });
+
+  /* ══ EXPANDABLE STOPS ══ */
+  document.querySelectorAll('.toggle-stops').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var box = btn.closest('.route-stops');
+      var open = box.classList.toggle('expanded');
+      btn.textContent = open ? btn.getAttribute('data-less') : btn.getAttribute('data-more');
+    });
+  });
+
+  /* ══ VEHICLE ID PREVIEW ══ */
+  var vtypeSel = document.getElementById('vtypeSel');
+  var vehPreview = document.getElementById('vehPreview');
+  if (vtypeSel && vehPreview) {
+    var upd = function () {
+      var m = { Bus: vtypeSel.getAttribute('data-bus'),
+                Van: vtypeSel.getAttribute('data-van'),
+                Coaster: vtypeSel.getAttribute('data-cstr') };
+      vehPreview.textContent = m[vtypeSel.value] || '—';
+    };
+    vtypeSel.addEventListener('change', upd); upd();
+  }
+  /* ══ DISTANCE (km / m) helper ══ */
+function syncDistance(valueId, unitId, hiddenId) {
+  var val  = document.getElementById(valueId);
+  var unit = document.getElementById(unitId);
+  var hid  = document.getElementById(hiddenId);
+  if (!val || !unit || !hid) return;
+
+  function update() {
+    var v = val.value.trim();
+    hid.value = v ? (v + ' ' + unit.value) : '';
+  }
+  val.addEventListener('input', update);
+  unit.addEventListener('change', update);
+  update(); // initial
+}
+
+// Call for both forms
+syncDistance('addDistValue',  'addDistUnit',  'addDistHidden');
+syncDistance('editDistValue', 'editDistUnit', 'editDistHidden');
+
+  /* ══════════ SEARCHABLE PICKER ══════════ */
+  function initPicker(el) {
+    if (!el) return null;
+
+    var mode    = el.getAttribute('data-mode') || 'multi';
+    var list    = el.querySelector('.pk-list');
+    var search  = el.querySelector('.pk-search');
+    var clear   = el.querySelector('.pk-clear');
+    var counter = el.querySelector('.pk-count');
+
+    function refresh() {
+      var n = 0, label = (mode === 'single') ? 'No driver' : '0 selected';
+
+      list.querySelectorAll('input').forEach(function (inp) {
+        var opt = inp.closest('.pk-opt');
+        opt.classList.toggle('sel', inp.checked);
+        if (inp.checked && inp.value) {
+          n++;
+          var b = opt.querySelector('.pk-meta b');
+          if (mode === 'single' && b) label = b.textContent.trim();
+        }
+      });
+
+      counter.textContent = (mode === 'single') ? label : (n + ' selected');
+    }
+
+    list.addEventListener('change', refresh);
+
+    if (search) {
+      search.addEventListener('input', function () {
+        var q = search.value.toLowerCase().trim();
+        list.querySelectorAll('.pk-opt').forEach(function (o) {
+          if (o.classList.contains('none-opt')) { o.style.display = ''; return; }
+          o.style.display = (!q || (o.getAttribute('data-search') || '').indexOf(q) !== -1) ? '' : 'none';
+        });
+      });
+    }
+
+    if (clear) {
+      clear.addEventListener('click', function () {
+        if (mode === 'single') {
+          var none = list.querySelector('.none-opt input');
+          if (none) none.checked = true;
+        } else {
+          list.querySelectorAll('input').forEach(function (i) { if (!i.disabled) i.checked = false; });
+        }
+        refresh();
+      });
+    }
+
+    list.addEventListener('click', function (e) {
+      var o = e.target.closest('.pk-opt');
+      if (o && o.classList.contains('locked')) e.preventDefault();
+    });
+
+    refresh();
+    return { el: el, list: list, search: search, refresh: refresh, mode: mode };
+  }
+
+  initPicker(document.getElementById('addDrvPicker'));
+  initPicker(document.getElementById('addVehPicker'));
+  var editDrvPicker = initPicker(document.getElementById('editDrvPicker'));
+  var editVehPicker = initPicker(document.getElementById('editVehPicker'));
+
+  function prepEditDrv(vehId, driverId) {
+    if (!editDrvPicker) return;
+    driverId = driverId || '';
+
+    editDrvPicker.list.querySelectorAll('.pk-opt').forEach(function (o) {
+      var inp = o.querySelector('input');
+
+      if (o.classList.contains('none-opt')) {
+        inp.disabled = false;
+        inp.checked = !driverId;
+        o.classList.remove('locked');
+        o.style.display = '';
+        return;
+      }
+
+      var owner = o.getAttribute('data-veh') || '';
+      var oCode = o.getAttribute('data-vehcode') || '';
+      var flag  = o.querySelector('.pk-flag');
+      var mine  = owner && owner === String(vehId);
+
+      inp.disabled = !!owner && !mine;
+      o.classList.toggle('locked', inp.disabled);
+      inp.checked = !!driverId && String(driverId) === inp.value;
+
+      if (mine)       { flag.textContent = 'Current driver'; flag.className = 'pk-flag f-mine'; }
+      else if (owner) { flag.textContent = 'On ' + oCode;    flag.className = 'pk-flag f-taken'; }
+      else            { flag.textContent = 'Available';      flag.className = 'pk-flag f-free'; }
+
+      o.style.display = '';
+    });
+
+    if (editDrvPicker.search) editDrvPicker.search.value = '';
+    editDrvPicker.refresh();
+  }
+
+  function prepEditVeh(routeId, selectedIds) {
+    if (!editVehPicker) return;
+
+    editVehPicker.list.querySelectorAll('.pk-opt').forEach(function (o) {
+      var inp   = o.querySelector('input');
+      var owner = o.getAttribute('data-route-id') || '';
+      var oCode = o.getAttribute('data-route-code') || '';
+      var flag  = o.querySelector('.pk-flag');
+      var mine  = owner && owner === String(routeId);
+
+      inp.disabled = !!owner && !mine;
+      o.classList.toggle('locked', inp.disabled);
+      inp.checked = selectedIds.indexOf(inp.value) !== -1;
+
+      if (mine)       { flag.textContent = 'On this route'; flag.className = 'pk-flag f-mine'; }
+      else if (owner) { flag.textContent = 'On ' + oCode;   flag.className = 'pk-flag f-taken'; }
+      else            { flag.textContent = 'Available';     flag.className = 'pk-flag f-free'; }
+
+      o.style.display = '';
+    });
+
+    if (editVehPicker.search) editVehPicker.search.value = '';
+    editVehPicker.refresh();
+  }
+
+  /* ══ TABLE FILTERS ══ */
+  function wire(ids, rowSel, test) {
+    var els = ids.map(function (i) { return document.getElementById(i); });
+    if (!els[0]) return;
+    var run = function () {
+      document.querySelectorAll(rowSel).forEach(function (row) {
+        if (row.cells && row.cells.length < 2) return;
+        row.style.display = test(row, els) ? '' : 'none';
+      });
+    };
+    els.forEach(function (e) {
+      if (!e) return;
+      e.addEventListener('input', run);
+      e.addEventListener('change', run);
+    });
+  }
+
+  wire(['fDrvSearch','fDrvRole','fDrvAssign'], '#drvBody tr', function (row, e) {
+    var q = (e[0].value || '').toLowerCase();
+    return (!q || row.innerText.toLowerCase().indexOf(q) !== -1)
+        && (!e[1].value || row.getAttribute('data-role') === e[1].value)
+        && (!e[2].value || row.getAttribute('data-assigned') === e[2].value);
+  });
+
+  wire(['fVehSearch','fVehType','fVehStatus','fVehDriver','fVehRoute'], '#vehBody tr', function (row, e) {
+    var q = (e[0].value || '').toLowerCase();
+    return (!q || row.innerText.toLowerCase().indexOf(q) !== -1)
+        && (!e[1].value || row.getAttribute('data-type') === e[1].value)
+        && (!e[2].value || row.getAttribute('data-status') === e[2].value)
+        && (!e[3].value || row.getAttribute('data-hasdriver') === e[3].value)
+        && (!e[4].value || row.getAttribute('data-hasroute') === e[4].value);
+  });
+
+  var fRS = document.getElementById('fRouteSearch');
+  if (fRS) {
+    var fRV = document.getElementById('fRouteVeh');
+    var runR = function () {
+      var q = fRS.value.toLowerCase().trim();
+      document.querySelectorAll('#routeGrid .route-card').forEach(function (c) {
+        c.style.display = ((!q || (c.getAttribute('data-search') || '').indexOf(q) !== -1)
+          && (!fRV.value || c.getAttribute('data-hasveh') === fRV.value)) ? '' : 'none';
+      });
+    };
+    fRS.addEventListener('input', runR);
+    fRV.addEventListener('change', runR);
+  }
+
+  /* ══ STOP ROWS ══ */
+  function stopRow(box, name, time) {
+    var r = document.createElement('div');
+    r.className = 'stop-row';
+    r.innerHTML =
+      '<input type="text" name="stop_name[]" placeholder="Stop name" value="' + (name || '') + '">' +
+      '<input type="time" name="stop_time[]" value="' + (time || '') + '">' +
+      '<button type="button" class="btn btn-sm btn-danger remove-stop">&times;</button>';
+    r.querySelector('.remove-stop').addEventListener('click', function () { r.remove(); });
+    box.appendChild(r);
+  }
+
+  var addStops = document.getElementById('addStopsContainer');
+  var addStopBtn = document.getElementById('addStopBtn');
+  if (addStopBtn && addStops) {
+    addStopBtn.addEventListener('click', function () { stopRow(addStops, '', ''); });
+    addStops.querySelectorAll('.remove-stop').forEach(function (b) {
+      b.addEventListener('click', function () { b.closest('.stop-row').remove(); });
+    });
+  }
+
+  var editStops = document.getElementById('editStopsContainer');
+  var editStopBtn = document.getElementById('editAddStopBtn');
+  if (editStopBtn && editStops) {
+    editStopBtn.addEventListener('click', function () { stopRow(editStops, '', ''); });
+  }
+
+  /* ══ EDIT ROUTE ══ */
+  document.querySelectorAll('.edit-route').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var f = document.getElementById('editRouteForm');
+      f.action = btn.getAttribute('data-edit-url');
+
+      f.elements['code'].value         = btn.getAttribute('data-code') || '';
+      f.elements['name'].value         = btn.getAttribute('data-name') || '';
+      // Split existing distance into number + unit
+        (function () {
+          var raw = (btn.getAttribute('data-distance') || '').trim();
+          var match = raw.match(/^([\d.]+)\s*(km|m)?$/i);
+          var num  = match ? match[1] : '';
+          var unit = (match && match[2]) ? match[2].toLowerCase() : 'km';
+
+          document.getElementById('editDistValue').value = num;
+          document.getElementById('editDistUnit').value  = unit;
+          document.getElementById('editDistHidden').value = raw;
+        })();
+      f.elements['pickup_start'].value = btn.getAttribute('data-pickup') || '';
+
+      prepEditVeh(btn.getAttribute('data-id'),
+                  (btn.getAttribute('data-vehicles') || '').split(',').filter(Boolean));
+
+      editStops.innerHTML = '';
+      var raw = btn.getAttribute('data-stops') || '';
+      if (raw) {
+        raw.split('|').forEach(function (s) {
+          var p = s.split('~');
+          stopRow(editStops, (p[0] || '').trim(), (p[1] || '').trim());
+        });
+      } else { stopRow(editStops, '', ''); }
+
+      openM('editRouteModal');
+    });
+  });
+
+  /* ══ SHARED VEHICLE CARD RENDERER ══ */
+  function renderVehCards(grid, vehicles, currentId) {
+    if (!vehicles.length) {
+      grid.innerHTML = '<div class="veh-empty">🚫 No vehicles assigned to this route.<br>' +
+                       'Add a vehicle to this route from the Routes tab first.</div>';
+      return false;
+    }
+
+    grid.innerHTML = vehicles.map(function (v) {
+      var mine = currentId && String(currentId) === String(v.id);
+      var pick = v.selectable || mine;
+
+      var badge = mine
+        ? '<span class="badge b-blue">Current</span>'
+        : (!v.selectable
+            ? (v.free <= 0 ? '<span class="badge b-red">FULL</span>'
+                           : '<span class="badge b-grey">' + esc(v.status) + '</span>')
+            : '<span class="badge b-green">' + v.free + ' free</span>');
+
+      return '<label class="veh-opt ' + (pick ? '' : 'full') + (mine ? ' sel' : '') + '">' +
+        '<input type="radio" name="vehicle" value="' + v.id + '"' +
+               (pick ? '' : ' disabled') + (mine ? ' checked' : '') + '>' +
+        '<div class="vo-head">' +
+          '<div class="vo-ic">' + vic(v.vtype) + '</div>' +
+          '<div class="vo-t"><b>' + esc(v.code) + '</b>' +
+          '<small>' + esc(v.reg_no) + ' · ' + esc(v.vtype) + '</small></div>' +
+          '<div class="vo-check">✓</div>' +
+        '</div>' +
+        '<div class="vo-bar ' + lvl(v.percent) + '" data-pct="' + v.percent + '"><i></i></div>' +
+        '<div class="vo-stats"><span><b>' + v.used + '</b> / ' + v.capacity + ' seats</span>' + badge + '</div>' +
+        (v.driver
+          ? '<div class="vo-drv">👨‍✈️ ' + esc(v.driver) + (v.driver_phone ? ' · ' + esc(v.driver_phone) : '') + '</div>'
+          : '<div class="vo-drv">⚠ No driver assigned</div>') +
+      '</label>';
+    }).join('');
+
+    paintBars(grid);
+    return true;
+  }
+
+  function bindVehGrid(grid, onPick) {
+    grid.addEventListener('change', function (e) {
+      if (e.target.type !== 'radio') return;
+      grid.querySelectorAll('.veh-opt').forEach(function (o) {
+        var i = o.querySelector('input');
+        o.classList.toggle('sel', i && i.checked);
+      });
+      if (onPick) onPick();
+    });
+    grid.addEventListener('click', function (e) {
+      if (e.target.closest('.veh-opt.full')) e.preventDefault();
+    });
+  }
+
+  /* ══════════ ASSIGNMENT WIZARD ══════════ */
+  var rollInput = document.getElementById('rollInput');
+
+  if (rollInput) {
+    var findBtn   = document.getElementById('findBtn');
+    var suggest   = document.getElementById('rollSuggest');
+    var lookupMsg = document.getElementById('lookupMsg');
+    var stuCard   = document.getElementById('stuCard');
+    var studentId = document.getElementById('studentId');
+    var routeSel  = document.getElementById('routeSel');
+    var routeInfo = document.getElementById('routeInfo');
+    var vehGrid   = document.getElementById('vehGrid');
+    var stopSel   = document.getElementById('stopSel');
+    var feeInput  = document.getElementById('feeInput');
+    var guardian  = document.getElementById('guardianInput');
+    var startIn   = document.getElementById('startInput');
+    var endIn     = document.getElementById('endInput');
+    var submitBtn = document.getElementById('submitBtn');
+
+    var sgTimer = null, sgIndex = -1, sgData = [];
+
+    /* default end date = start + 1 year */
+    function plusYear(iso) {
+      if (!iso) return '';
+      var d = new Date(iso + 'T00:00:00');
+      if (isNaN(d)) return '';
+      d.setFullYear(d.getFullYear() + 1);
+      return d.toISOString().slice(0, 10);
+    }
+
+    var DEFAULT_END = plusYear(startIn.value);
+    if (!endIn.value) endIn.value = DEFAULT_END;
+
+    startIn.addEventListener('change', function () {
+      if (!endIn.value || endIn.value === DEFAULT_END) {
+        DEFAULT_END = plusYear(startIn.value);
+        endIn.value = DEFAULT_END;
+      }
+    });
+
+    function step(n, s) {
+      var w = document.getElementById('w' + n);
+      if (!w) return;
+      w.classList.remove('active', 'done');
+      if (s) w.classList.add(s);
+    }
+    function lock(n, v) {
+      var b = document.getElementById('blk' + n);
+      if (b) b.classList.toggle('locked', v);
+    }
+    function msg(t, c) { lookupMsg.textContent = t; lookupMsg.className = 'lookup-msg show ' + (c || 'err'); }
+    function hideMsg() { lookupMsg.className = 'lookup-msg'; }
+    function hideSg() { suggest.classList.remove('show'); sgIndex = -1; }
+
+    function resetAll() {
+      document.getElementById('assignForm').reset();
+      studentId.value = '';
+      stuCard.classList.remove('show');
+      routeInfo.classList.remove('show');
+      hideMsg(); hideSg();
+      vehGrid.innerHTML = '<div class="veh-empty">Select a route first to see available vehicles.</div>';
+      stopSel.innerHTML = '<option value="">— None —</option>';
+      endIn.value = plusYear(startIn.value);
+      submitBtn.disabled = true;
+      lock(2, true); lock(3, true); lock(4, true);
+      step(1, 'active'); step(2, null); step(3, null); step(4, null);
+      rollInput.focus();
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('resetBtn2').addEventListener('click', resetAll);
+
+    /* ── SUGGESTIONS ── */
+    function drawSuggest(items) {
+      sgData = items;
+      if (!items.length) {
+        suggest.innerHTML = '<div class="sg-empty">No matching students.</div>';
+        suggest.classList.add('show');
+        return;
+      }
+      suggest.innerHTML = items.map(function (s, i) {
+        return '<div class="sg-item' + (s.assigned ? ' taken' : '') + '" data-i="' + i + '">' +
+          '<div class="sg-av">' +
+            (s.photo ? '<img src="' + s.photo + '" alt="">' : esc(s.name.charAt(0).toUpperCase())) +
+          '</div>' +
+          '<div class="sg-meta">' +
+            '<b>' + esc(s.name) + '</b>' +
+            '<small>' + esc(s.roll_no) + ' · Class ' + esc(s.student_class) +
+              (s.father_name ? ' · ' + esc(s.father_name) : '') + '</small>' +
+          '</div>' +
+          (s.assigned ? '<span class="badge b-red">Assigned</span>'
+                      : '<span class="badge b-green">Free</span>') +
+        '</div>';
+      }).join('');
+      suggest.classList.add('show');
+    }
+
+    rollInput.addEventListener('input', function () {
+      var q = rollInput.value.trim();
+      clearTimeout(sgTimer);
+      if (q.length < 1) { hideSg(); return; }
+
+      sgTimer = setTimeout(function () {
+        fetch(SUGGEST_API + '?q=' + encodeURIComponent(q), {
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { drawSuggest(d.results || []); })
+        .catch(function () { hideSg(); });
+      }, 220);
+    });
+
+    suggest.addEventListener('click', function (e) {
+      var it = e.target.closest('.sg-item');
+      if (!it || it.classList.contains('taken')) return;
+      var s = sgData[+it.getAttribute('data-i')];
+      rollInput.value = s.roll_no;
+      hideSg();
+      findStudent();
+    });
+
+    rollInput.addEventListener('keydown', function (e) {
+      var items = suggest.querySelectorAll('.sg-item');
+
+      if (e.key === 'ArrowDown' && items.length) {
+        e.preventDefault();
+        sgIndex = Math.min(sgIndex + 1, items.length - 1);
+      } else if (e.key === 'ArrowUp' && items.length) {
+        e.preventDefault();
+        sgIndex = Math.max(sgIndex - 1, 0);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (sgIndex >= 0 && items[sgIndex] && !items[sgIndex].classList.contains('taken')) {
+          items[sgIndex].click();
+        } else {
+          hideSg(); findStudent();
+        }
+        return;
+      } else if (e.key === 'Escape') {
+        hideSg(); return;
+      } else { return; }
+
+      items.forEach(function (x, i) { x.classList.toggle('hi', i === sgIndex); });
+      if (items[sgIndex]) items[sgIndex].scrollIntoView({ block: 'nearest' });
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.roll-wrap')) hideSg();
+    });
+
+    /* ── FIND STUDENT ── */
+    function findStudent() {
+      var roll = rollInput.value.trim();
+      if (!roll) { msg('Please enter a roll number.', 'err'); return; }
+
+      findBtn.disabled = true;
+      findBtn.textContent = '⏳';
+      hideMsg();
+
+      fetch(STU_API + '?roll_no=' + encodeURIComponent(roll), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+      .then(function (res) {
+        findBtn.disabled = false;
+        findBtn.textContent = '🔍 Find';
+
+        if (!res.ok || !res.data.ok) {
+          stuCard.classList.remove('show');
+          studentId.value = '';
+          lock(2, true); lock(3, true); lock(4, true);
+          msg(res.data.error || 'Student not found.', 'err');
+          return;
+        }
+
+        var s = res.data.student;
+
+        if (res.data.existing) {
+          stuCard.classList.remove('show');
+          studentId.value = '';
+          lock(2, true); lock(3, true); lock(4, true);
+          msg('⚠ ' + s.name + ' is already assigned — ' + res.data.existing.vehicle +
+              ' on ' + res.data.existing.route + ' (' + res.data.existing.code +
+              '). Use Edit or Unassign in the list below.', 'warn');
+          return;
+        }
+        
+        if (!s.is_active) {
+            stuCard.classList.remove('show');
+            studentId.value = '';
+            lock(2, true); lock(3, true); lock(4, true);
+            msg('This student is deactivated. Please activate them from the Students list before assigning transport.', 'err');
+            return;
+          }
+
+        studentId.value = s.id;
+
+        document.getElementById('stuAv').innerHTML = s.photo
+          ? '<img src="' + s.photo + '" alt="">'
+          : esc(s.name.charAt(0).toUpperCase());
+
+        document.getElementById('stuName').textContent = s.name;
+        document.getElementById('stuSub').textContent =
+          'Roll ' + s.roll_no + '  ·  Father: ' + (s.father_name || '—');
+
+        document.getElementById('stuTags').innerHTML =
+          '<span class="badge b-purple">Class ' + esc(s.student_class) + '</span>' +
+          '<span class="badge b-blue">' + esc(s.contact || 'no contact') + '</span>' +
+          (s.is_active ? '<span class="badge b-green">Active</span>'
+                       : '<span class="badge b-red">Inactive</span>');
+
+        stuCard.classList.add('show');
+        guardian.value = s.contact || '';
+        feeInput.value = s.transport_charges || '0.00';
+
+        step(1, 'done'); step(2, 'active');
+        lock(2, false);   // ← shows Choose Route block
+        routeSel.focus();
+      })
+      .catch(function () {
+        findBtn.disabled = false;
+        findBtn.textContent = '🔍 Find';
+        msg('Network error. Please try again.', 'err');
+      });
+    }
+
+    findBtn.addEventListener('click', findStudent);
+
+    /* ── ROUTE CHANGE ── */
+    routeSel.addEventListener('change', function () {
+      var id = routeSel.value;
+
+      if (!id) {
+        routeInfo.classList.remove('show');
+        vehGrid.innerHTML = '<div class="veh-empty">Select a route first.</div>';
+        lock(3, true); lock(4, true);
+        submitBtn.disabled = true;
+        step(2, 'active'); step(3, null); step(4, null);
+        return;
+      }
+
+      vehGrid.innerHTML = '<div class="veh-empty">⏳ Loading vehicles…</div>';
+      lock(3, false);
+
+      fetch(ROUTE_API.replace('/0/', '/' + id + '/'), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        document.getElementById('riCode').textContent   = d.route.code;
+        document.getElementById('riDist').textContent   = d.route.distance;
+        document.getElementById('riPickup').textContent = d.route.pickup_start || '—';
+        document.getElementById('riVeh').textContent    = d.vehicles.length;
+        routeInfo.classList.add('show');
+
+        stopSel.innerHTML = '<option value="">— None —</option>';
+        d.stops.forEach(function (s) {
+          var o = document.createElement('option');
+          o.value = s.id;
+          o.textContent = s.name + (s.time ? ' (' + s.time + ')' : '');
+          stopSel.appendChild(o);
+        });
+
+        var ok = renderVehCards(vehGrid, d.vehicles, null);
+        if (!ok) { lock(4, true); submitBtn.disabled = true; return; }
+
+        step(2, 'done'); step(3, 'active');
+      })
+      .catch(function () {
+        vehGrid.innerHTML = '<div class="veh-empty error">Unable to load vehicles.</div>';
+      });
+    });
+
+    bindVehGrid(vehGrid, function () {
+      lock(4, false);
+      submitBtn.disabled = false;
+      step(3, 'done'); step(4, 'active');
+      document.getElementById('blk4').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    rollInput.focus();
+  }
+
+  /* ══════════ EDIT ASSIGNMENT ══════════ */
+  var eaRoute = document.getElementById('eaRoute');
+  var eaLoadRoute = null;
+
+  if (eaRoute) {
+    var eaGrid = document.getElementById('eaVehGrid');
+    var eaStop = document.getElementById('eaStop');
+    var eaFee  = document.getElementById('eaFee');
+
+    bindVehGrid(eaGrid, null);
+
+    eaLoadRoute = function (routeId, keepVeh, keepStop, keepFee) {
+      if (!routeId) {
+        eaGrid.innerHTML = '<div class="veh-empty">Select a route to load vehicles.</div>';
+        eaStop.innerHTML = '<option value="">— None —</option>';
+        return;
+      }
+
+      eaGrid.innerHTML = '<div class="veh-empty">⏳ Loading vehicles…</div>';
+
+      fetch(ROUTE_API.replace('/0/', '/' + routeId + '/'), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        eaStop.innerHTML = '<option value="">— None —</option>';
+        d.stops.forEach(function (s) {
+          var o = document.createElement('option');
+          o.value = s.id;
+          o.textContent = s.name + (s.time ? ' (' + s.time + ')' : '');
+          if (keepStop && String(keepStop) === String(s.id)) o.selected = true;
+          eaStop.appendChild(o);
+        });
+
+        if (!keepFee) eaFee.value = d.route.monthly_fee;
+
+        renderVehCards(eaGrid, d.vehicles, keepVeh);
+      })
+      .catch(function () {
+        eaGrid.innerHTML = '<div class="veh-empty error">Unable to load vehicles.</div>';
+      });
+    };
+
+    eaRoute.addEventListener('change', function () {
+      eaLoadRoute(eaRoute.value, null, null, false);
+    });
+  }
+
+  /* ══════════ DELEGATED ACTIONS ══════════ */
+  document.addEventListener('click', function (e) {
+
+    /* STAFF DETAIL */
+    var sb = e.target.closest('.staff-detail');
+    if (sb) {
+      fetch(sb.getAttribute('data-url'), { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function (d) {
+          var v = d.vehicle;
+
+          var driverPhoto = d.photo
+            ? '<img src="' + esc(d.photo) + '" alt="' + esc(d.name) + '">'
+            : '👨‍✈️';
+
+          var cnicPhoto = d.cnic_photo
+            ? '<img src="' + esc(d.cnic_photo) + '" alt="CNIC of ' + esc(d.name) + '" title="Click to view full image">'
+            : '<span>No CNIC image uploaded</span>';
+
+          var vehicleHtml = v
+            ? esc(v.code) + ' — ' + esc(v.name) + ' (' + v.used + '/' + v.capacity + ' seats)' +
+              (v.route ? ' · route ' + esc(v.route) : '')
+            : 'No vehicle assigned';
+
+          document.getElementById('staffDetailContent').innerHTML =
+            '<div class="staff-hero">' +
+              '<div class="av">' + driverPhoto + '</div>' +
+              '<h3>' + esc(d.name) + '</h3>' +
+              '<div class="sub">' + esc(d.code) + ' • ' + esc(d.role) + '</div>' +
+            '</div>' +
+
+            '<div class="staff-docs">' +
+              '<div class="staff-doc">' +
+                '<div class="staff-doc-label"><span>Driver Photo</span><span>📷</span></div>' +
+                '<div class="staff-doc-img">' + driverPhoto + '</div>' +
+              '</div>' +
+              '<div class="staff-doc ' + (d.cnic_photo ? '' : 'no-image') + '">' +
+                '<div class="staff-doc-label"><span>CNIC Image</span><span>🪪</span></div>' +
+                '<div class="staff-doc-img">' + cnicPhoto + '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="detail-grid">' +
+              '<div class="detail-box"><span>Employee ID</span><strong>' + esc(d.code) + '</strong></div>' +
+              '<div class="detail-box"><span>Role</span><strong>' + esc(d.role) + '</strong></div>' +
+              '<div class="detail-box"><span>CNIC Number</span><strong>' + esc(d.cnic) + '</strong></div>' +
+              '<div class="detail-box"><span>Contact</span><strong>' + esc(d.contact) + '</strong></div>' +
+              '<div class="detail-box"><span>Email</span><strong>' + esc(d.email) + '</strong></div>' +
+              '<div class="detail-box"><span>Qualification</span><strong>' + esc(d.qualification) + '</strong></div>' +
+              '<div class="detail-box"><span>Salary</span><strong>Rs ' + esc(d.salary) + '</strong></div>' +
+              '<div class="detail-box"><span>Status</span><strong>' +
+                (d.is_active ? '<span class="badge b-green">Active</span>' : '<span class="badge b-grey">Inactive</span>') +
+              '</strong></div>' +
+              '<div class="detail-box wide"><span>Assigned Vehicle</span><strong>' +
+                vehicleHtml + '</strong></div>' +
+            '</div>';
+
+          /* Clicking either image opens it in a new browser tab. */
+          var imgs = document.querySelectorAll('#staffDetailContent .staff-doc-img img');
+          imgs.forEach(function (img) {
+            img.addEventListener('click', function () {
+              if (img.src) window.open(img.src, '_blank', 'noopener,noreferrer');
+            });
+          });
+
+          openM('staffDetailModal');
+        })
+        .catch(function () { alert('Unable to load staff details.'); });
+      return;
+    }
+
+    /* VEHICLE DETAIL */
+    var vb = e.target.closest('.view-vehicle');
+    if (vb) {
+      fetch(vb.getAttribute('data-url'), {
+        credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (d) {
+        var sc = d.status === 'Active' ? 'b-green' : d.status === 'Maintenance' ? 'b-amber' : 'b-grey';
+
+        var drv = d.driver
+          ? '<b>' + esc(d.driver.code) + '</b><div class="muted-sm">' +
+            esc(d.driver.name) + ' · ' + esc(d.driver.phone) + '</div>'
+          : '<span class="muted-sm">No driver assigned</span>';
+
+        var rts = (d.routes && d.routes.length)
+          ? d.routes.map(function (r) {
+              return '<span class="badge b-blue mini">' + esc(r.code) + ' — ' + esc(r.name) + '</span>';
+            }).join('')
+          : '<span class="muted-sm">Not on any route</span>';
+
+        var riders = (d.riders && d.riders.length)
+          ? d.riders.map(function (s) {
+              return '<span class="badge b-purple mini">' + esc(s.name) + ' (' + esc(s.roll_no) + ')</span>';
+            }).join('')
+          : '<span class="muted-sm">No students assigned</span>';
+
+        document.getElementById('vehicleDetailContent').innerHTML =
+          '<div class="detail-head">' +
+            '<div class="thumb big">' + vic(d.vtype) + '</div>' +
+            '<div><h3>' + esc(d.name) + '</h3><div class="code">' + esc(d.code) + '</div></div>' +
+            '<div class="right"><span class="badge ' + sc + '">' + esc(d.status) + '</span></div>' +
+          '</div>' +
+          '<div class="occ-panel">' +
+            '<div class="row"><span>Seat Occupancy</span><span>' +
+              d.used + ' / ' + d.capacity + ' (' + d.percent + '%)</span></div>' +
+            '<div class="occ-bar tall ' + lvl(d.percent) + '" data-pct="' + d.percent + '"><i></i></div>' +
+            '<div class="foot">' + d.free + ' seats still available</div>' +
+          '</div>' +
+          '<div class="detail-grid">' +
+            '<div class="detail-box"><span>Type</span><strong>' + esc(d.vtype) + '</strong></div>' +
+            '<div class="detail-box"><span>Reg No.</span><strong>' + esc(d.reg_no) + '</strong></div>' +
+            '<div class="detail-box"><span>Model / Year</span><strong>' + esc(d.model_year) + '</strong></div>' +
+            '<div class="detail-box"><span>Capacity</span><strong>' + d.capacity + ' seats</strong></div>' +
+            '<div class="detail-box wide"><span>Driver</span><div class="inner">' + drv + '</div></div>' +
+            '<div class="detail-box wide"><span>Routes</span><div class="inner">' + rts + '</div></div>' +
+            '<div class="detail-box wide"><span>Students On Board</span><div class="inner">' + riders + '</div></div>' +
+            '<div class="detail-box wide"><span>Notes</span><strong class="soft">' + esc(d.notes) + '</strong></div>' +
+          '</div>';
+
+        paintBars(document.getElementById('vehicleDetailContent'));
+        openM('vehicleDetailModal');
+      })
+      .catch(function () { alert('Unable to load vehicle details.'); });
+      return;
+    }
+
+    /* EDIT VEHICLE */
+    var ev = e.target.closest('.edit-vehicle');
+    if (ev) {
+      var f = document.getElementById('editVehicleForm');
+      f.action = ev.getAttribute('data-edit-url');
+
+      f.elements['code'].value       = ev.getAttribute('data-code') || '';
+      f.elements['name'].value       = ev.getAttribute('data-name') || '';
+      f.elements['vtype'].value      = ev.getAttribute('data-vtype') || 'Bus';
+      f.elements['reg_no'].value     = ev.getAttribute('data-regno') || '';
+      f.elements['model_year'].value = ev.getAttribute('data-model') || '';
+      f.elements['capacity'].value   = ev.getAttribute('data-capacity') || 0;
+      f.elements['status'].value     = ev.getAttribute('data-status') || 'Active';
+      f.elements['notes'].value      = ev.getAttribute('data-notes') || '';
+
+      prepEditDrv(ev.getAttribute('data-id'), ev.getAttribute('data-driver') || '');
+
+      openM('editVehicleModal');
+      return;
+    }
+
+    /* ASSIGNMENT DETAIL */
+    var ab = e.target.closest('.view-assign');
+    if (ab) {
+      fetch(ab.getAttribute('data-url'), { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function (d) {
+          var pct = d.vehicle.capacity
+            ? Math.round(d.vehicle.used / d.vehicle.capacity * 100) : 0;
+
+          document.getElementById('assignDetailContent').innerHTML =
+            '<div class="detail-head">' +
+              '<div class="thumb circle big">' +
+                (d.student.photo ? '<img src="' + d.student.photo + '" alt="">'
+                                 : esc(d.student.name.charAt(0).toUpperCase())) +
+              '</div>' +
+              '<div><h3>' + esc(d.student.name) + '</h3>' +
+                '<div class="code">' + esc(d.student.roll_no) + ' · Class ' +
+                esc(d.student.student_class) + ' · ' + esc(d.code) + '</div></div>' +
+              '<div class="right">' +
+                (d.is_active ? '<span class="badge b-green">Active</span>'
+                             : '<span class="badge b-grey">Unassigned</span>') + '</div>' +
+            '</div>' +
+            '<div class="detail-grid">' +
+              '<div class="detail-box"><span>Route</span><strong>' +
+                esc(d.route.code) + ' — ' + esc(d.route.name) + '</strong></div>' +
+              '<div class="detail-box"><span>Distance</span><strong>' + esc(d.route.distance) + '</strong></div>' +
+              '<div class="detail-box"><span>Vehicle</span><strong>' +
+                esc(d.vehicle.code) + ' · ' + esc(d.vehicle.reg_no) + '</strong></div>' +
+              '<div class="detail-box"><span>Occupancy</span><strong>' +
+                d.vehicle.used + ' / ' + d.vehicle.capacity + ' (' + pct + '%)</strong></div>' +
+              '<div class="detail-box"><span>Driver</span><strong>' +
+                esc(d.vehicle.driver || '— none —') + '</strong></div>' +
+              '<div class="detail-box"><span>Pickup Stop</span><strong>' +
+                esc(d.stop ? d.stop.name : '—') + '</strong></div>' +
+              '<div class="detail-box"><span>Monthly Fee</span><strong>Rs ' + esc(d.monthly_fee) + '</strong></div>' +
+              '<div class="detail-box"><span>Guardian</span><strong>' + esc(d.guardian_contact || '—') + '</strong></div>' +
+              '<div class="detail-box"><span>Start Date</span><strong>' + esc(d.start_date || '—') + '</strong></div>' +
+              '<div class="detail-box"><span>End Date</span><strong>' + esc(d.end_date || '—') + '</strong></div>' +
+              '<div class="detail-box wide"><span>Pickup Point</span><strong>' +
+                esc(d.pickup_point || '—') + '</strong></div>' +
+              '<div class="detail-box wide"><span>Notes</span><strong class="soft">' +
+                esc(d.notes || '—') + '</strong></div>' +
+            '</div>';
+
+          openM('assignDetailModal');
+        })
+        .catch(function () { alert('Unable to load assignment details.'); });
+      return;
+    }
+
+    /* EDIT ASSIGNMENT */
+    var ea = e.target.closest('.edit-assign');
+    if (ea) {
+      var form = document.getElementById('editAssignForm');
+      form.action = ea.getAttribute('data-edit-url');
+
+      fetch(ea.getAttribute('data-url'), { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function (d) {
+          document.getElementById('eaAv').innerHTML = d.student.photo
+            ? '<img src="' + d.student.photo + '" alt="">'
+            : esc(d.student.name.charAt(0).toUpperCase());
+
+          document.getElementById('eaName').textContent = d.student.name;
+          document.getElementById('eaSub').textContent =
+            d.student.roll_no + ' · Class ' + d.student.student_class +
+            (d.student.father_name ? ' · ' + d.student.father_name : '');
+          document.getElementById('eaCode').textContent = d.code;
+
+          document.getElementById('eaRoute').value    = d.route.id;
+          document.getElementById('eaFee').value      = d.monthly_fee;
+          document.getElementById('eaGuardian').value = d.guardian_contact || '';
+          document.getElementById('eaStart').value    = d.start_date || '';
+          document.getElementById('eaEnd').value      = d.end_date || '';
+          document.getElementById('eaPickup').value   = d.pickup_point || '';
+          document.getElementById('eaNotes').value    = d.notes || '';
+
+          if (eaLoadRoute) {
+            eaLoadRoute(d.route.id, d.vehicle.id, d.stop ? d.stop.id : null, true);
+          }
+
+          openM('editAssignModal');
+        })
+        .catch(function () { alert('Unable to load assignment for editing.'); });
+      return;
+    }
+
+  });
+
+})();
+</script>
+{% endblock %}

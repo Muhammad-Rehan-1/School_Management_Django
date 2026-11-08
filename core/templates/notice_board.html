@@ -1,0 +1,2392 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notice Board — SchoolIMS{% endblock %}
+{% block nav_notice %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+
+/* =========================================================
+   NOTICE BOARD
+   ========================================================= */
+
+:root {
+  --green: #3CB878;
+  --red: #E4605E;
+  --blue: #5B87D6;
+  --purple: #8B7BD8;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.page { padding: 0 26px 40px; }
+
+@media (max-width: 760px) {
+  .page { padding: 0 16px 40px; }
+}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.stat {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 18px rgba(20, 24, 40, .04);
+}
+
+.stat .ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat .ic svg {
+  width: 21px;
+  height: 21px;
+  stroke: #fff;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stat h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stat p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.bg-orange { background: var(--orange); }
+.bg-green  { background: var(--green); }
+.bg-blue   { background: var(--blue); }
+.bg-purple { background: var(--purple); }
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+
+.panel {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 4px 18px rgba(20, 24, 40, .04);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.panel-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.grow { flex: 1; }
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  background: #F3F4F8;
+  padding: 5px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+
+.tabs button {
+  padding: 9px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tabs button.active {
+  background: #fff;
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(20, 24, 40, .07);
+}
+
+.tabs button i {
+  font-style: normal;
+  background: #E4E7EF;
+  color: #7A8194;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-size: 10px;
+}
+
+.tabs button.active i {
+  background: #FDF0E8;
+  color: var(--orange);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: .15s;
+}
+
+.btn-primary { background: var(--orange); color: #fff; }
+.btn-primary:hover { background: #E67D50; }
+
+.btn-ghost { background: #F1F2F7; color: var(--text); }
+.btn-ghost:hover { background: #E5E7EE; }
+
+.btn-sm { padding: 7px 13px; font-size: 12px; }
+
+.btn-danger {
+  background: #FDECEC;
+  color: var(--red);
+  border: 1px solid #F7D4D3;
+}
+
+.btn-edit,
+.btn-blue {
+  background: #E9F0FC;
+  color: #3F68B4;
+  border: 1px solid #C8D9F0;
+}
+
+.btn-solid-danger { background: var(--red); color: #fff; }
+
+.btn-publish {
+  background: #E5F6EE;
+  color: #2A9364;
+  border: 1px solid #C6EAD9;
+}
+.btn-publish:hover { background: #D9F1E5; }
+
+.btn-print {
+  background: #F0EDFB;
+  color: #6B5CC4;
+  border: 1px solid #DCD5F5;
+}
+.btn-print:hover { background: #E6E0F9; }
+
+/* =========================================================
+   FILTERS
+   ========================================================= */
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.filters input,
+.filters select {
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12.5px;
+  background: #fff;
+  min-width: 150px;
+  outline: none;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: var(--orange-soft);
+}
+
+/* =========================================================
+   VIEW TOGGLE
+   ========================================================= */
+
+.viewtoggle {
+  display: flex;
+  background: #F1F2F7;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.viewtoggle button {
+  border: none;
+  background: none;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.viewtoggle button.active {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 2px 6px rgba(20, 24, 40, .08);
+}
+
+/* =========================================================
+   INFO CHIP
+   ========================================================= */
+
+.chip-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #F8F9FC;
+  border: 1px solid #EEF0F5;
+  border-radius: 20px;
+  padding: 7px 13px;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.chip-info b { color: var(--text); }
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.b-green  { background: #E5F6EE; color: #2A9364; }
+.b-red    { background: #FDECEC; color: #C94A48; }
+.b-amber  { background: #FEF2E4; color: #C67C2E; }
+.b-blue   { background: #E9F0FC; color: #3F68B4; }
+.b-grey   { background: #F1F2F7; color: #7A8194; }
+.b-purple { background: #F0EDFB; color: #6B5CC4; }
+
+/* =========================================================
+   NOTICE GRID
+   ========================================================= */
+
+.notice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.notice-grid.list-view { grid-template-columns: 1fr; }
+
+.nc {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 17px;
+  background: #fff;
+  transition: .2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.nc:hover {
+  box-shadow: 0 10px 28px rgba(20, 24, 40, .08);
+  transform: translateY(-2px);
+}
+
+.nc.pinned {
+  border-color: var(--orange-soft);
+  background: linear-gradient(180deg, #FFFBF8 0%, #fff 60%);
+}
+
+.nc.urgent { border-left: 4px solid var(--red); }
+
+.nc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.nc-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.nc-title { min-width: 0; flex: 1; }
+
+.nc-code {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: .4px;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nc-title h4 {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.pin-link {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: .25;
+  transition: .15s;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.pin-link:hover { opacity: .8; transform: scale(1.15); }
+.pin-link.on { opacity: 1; }
+
+.nc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.nc-body {
+  font-size: 12.3px;
+  color: #5C6479;
+  line-height: 1.6;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.nc-body.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.nc-sec-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.aud-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.aud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F8F9FC;
+  border: 1px solid #EEF0F5;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #5C6479;
+}
+
+.nc-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F8F9FC;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 8px 11px;
+  font-size: 11.5px;
+  color: #5C6479;
+  margin-bottom: 11px;
+}
+
+.nc-file a { color: inherit; text-decoration: none; }
+.nc-file .open-file { margin-left: auto; color: var(--blue); font-weight: 600; }
+
+.nc-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+}
+
+.nc-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.nc-meta-item span { font-size: 10px; color: var(--muted); }
+.nc-meta-item strong { font-size: 12px; color: var(--text); font-weight: 600; }
+
+.nc-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.nc-foot .views {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-wrap { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+
+thead th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+tbody td {
+  padding: 13px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #F5F6FA;
+  vertical-align: middle;
+}
+
+tbody tr:hover { background: #FAFBFD; }
+
+.cell-main { display: flex; align-items: center; gap: 11px; }
+
+.thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cell-main b { display: block; font-size: 13px; }
+.cell-main small { font-size: 11px; color: var(--muted); }
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 40, .5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 18px;
+}
+
+.overlay.show { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: 0 25px 60px rgba(20, 24, 40, .3);
+}
+
+.modal.sm { max-width: 430px; }
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-head h3 { font-size: 17px; font-weight: 600; margin: 0; }
+
+.modal-head button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 19px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 12px; font-weight: 500; color: #6C7386; }
+
+.field input,
+.field select,
+.field textarea {
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+  background: #FBFCFE;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--orange-soft);
+  background: #fff;
+}
+
+.field input.date-disabled {
+  background: #F1F2F7;
+  color: #8890A0;
+  cursor: not-allowed;
+  border-color: var(--line);
+}
+
+.field input.date-disabled:focus { border-color: var(--line); }
+
+.hint-date {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 10.5px;
+  margin-top: 1px;
+}
+
+.field textarea { resize: vertical; line-height: 1.6; min-height: 110px; }
+
+.hint-lite { color: var(--muted); font-weight: 400; font-size: 11px; }
+
+/* =========================================================
+   CATEGORY FIELD
+   ========================================================= */
+
+.category-wrap { display: flex; align-items: stretch; gap: 7px; }
+.category-wrap select { flex: 1; min-width: 0; }
+
+.category-add-btn {
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: .15s;
+}
+
+.category-add-btn:hover { background: #E67D50; }
+.category-add-btn:active { transform: scale(.96); }
+
+/* =========================================================
+   CATEGORY MODAL
+   ========================================================= */
+
+.category-modal-box { max-width: 430px; }
+
+.category-modal-help {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.category-error {
+  display: none;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #FDECEC;
+  color: #C94A48;
+  font-size: 12px;
+  margin-top: 9px;
+}
+
+.category-success {
+  display: none;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: #E5F6EE;
+  color: #2A9364;
+  font-size: 12px;
+  margin-top: 9px;
+}
+
+/* =========================================================
+   AUDIENCE
+   ========================================================= */
+
+.aud-pick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.aud-opt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  background: #FBFCFE;
+  font-size: 12.5px;
+  transition: .15s;
+}
+
+.aud-opt:hover { background: #fff; }
+
+.aud-opt.sel {
+  background: #FFF7F1;
+  border-color: var(--orange-soft);
+  font-weight: 600;
+}
+
+.aud-opt input { width: 16px; height: 16px; accent-color: var(--orange); }
+
+/* =========================================================
+   SWITCH
+   ========================================================= */
+
+.sw-wrap { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+
+.switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #DDE1EA;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: .25s;
+}
+
+.slider:before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  left: 3px;
+  top: 3px;
+  transition: .25s;
+}
+
+.switch input:checked + .slider { background: var(--orange); }
+.switch input:checked + .slider:before { transform: translateX(18px); }
+
+/* =========================================================
+   CURRENT FILE
+   ========================================================= */
+
+.current-file {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 10px 12px;
+  background: #F8F9FC;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: 11.5px;
+}
+
+.current-file a { color: var(--blue); font-weight: 600; text-decoration: none; }
+
+.current-file label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 11.5px;
+  color: #5C6479;
+}
+
+/* =========================================================
+   DETAIL
+   ========================================================= */
+
+.detail-box {
+  background: #F8F9FC;
+  border: 1px solid #EEF0F5;
+  border-radius: 11px;
+  padding: 12px 14px;
+}
+
+.detail-box span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.detail-box strong {
+  display: block;
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.detail-body {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #4A5265;
+  white-space: pre-wrap;
+  background: #FBFCFE;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 15px;
+}
+
+/* =========================================================
+   EMPTY
+   ========================================================= */
+
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); grid-column: 1 / -1; }
+.empty .big { font-size: 42px; margin-bottom: 12px; }
+.empty h4 { font-size: 15px; color: var(--text); margin-bottom: 5px; }
+.empty p { font-size: 12.5px; }
+
+/* =========================================================
+   FLASH
+   ========================================================= */
+
+.flash { margin: 0 0 18px; padding: 11px 14px; border-radius: 10px; font-size: 13px; }
+.flash.ok  { background: #E5F6EE; color: #2A9364; }
+.flash.err { background: #FDECEC; color: #C94A48; }
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .field.full { grid-column: auto; }
+  .nc-meta { grid-template-columns: 1fr; }
+  .notice-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+{% endblock %}
+
+
+{% block page_title %}Notice Board{% endblock %}
+
+
+{% block content %}
+<div class="page">
+
+  <!-- ============ MESSAGES ============ -->
+  {% if messages %}
+    {% for m in messages %}
+      <div class="flash {% if 'error' in m.tags %}err{% else %}ok{% endif %}">{{ m }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ============ STATS ============ -->
+  <div class="stats">
+
+    <div class="stat">
+      <div class="ic bg-orange">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6z"/>
+          <path d="M10 19a2 2 0 004 0"/>
+        </svg>
+      </div>
+      <div>
+        <h3 id="sTotal">0</h3>
+        <p>Total Notices</p>
+      </div>
+    </div>
+
+    <div class="stat">
+      <div class="ic bg-green">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <div>
+        <h3 id="sPublished">0</h3>
+        <p>Published</p>
+      </div>
+    </div>
+
+    <div class="stat">
+      <div class="ic bg-blue">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+      </div>
+      <div>
+        <h3 id="sScheduled">0</h3>
+        <p>Scheduled</p>
+      </div>
+    </div>
+
+    <div class="stat">
+      <div class="ic bg-purple">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v18"/>
+          <path d="M5 8h14"/>
+          <path d="M5 16h14"/>
+        </svg>
+      </div>
+      <div>
+        <h3 id="sDraft">0</h3>
+        <p>Drafts</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ MAIN PANEL ============ -->
+  <div class="panel">
+
+    <!-- HEADER -->
+    <div class="panel-head">
+      <div>
+        <h2>Notice Management</h2>
+      </div>
+      <div class="grow"></div>
+      <div class="chip-info">📌 Pinned: <b id="pinChip">0</b></div>
+      {% if perms.can_add or user.is_superuser %}
+      <button type="button" class="btn btn-primary" id="openAdd">+ New Notice</button>
+      {% endif %}
+    </div>
+
+    <!-- STATUS TABS -->
+    <div class="tabs" id="tabs">
+      <button type="button" class="active" data-tab="all">All <i id="cAll">0</i></button>
+      <button type="button" data-tab="Published">Published <i id="cPublished">0</i></button>
+      <button type="button" data-tab="Scheduled">Scheduled <i id="cScheduled">0</i></button>
+      <button type="button" data-tab="Draft">Draft <i id="cDraft">0</i></button>
+      <button type="button" data-tab="Expired">Expired <i id="cExpired">0</i></button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+
+      <input type="search" id="fSearch" placeholder="Search notices...">
+
+      <!-- DYNAMIC CATEGORY FILTER -->
+      <select id="fCategory">
+        <option value="">All Categories</option>
+        {% for category in categories %}
+          <option value="{{ category.category_name }}">{{ category.category_name }}</option>
+        {% endfor %}
+      </select>
+
+      <select id="fAudience">
+        <option value="">All Audiences</option>
+        <option value="Students">Students</option>
+        <option value="Teachers">Teachers</option>
+        <option value="Staff">Staff</option>
+        <option value="Parents">Parents</option>
+      </select>
+
+      <select id="fPriority">
+        <option value="">All Priorities</option>
+        <option value="High">High</option>
+        <option value="Normal">Normal</option>
+        <option value="Low">Low</option>
+      </select>
+
+      <select id="fSort">
+        <option value="new">Newest First</option>
+        <option value="old">Oldest First</option>
+        <option value="az">Title A–Z</option>
+        <option value="views">Most Viewed</option>
+      </select>
+
+      <div class="grow"></div>
+
+      <div class="viewtoggle">
+        <button type="button" class="active" data-view="grid">▦ Card</button>
+        <button type="button" data-view="table">☰ Table</button>
+      </div>
+
+    </div>
+
+    <!-- PANEL TITLE -->
+    <div class="panel-head">
+      <h2 id="panelTitle">All Notices</h2>
+    </div>
+
+    <!-- NOTICE CARDS -->
+    <div class="notice-grid" id="noticeGrid">
+
+      {% for n in notices %}
+      <div
+        class="nc {% if n.pinned %}pinned{% endif %} {% if n.priority == 'High' %}urgent{% endif %}"
+        data-id="{{ n.pk }}"
+        data-code="{{ n.code|lower }}"
+        data-title="{{ n.title|lower }}"
+        data-body="{{ n.body|lower }}"
+        data-category="{{ n.category|default:'' }}"
+        data-priority="{{ n.priority }}"
+        data-status="{{ n.status }}"
+        data-aud="{{ n.audience|join:','|lower }}"
+        data-views="{{ n.views }}"
+        data-publish="{% if n.publish_date %}{{ n.publish_date|date:'Y-m-d' }}{% endif %}"
+        data-expiry="{% if n.expiry_date %}{{ n.expiry_date|date:'Y-m-d' }}{% endif %}"
+        data-pinned="{% if n.pinned %}1{% else %}0{% endif %}"
+        data-print="{% url 'notice_print' n.pk %}">
+
+        <!-- CARD HEADER -->
+        <div class="nc-head">
+          <div class="nc-ic" data-ic="{{ n.category|default:'' }}"></div>
+
+          <div class="nc-title">
+            <div class="nc-code">
+              {{ n.code }}
+              {% if n.pinned %} · 📌 PINNED{% endif %}
+            </div>
+            <h4>{{ n.title }}</h4>
+          </div>
+
+          <!-- PIN -->
+          <!-- PIN ICON -->
+          {% if perms.can_edit or user.is_superuser %}
+          <form method="post" action="{% url 'toggle_pin_notice' n.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="pin-link {% if n.pinned %}on{% endif %}"
+              title="{% if n.pinned %}Unpin{% else %}Pin to top{% endif %}">📌</button>
+          </form>
+          {% elif n.pinned %}
+          <span class="pin-link on" style="cursor:default;">📌</span>
+          {% endif %}
+        </div>
+        <!-- CARD TAGS -->
+        <div class="nc-tags">
+          <span class="badge" data-cat-badge="{{ n.category|default:'' }}"></span>
+
+          <span class="badge
+            {% if n.priority == 'High' %}b-red
+            {% elif n.priority == 'Low' %}b-grey
+            {% else %}b-blue{% endif %}">
+            {{ n.priority }} priority
+          </span>
+
+          <span class="badge
+            {% if n.status == 'Published' %}b-green
+            {% elif n.status == 'Expired' %}b-red
+            {% elif n.status == 'Scheduled' %}b-blue
+            {% else %}b-grey{% endif %}">
+            {{ n.status }}
+          </span>
+        </div>
+
+        <!-- BODY -->
+        <div class="nc-body clamp">{{ n.body }}</div>
+
+        <!-- AUDIENCE -->
+        <div class="nc-sec-title">Audience</div>
+        <div class="aud-chips">
+          {% for a in n.audience %}
+            <span class="aud-chip">
+              <span data-aud-ic="{{ a }}"></span>
+              {{ a }}
+            </span>
+          {% empty %}
+            <span class="aud-chip">— none —</span>
+          {% endfor %}
+        </div>
+
+        <!-- ATTACHMENT -->
+        {% if n.attachment %}
+          <div class="nc-file">
+            📎
+            <a href="{{ n.attachment.url }}" target="_blank" class="open-file">
+              {{ n.attachment.name|cut:"notices/" }}
+            </a>
+          </div>
+        {% endif %}
+
+        <!-- META -->
+        <div class="nc-meta">
+          <div class="nc-meta-item">
+            <span>Publish</span>
+            <strong>{% if n.publish_date %}{{ n.publish_date|date:"d M Y" }}{% else %}—{% endif %}</strong>
+          </div>
+          <div class="nc-meta-item">
+            <span>Expiry</span>
+            <strong>{% if n.expiry_date %}{{ n.expiry_date|date:"d M Y" }}{% else %}—{% endif %}</strong>
+          </div>
+        </div>
+
+        <!-- FOOT -->
+        <div class="nc-foot">
+          <span class="views">👁 {{ n.views }} views</span>
+          <div class="grow"></div>
+
+          <!-- VIEW -->
+          <button type="button" class="btn btn-sm btn-blue view-btn"
+            data-url="{% url 'notice_detail_json' n.pk %}"
+            data-print-url="{% if n.status == 'Published' %}{% url 'notice_print' n.pk %}{% endif %}">
+            View
+          </button>
+
+          <!-- EDIT -->
+          {% if perms.can_edit or user.is_superuser %}
+          <button type="button" class="btn btn-sm btn-edit edit-btn"
+            data-url="{% url 'notice_detail_json' n.pk %}"
+            data-edit-url="{% url 'edit_notice' n.pk %}">
+            Edit
+          </button>
+          {% endif %}
+
+          <!-- PRINT -->
+          {% if perms.can_print or user.is_superuser %}
+            {% if n.status == 'Published' %}
+              <button type="button" class="btn btn-sm btn-print print-btn" data-url="{% url 'notice_print' n.pk %}">🖨 Print</button>
+            {% endif %}
+          {% endif %}
+
+          <!-- PUBLISH DRAFT -->
+          {% if perms.can_edit or perms.can_add or user.is_superuser %}
+            {% if n.status == 'Draft' %}
+              <form method="post" action="{% url 'publish_notice' n.pk %}" class="publish-form" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-publish">✓ Publish</button>
+              </form>
+            {% endif %}
+          {% endif %}
+          <!-- DELETE -->
+          {% if perms.can_delete or user.is_superuser %}
+          <form method="post" action="{% url 'delete_notice' n.pk %}" class="del-form"
+            data-name="{{ n.code }} — {{ n.title }}" style="display:inline;">
+            {% csrf_token %}
+            <button type="button" class="btn btn-sm btn-danger del-trigger">Delete</button>
+          </form>
+          {% endif %}
+        </div>
+
+      </div>
+      {% empty %}
+      <div class="empty">
+        <div class="big">📭</div>
+        <h4>No notices yet</h4>
+        <p>Click "+ New Notice" to publish your first notice.</p>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap" id="noticeTableWrap" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Notice</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Audience</th>
+            <th>Publish</th>
+            <th>Expiry</th>
+            <th>Views</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="noticeTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+
+{% block modals %}
+
+<!-- ============ ADD / EDIT NOTICE MODAL ============ -->
+<div class="overlay" id="mNotice">
+  <div class="modal">
+
+    <div class="modal-head">
+      <h3 id="ncModalTitle">Publish New Notice</h3>
+      <button type="button" data-close="mNotice">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'add_notice' %}" id="noticeForm" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="edit_id" id="editId">
+
+      <div class="form-grid">
+
+        <!-- TITLE -->
+        <div class="field full">
+          <label>Notice Title</label>
+          <input name="title" id="fTitle" required>
+        </div>
+
+        <!-- BODY -->
+        <div class="field full">
+          <label>Notice Body</label>
+          <textarea name="body" id="fBody" rows="5" required></textarea>
+        </div>
+
+        <!-- CATEGORY -->
+        <div class="field">
+          <label>Category</label>
+          <div class="category-wrap">
+            <select name="category" id="fCat" required>
+              <option value="">Select Category</option>
+              {% for category in categories %}
+                <option value="{{ category.category_name }}">{{ category.category_name }}</option>
+              {% endfor %}
+            </select>
+
+            <!-- PLUS BUTTON -->
+            <button type="button" class="category-add-btn" id="openCategoryModal" title="Add Category">+</button>
+          </div>
+        </div>
+
+        <!-- PRIORITY -->
+        <div class="field">
+          <label>Priority</label>
+          <select name="priority" id="fPri" required>
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+
+        <!-- STATUS -->
+        <div class="field">
+          <label>Status</label>
+          <select name="status" id="fStat" required>
+            <option value="Published">Published</option>
+            <option value="Scheduled">Scheduled</option>
+            <option value="Draft">Draft</option>
+          </select>
+        </div>
+
+        <!-- PUBLISH DATE -->
+        <div class="field">
+          <label>Publish Date</label>
+          <input type="date" name="publish_date" id="fPub" required>
+          <small class="hint-date" id="fPubHint"></small>
+        </div>
+
+        <!-- EXPIRY DATE -->
+        <div class="field">
+          <label>Expiry Date</label>
+          <input type="date" name="expiry_date" id="fExp" required>
+        </div>
+
+        <!-- ATTACHMENT -->
+        <div class="field full">
+          <label>Attachment</label>
+          <input type="file" name="attachment" id="fAtt">
+          <div class="current-file" id="currentAttachment">
+            <a id="currentAttachmentLink" href="#" target="_blank"></a>
+            <label>
+              <input type="checkbox" name="remove_attachment" id="removeAttachment" value="1">
+              Remove current attachment
+            </label>
+          </div>
+        </div>
+
+        <!-- AUDIENCE -->
+        <div class="field full">
+          <label>Audience <span class="hint-lite">— select one or more</span></label>
+          <div class="aud-pick">
+            <label class="aud-opt">
+              <input type="checkbox" class="audBox" name="audience[]" value="Students">
+              🎓 Students
+            </label>
+            <label class="aud-opt">
+              <input type="checkbox" class="audBox" name="audience[]" value="Teachers">
+              👩‍🏫 Teachers
+            </label>
+            <label class="aud-opt">
+              <input type="checkbox" class="audBox" name="audience[]" value="Staff">
+              🧑‍💼 Staff
+            </label>
+            <label class="aud-opt">
+              <input type="checkbox" class="audBox" name="audience[]" value="Parents">
+              👨‍👩‍👦 Parents
+            </label>
+          </div>
+        </div>
+
+        <!-- PIN -->
+        <div class="field full">
+          <div class="sw-wrap">
+            <label class="switch">
+              <input type="checkbox" name="pinned" id="fPin">
+              <span class="slider"></span>
+            </label>
+            <div>
+              <strong style="font-size:12.5px;">Pin Notice</strong>
+              <div class="hint-lite">Pinned notices appear first.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="mNotice">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">Publish Notice</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- ============ ADD CATEGORY MODAL ============ -->
+<div class="overlay" id="mCategory">
+  <div class="modal category-modal-box">
+
+    <div class="modal-head">
+      <h3>Add Category</h3>
+      <button type="button" data-close="mCategory">✕</button>
+    </div>
+
+    <div class="category-modal-help">
+      Enter a category name. It will be saved directly into <strong>n_category</strong>
+      and immediately added to the Category dropdown.
+    </div>
+
+    <div class="field">
+      <label>Category Name</label>
+      <input type="text" id="newCategoryName" maxlength="100" placeholder="e.g. Sports">
+    </div>
+
+    <div class="category-error" id="categoryError"></div>
+    <div class="category-success" id="categorySuccess"></div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close="mCategory">Cancel</button>
+      <button type="button" class="btn btn-primary" id="saveCategoryBtn">Add Category</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="overlay" id="mDetail">
+  <div class="modal">
+
+    <div class="modal-head">
+      <h3>Notice Details</h3>
+      <button type="button" data-close="mDetail">✕</button>
+    </div>
+
+    <div id="detailContent">
+      <div style="text-align:center; padding:35px; color:var(--muted);">Loading...</div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close="mDetail">Close</button>
+      <button type="button" class="btn btn-print" id="detailPrintBtn" style="display:none;">🖨 Print Notice</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ DELETE MODAL ============ -->
+<div class="overlay" id="mDelete">
+  <div class="modal sm">
+
+    <div class="modal-head">
+      <h3>Delete Notice</h3>
+      <button type="button" data-close="mDelete">✕</button>
+    </div>
+
+    <p style="font-size:13px; color:#5C6479; line-height:1.6;">
+      Are you sure you want to delete <b id="delName">—</b>? This action cannot be undone.
+    </p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close="mDelete">Cancel</button>
+      <button type="button" class="btn btn-solid-danger" id="confirmDelete">Yes, Delete</button>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+
+/* =========================================================
+   CATEGORY ICONS / BACKGROUNDS / BADGE CLASSES
+   ========================================================= */
+
+const CAT_IC = {
+  'General': '📋',
+  'Exam': '📝',
+  'Holiday': '🏖️',
+  'Event': '🎉',
+  'Fee': '💰',
+  'Urgent': '🚨'
+};
+
+const CAT_BG = {
+  'General': '#F1F2F7',
+  'Exam': '#E9F0FC',
+  'Holiday': '#E5F6EE',
+  'Event': '#F0EDFB',
+  'Fee': '#FEF2E4',
+  'Urgent': '#FDECEC'
+};
+
+const CAT_CLS = {
+  'General': 'b-grey',
+  'Exam': 'b-blue',
+  'Holiday': 'b-green',
+  'Event': 'b-purple',
+  'Fee': 'b-amber',
+  'Urgent': 'b-red'
+};
+
+/* =========================================================
+   AUDIENCE ICONS
+   ========================================================= */
+
+const AUD_IC = {
+  'Students': '🎓',
+  'Teachers': '👩‍🏫',
+  'Staff': '🧑‍💼',
+  'Parents': '👨‍👩‍👦'
+};
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function esc(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, function (m) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[m];
+  });
+}
+
+/* =========================================================
+   DATE FORMAT
+   ========================================================= */
+
+function fmt(d) {
+  if (!d) return '—';
+
+  const t = new Date(d + 'T00:00:00');
+  if (isNaN(t)) return '—';
+
+  return t.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* =========================================================
+   STATUS / PRIORITY CLASS
+   ========================================================= */
+
+function statusClass(status) {
+  if (status === 'Published') return 'b-green';
+  if (status === 'Expired') return 'b-red';
+  if (status === 'Scheduled') return 'b-blue';
+  return 'b-grey';
+}
+
+function priorityClass(priority) {
+  if (priority === 'High') return 'b-red';
+  if (priority === 'Low') return 'b-grey';
+  return 'b-blue';
+}
+
+/* =========================================================
+   ATTACHMENT NORMALIZER
+   ========================================================= */
+
+function normalizeAttachment(att) {
+  if (!att) return null;
+  if (typeof att === 'string') return { name: att, url: '' };
+  return att;
+}
+
+/* =========================================================
+   TODAY
+   ========================================================= */
+
+function todayStr() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
+function openPrintPage(url) {
+  if (!url) {
+    alert('Print is only available for published notices.');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+/* =========================================================
+   DOM READY
+   ========================================================= */
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ===== ICONS / BADGES ===== */
+
+  document.querySelectorAll('[data-ic]').forEach(function (el) {
+    const c = el.dataset.ic || '';
+    el.textContent = CAT_IC[c] || '📋';
+    el.style.background = CAT_BG[c] || '#F1F2F7';
+  });
+
+  document.querySelectorAll('[data-cat-badge]').forEach(function (el) {
+    const c = el.dataset.catBadge || '';
+    el.className = 'badge ' + (CAT_CLS[c] || 'b-grey');
+    el.textContent = (CAT_IC[c] || '📋') + ' ' + (c || 'General');
+  });
+
+  document.querySelectorAll('[data-aud-ic]').forEach(function (el) {
+    el.textContent = AUD_IC[el.dataset.audIc] || '👤';
+  });
+
+  /* ===== ELEMENTS ===== */
+
+  const cards = Array.from(document.querySelectorAll('.nc'));
+
+  const fSearch = document.getElementById('fSearch');
+  const fCat = document.getElementById('fCategory');
+  const fAud = document.getElementById('fAudience');
+  const fPri = document.getElementById('fPriority');
+  const fSort = document.getElementById('fSort');
+
+  const grid = document.getElementById('noticeGrid');
+  const twrap = document.getElementById('noticeTableWrap');
+  const tbody = document.getElementById('noticeTable');
+
+  const fStat = document.getElementById('fStat');
+  const fPub = document.getElementById('fPub');
+  const fExp = document.getElementById('fExp');
+  const fPubHint = document.getElementById('fPubHint');
+
+  let delForm = null;
+
+  /* ===== DATE RULES ===== */
+
+  function setExpiryMin() {
+    if (!fPub.value) {
+      return;
+    }
+
+    const d = new Date(fPub.value + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    const minExp = `${y}-${m}-${day}`;
+
+    fExp.min = minExp;
+
+    /* Expiry must stay strictly after the publish date */
+    if (fExp.value && fExp.value < minExp) {
+      fExp.value = '';
+    }
+  }
+
+  function applyRequiredRules() {
+    const categoryEl = document.getElementById('fCat');
+    const isDraft = fStat.value === 'Draft';
+
+    if (isDraft) {
+      /* Draft: only Title and Body are required */
+      categoryEl.removeAttribute('required');
+      fPub.removeAttribute('required');
+      fExp.removeAttribute('required');
+    } else {
+      categoryEl.setAttribute('required', 'required');
+      fPub.setAttribute('required', 'required');
+      fExp.setAttribute('required', 'required');
+    }
+  }
+
+  function applyDateRules(forceDefaultPublish) {
+    const today = todayStr();
+
+    if (fStat.value === 'Published') {
+      fPub.readOnly = true;
+      fPub.classList.add('date-disabled');
+      fPub.removeAttribute('min');
+
+      if (forceDefaultPublish || !fPub.value) {
+        fPub.value = today;
+      }
+
+      fPubHint.textContent = 'Published notices are set to today automatically';
+
+      /* Publish date is always set for Published, so Expiry is enabled */
+      fExp.disabled = false;
+      fExp.classList.remove('date-disabled');
+      setExpiryMin();
+    } else {
+      fPub.readOnly = false;
+      fPub.classList.remove('date-disabled');
+      fPub.min = today;
+
+      if (fPub.value && fPub.value < today) {
+        fPub.value = today;
+      }
+
+      fPubHint.textContent = 'Scheduled and draft notices must use today or a future date';
+
+      /* Expiry stays disabled until a Publish Date is entered */
+      if (fPub.value) {
+        fExp.disabled = false;
+        fExp.classList.remove('date-disabled');
+        setExpiryMin();
+      } else {
+        fExp.disabled = true;
+        fExp.classList.add('date-disabled');
+        fExp.value = '';
+        fExp.removeAttribute('min');
+      }
+    }
+
+    applyRequiredRules();
+  }
+
+  /* Re-check Expiry availability whenever Publish Date changes */
+  fPub.addEventListener('change', function () {
+    applyDateRules(false);
+  });
+
+  /* ===== STATS ===== */
+
+  function stats() {
+    const total = cards.length;
+
+    const published = cards.filter(function (c) { return c.dataset.status === 'Published'; }).length;
+    const scheduled = cards.filter(function (c) { return c.dataset.status === 'Scheduled'; }).length;
+    const draft = cards.filter(function (c) { return c.dataset.status === 'Draft'; }).length;
+    const expired = cards.filter(function (c) { return c.dataset.status === 'Expired'; }).length;
+    const pinned = cards.filter(function (c) { return c.dataset.pinned === '1'; }).length;
+
+    document.getElementById('sTotal').textContent = total;
+    document.getElementById('sPublished').textContent = published;
+    document.getElementById('sScheduled').textContent = scheduled;
+    document.getElementById('sDraft').textContent = draft;
+
+    document.getElementById('cAll').textContent = total;
+    document.getElementById('cPublished').textContent = published;
+    document.getElementById('cScheduled').textContent = scheduled;
+    document.getElementById('cDraft').textContent = draft;
+    document.getElementById('cExpired').textContent = expired;
+
+    document.getElementById('pinChip').textContent = pinned;
+  }
+
+  /* ===== FILTER + TABLE ===== */
+
+  function apply() {
+    let arr = cards.slice();
+
+    const q = fSearch.value.toLowerCase().trim();
+
+    const activeTab = document.querySelector('#tabs .active');
+    const tab = activeTab ? activeTab.dataset.tab : 'all';
+
+    arr = arr.filter(function (c) {
+      if (tab !== 'all' && c.dataset.status !== tab) return false;
+      if (fCat.value && c.dataset.category !== fCat.value) return false;
+      if (fPri.value && c.dataset.priority !== fPri.value) return false;
+      if (fAud.value && !c.dataset.aud.includes(fAud.value.toLowerCase())) return false;
+
+      if (q) {
+        const hay = c.dataset.code + ' ' + c.dataset.title + ' ' + c.dataset.body + ' ' + c.dataset.category;
+        if (hay.indexOf(q) === -1) return false;
+      }
+
+      return true;
+    });
+
+    /* ===== SORT ===== */
+
+    arr.sort(function (a, b) {
+      if (a.dataset.pinned !== b.dataset.pinned) {
+        return Number(b.dataset.pinned) - Number(a.dataset.pinned);
+      }
+
+      if (fSort.value === 'az') {
+        return a.dataset.title.localeCompare(b.dataset.title);
+      }
+
+      if (fSort.value === 'views') {
+        return Number(b.dataset.views) - Number(a.dataset.views);
+      }
+
+      if (fSort.value === 'old') {
+        return (a.dataset.publish || '9999').localeCompare(b.dataset.publish || '9999');
+      }
+
+      return (b.dataset.publish || '0000').localeCompare(a.dataset.publish || '0000');
+    });
+
+    /* ===== SHOW FILTERED CARDS ===== */
+
+    cards.forEach(function (c) { c.style.display = 'none'; });
+    arr.forEach(function (c) { c.style.display = 'flex'; });
+
+    /* ===== TABLE ===== */
+
+    tbody.innerHTML = '';
+
+    if (!arr.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align:center; padding:35px; color:var(--muted);">
+            No notices found
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    arr.forEach(function (c) {
+      const cat = c.dataset.category || '';
+      const priority = c.dataset.priority;
+      const status = c.dataset.status;
+
+      const viewBtn = c.querySelector('.view-btn');
+      const editBtn = c.querySelector('.edit-btn');
+      const delFormEl = c.querySelector('.del-form');
+      const publishForm = c.querySelector('.publish-form');
+
+      const viewUrl = viewBtn ? viewBtn.dataset.url : '';
+      const editUrl = editBtn ? editBtn.dataset.editUrl : '';
+      const detailUrl = editBtn ? editBtn.dataset.url : '';
+      const printUrl = c.dataset.print || '';
+
+      const delAction = delFormEl ? delFormEl.action : '';
+      const delName = delFormEl ? delFormEl.dataset.name : '';
+      const publishAction = publishForm ? publishForm.action : '';
+
+      const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+      const csrf = csrfInput ? csrfInput.value : '';
+
+      const aud = c.dataset.aud.split(',').filter(Boolean).map(function (x) {
+        return `<span class="badge b-grey" style="margin:1px;">${esc(x)}</span>`;
+      }).join(' ') || '—';
+
+      const publishHtml = status === 'Draft' && publishAction ? `
+        <form method="post" action="${publishAction}" style="display:inline;">
+          <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+          <button type="submit" class="btn btn-sm btn-publish">✓ Publish</button>
+        </form>
+      ` : '';
+
+      const printHtml = status === 'Published' && printUrl ? `
+        <button type="button" class="btn btn-sm btn-print print-btn" data-url="${printUrl}">🖨 Print</button>
+      ` : '';
+
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>
+            <div class="cell-main">
+              <div class="thumb" style="background:${CAT_BG[cat] || '#F1F2F7'};">
+                ${CAT_IC[cat] || '📋'}
+              </div>
+              <div>
+                <b>${esc(c.querySelector('h4').textContent)}</b>
+                <small>${esc(c.dataset.code.toUpperCase())}</small>
+              </div>
+            </div>
+          </td>
+
+          <td>
+            <span class="badge ${CAT_CLS[cat] || 'b-grey'}">${esc(cat || '—')}</span>
+          </td>
+
+          <td>
+            <span class="badge ${priorityClass(priority)}">${esc(priority)}</span>
+          </td>
+
+          <td>${aud}</td>
+          <td>${fmt(c.dataset.publish)}</td>
+          <td>${fmt(c.dataset.expiry)}</td>
+          <td>${esc(c.dataset.views)}</td>
+
+          <td>
+            <span class="badge ${statusClass(status)}">${esc(status)}</span>
+          </td>
+
+          <td style="white-space:nowrap;">
+            <button type="button" class="btn btn-sm btn-blue view-btn" data-url="${viewUrl}" data-print-url="${printUrl}">View</button>
+            <button type="button" class="btn btn-sm btn-edit edit-btn" data-url="${detailUrl}" data-edit-url="${editUrl}">Edit</button>
+            ${printHtml}
+            ${publishHtml}
+            <form method="post" action="${delAction}" class="del-form" data-name="${esc(delName)}" style="display:inline;">
+              <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+              <button type="button" class="btn btn-sm btn-danger del-trigger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      `);
+    });
+  }
+
+  /* ===== MODAL FUNCTIONS ===== */
+
+  function open(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('show');
+  }
+
+  function close(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  }
+
+  document.querySelectorAll('[data-close]').forEach(function (btn) {
+    btn.addEventListener('click', function () { close(btn.dataset.close); });
+  });
+
+  document.querySelectorAll('.overlay').forEach(function (o) {
+    o.addEventListener('click', function (e) {
+      if (e.target === o) close(o.id);
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.overlay.show').forEach(function (o) {
+        o.classList.remove('show');
+      });
+    }
+  });
+
+  /* ===== AUDIENCE UI ===== */
+
+  document.querySelectorAll('.audBox').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+      const parent = cb.closest('.aud-opt');
+      if (parent) parent.classList.toggle('sel', cb.checked);
+    });
+  });
+
+  /* ===== AUDIENCE REQUIRED (at least one, except for Draft) ===== */
+
+  document.getElementById('noticeForm').addEventListener('submit', function (e) {
+    if (fStat.value === 'Draft') {
+      return;
+    }
+
+    const anyChecked = Array.from(document.querySelectorAll('.audBox'))
+      .some(function (cb) { return cb.checked; });
+
+    if (!anyChecked) {
+      e.preventDefault();
+      alert('Please select at least one audience.');
+    }
+  });
+
+  /* ===== ADD NOTICE ===== */
+
+  document.getElementById('openAdd').addEventListener('click', function () {
+    const form = document.getElementById('noticeForm');
+
+    form.action = "{% url 'add_notice' %}";
+    form.reset();
+
+    document.getElementById('ncModalTitle').textContent = 'Publish New Notice';
+    document.getElementById('saveBtn').textContent = 'Publish Notice';
+    document.getElementById('editId').value = '';
+
+    document.getElementById('currentAttachment').style.display = 'none';
+    document.getElementById('currentAttachmentLink').href = '#';
+    document.getElementById('currentAttachmentLink').textContent = '';
+    document.getElementById('removeAttachment').checked = false;
+
+    document.querySelectorAll('.audBox').forEach(function (cb) {
+      cb.checked = false;
+      cb.closest('.aud-opt').classList.remove('sel');
+    });
+
+    /* Always default to the "Select Category" placeholder */
+    const categorySelect = document.getElementById('fCat');
+    categorySelect.selectedIndex = 0;
+
+    applyDateRules(true);
+    open('mNotice');
+  });
+
+  /* ===== CATEGORY MODAL ===== */
+
+  const openCategoryModal = document.getElementById('openCategoryModal');
+  const newCategoryName = document.getElementById('newCategoryName');
+  const categoryError = document.getElementById('categoryError');
+  const categorySuccess = document.getElementById('categorySuccess');
+  const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+  const categorySelect = document.getElementById('fCat');
+
+  function resetCategoryModal() {
+    newCategoryName.value = '';
+    categoryError.style.display = 'none';
+    categoryError.textContent = '';
+    categorySuccess.style.display = 'none';
+    categorySuccess.textContent = '';
+    saveCategoryBtn.disabled = false;
+    saveCategoryBtn.textContent = 'Add Category';
+  }
+
+  openCategoryModal.addEventListener('click', function () {
+    resetCategoryModal();
+    open('mCategory');
+    setTimeout(function () { newCategoryName.focus(); }, 100);
+  });
+
+  /* ===== SAVE CATEGORY VIA AJAX ===== */
+
+  saveCategoryBtn.addEventListener('click', function () {
+    const name = newCategoryName.value.trim();
+
+    if (!name) {
+      categoryError.textContent = 'Please enter a category name.';
+      categoryError.style.display = 'block';
+      newCategoryName.focus();
+      return;
+    }
+
+    saveCategoryBtn.disabled = true;
+    saveCategoryBtn.textContent = 'Saving...';
+
+    categoryError.style.display = 'none';
+    categorySuccess.style.display = 'none';
+
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrf = csrfInput ? csrfInput.value : '';
+
+    const formData = new FormData();
+    formData.append('category_name', name);
+    formData.append('csrfmiddlewaretoken', csrf);
+
+    fetch("{% url 'add_category_ajax' %}", {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: formData
+    })
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) {
+            throw new Error(data.error || 'Unable to add category.');
+          }
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (!data.success) {
+          throw new Error(data.error || 'Unable to add category.');
+        }
+
+        const categoryName = data.category_name;
+
+        /* ===== ADD TO NOTICE CATEGORY DROPDOWN ===== */
+
+        let option = Array.from(categorySelect.options).find(function (opt) {
+          return opt.value === categoryName;
+        });
+
+        if (!option) {
+          option = document.createElement('option');
+          option.value = categoryName;
+          option.textContent = categoryName;
+          categorySelect.appendChild(option);
+        }
+
+        /* ===== SELECT NEW CATEGORY ===== */
+
+        categorySelect.value = categoryName;
+
+        /* ===== ADD TO FILTER DROPDOWN ===== */
+
+        const filterOption = Array.from(fCat.options).find(function (opt) {
+          return opt.value === categoryName;
+        });
+
+        if (!filterOption) {
+          const newFilterOption = document.createElement('option');
+          newFilterOption.value = categoryName;
+          newFilterOption.textContent = categoryName;
+          fCat.appendChild(newFilterOption);
+        }
+
+        categorySuccess.textContent = data.created
+          ? `"${categoryName}" added successfully.`
+          : `"${categoryName}" already exists.`;
+
+        categorySuccess.style.display = 'block';
+        saveCategoryBtn.textContent = 'Added';
+
+        setTimeout(function () {
+          close('mCategory');
+          saveCategoryBtn.disabled = false;
+          saveCategoryBtn.textContent = 'Add Category';
+        }, 700);
+      })
+      .catch(function (error) {
+        console.error(error);
+
+        categoryError.textContent = error.message || 'Unable to add category.';
+        categoryError.style.display = 'block';
+
+        saveCategoryBtn.disabled = false;
+        saveCategoryBtn.textContent = 'Add Category';
+      });
+  });
+
+  /* ===== ENTER KEY IN CATEGORY MODAL ===== */
+
+  newCategoryName.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveCategoryBtn.click();
+    }
+  });
+
+  /* ===== DELEGATED BUTTON EVENTS ===== */
+
+  document.addEventListener('click', function (e) {
+    const viewBtn = e.target.closest('.view-btn');
+    const editBtn = e.target.closest('.edit-btn');
+    const delBtn = e.target.closest('.del-trigger');
+    const printBtn = e.target.closest('.print-btn');
+
+    /* ===== PRINT ===== */
+
+    if (printBtn) {
+      openPrintPage(printBtn.dataset.url);
+      return;
+    }
+
+    /* ===== VIEW ===== */
+
+    if (viewBtn) {
+      const printUrl = viewBtn.dataset.printUrl || '';
+
+      fetch(viewBtn.dataset.url, {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Unable to load notice details.');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          const cat = data.category || 'General';
+          const att = normalizeAttachment(data.attachment);
+
+          const attHtml = att ? `
+            <div class="nc-file" style="margin-top:14px;">
+              📎
+              <b>${esc(att.name)}</b>
+              ${att.url ? `<a href="${esc(att.url)}" target="_blank" class="open-file">Open</a>` : ''}
+            </div>
+          ` : '';
+
+          document.getElementById('detailContent').innerHTML = `
+            <div style="display:flex; gap:14px; padding-bottom:18px; border-bottom:1px solid var(--line); margin-bottom:18px;">
+              <div class="nc-ic" style="width:52px; height:52px; font-size:24px; background:${CAT_BG[cat] || '#F1F2F7'};">
+                ${CAT_IC[cat] || '📋'}
+              </div>
+
+              <div style="flex:1;">
+                <div style="font-size:11px; color:var(--muted); font-weight:700; margin-bottom:3px;">
+                  ${esc(data.code)} ${data.pinned ? ' · 📌 PINNED' : ''}
+                </div>
+
+                <h3 style="font-size:16.5px; line-height:1.4; margin:0;">${esc(data.title)}</h3>
+
+                <div style="display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;">
+                  <span class="badge ${CAT_CLS[cat] || 'b-grey'}">${esc(cat)}</span>
+                  <span class="badge ${priorityClass(data.priority)}">${esc(data.priority)}</span>
+                  <span class="badge ${statusClass(data.status)}">${esc(data.status)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;">
+              <div class="detail-box">
+                <span>Published On</span>
+                <strong>${fmt(data.publish_date)}</strong>
+              </div>
+              <div class="detail-box">
+                <span>Expires On</span>
+                <strong>${fmt(data.expiry_date)}</strong>
+              </div>
+              <div class="detail-box">
+                <span>Posted By</span>
+                <strong>${esc(data.author)}</strong>
+              </div>
+              <div class="detail-box">
+                <span>Total Views</span>
+                <strong>👁 ${esc(data.views)}</strong>
+              </div>
+            </div>
+
+            <div class="nc-sec-title">Audience</div>
+            <div class="aud-chips" style="margin-bottom:16px;">
+              ${data.audience && data.audience.length
+                ? data.audience.map(function (a) {
+                    return `<span class="aud-chip">${AUD_IC[a] || '👤'} ${esc(a)}</span>`;
+                  }).join('')
+                : `<span class="aud-chip">— none —</span>`}
+            </div>
+
+            <div class="nc-sec-title">Notice Content</div>
+            <div class="detail-body">${esc(data.body)}</div>
+
+            ${attHtml}
+          `;
+
+          const detailPrintBtn = document.getElementById('detailPrintBtn');
+
+          if (data.status === 'Published' && printUrl) {
+            detailPrintBtn.style.display = 'inline-flex';
+            detailPrintBtn.onclick = function () { openPrintPage(printUrl); };
+          } else {
+            detailPrintBtn.style.display = 'none';
+            detailPrintBtn.onclick = null;
+          }
+
+          open('mDetail');
+        })
+        .catch(function (error) {
+          console.error(error);
+          alert('Unable to load notice details.');
+        });
+
+      return;
+    }
+
+    /* ===== EDIT ===== */
+
+    if (editBtn) {
+      const detailUrl = editBtn.dataset.url;
+      const editUrl = editBtn.dataset.editUrl;
+      const sep = detailUrl.includes('?') ? '&' : '?';
+
+      fetch(detailUrl + sep + 'mode=edit', {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+      })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Unable to load notice for edit.');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          const form = document.getElementById('noticeForm');
+
+          form.action = editUrl;
+
+          document.getElementById('ncModalTitle').textContent = 'Edit Notice';
+          document.getElementById('saveBtn').textContent = 'Update Notice';
+          document.getElementById('editId').value = data.id || '';
+          document.getElementById('fTitle').value = data.title || '';
+          document.getElementById('fBody').value = data.body || '';
+
+          /* IMPORTANT: CATEGORY IS THE CATEGORY NAME */
+          const categoryValue = data.category || '';
+
+          /*
+           * Make sure category exists in dropdown.
+           * This protects old notices whose category
+           * might not currently be listed.
+           */
+          if (categoryValue && !Array.from(categorySelect.options).some(function (opt) {
+            return opt.value === categoryValue;
+          })) {
+            const option = document.createElement('option');
+            option.value = categoryValue;
+            option.textContent = categoryValue;
+            categorySelect.appendChild(option);
+          }
+
+          categorySelect.value = categoryValue;
+
+          document.getElementById('fPri').value = data.priority || 'Normal';
+
+          document.getElementById('fStat').value =
+            data.status === 'Expired' ? 'Published' : (data.status || 'Published');
+
+          document.getElementById('fPub').value = data.publish_date || '';
+          document.getElementById('fExp').value = data.expiry_date || '';
+
+          applyDateRules(false);
+
+          document.getElementById('fPin').checked = !!data.pinned;
+
+          /* FILE */
+          document.getElementById('fAtt').value = '';
+
+          /* AUDIENCE */
+          const selectedAudience = Array.isArray(data.audience) ? data.audience : [];
+
+          document.querySelectorAll('.audBox').forEach(function (cb) {
+            cb.checked = selectedAudience.includes(cb.value);
+            cb.closest('.aud-opt').classList.toggle('sel', cb.checked);
+          });
+
+          const CAN_PRINT = ("{{ perms.can_print }}" === "True" || "{{ user.is_superuser }}" === "True");
+
+  // Inside View handler:
+            if (data.status === 'Published' && printUrl && CAN_PRINT) {
+              detailPrintBtn.style.display = 'inline-flex';
+              detailPrintBtn.onclick = function () { openPrintPage(printUrl); };
+            } else {
+              detailPrintBtn.style.display = 'none';
+              detailPrintBtn.onclick = null;
+            }
+          /* ATTACHMENT */
+          const att = normalizeAttachment(data.attachment);
+
+          const currentBox = document.getElementById('currentAttachment');
+          const currentLink = document.getElementById('currentAttachmentLink');
+          const removeAttachment = document.getElementById('removeAttachment');
+
+          removeAttachment.checked = false;
+
+          if (att) {
+            currentBox.style.display = 'flex';
+            currentLink.textContent = att.name || 'Attachment';
+            currentLink.href = att.url || '#';
+
+            if (!att.url) {
+              currentLink.removeAttribute('target');
+            } else {
+              currentLink.setAttribute('target', '_blank');
+            }
+          } else {
+            currentBox.style.display = 'none';
+            currentLink.textContent = '';
+            currentLink.href = '#';
+          }
+
+          open('mNotice');
+        })
+        .catch(function (error) {
+          console.error(error);
+          alert('Unable to load notice for editing.');
+        });
+
+      return;
+    }
+
+    /* ===== DELETE ===== */
+
+    if (delBtn) {
+      delForm = delBtn.closest('.del-form');
+      document.getElementById('delName').textContent = delForm.dataset.name || 'this notice';
+      open('mDelete');
+      return;
+    }
+  });
+
+  /* ===== DELETE CONFIRM ===== */
+
+  document.getElementById('confirmDelete').addEventListener('click', function () {
+    if (delForm) delForm.submit();
+  });
+
+  /* ===== STATUS CHANGE ===== */
+
+  fStat.addEventListener('change', function () {
+    applyDateRules(false);
+  });
+
+  /* ===== FILTER EVENTS ===== */
+
+  [fSearch, fCat, fAud, fPri, fSort].forEach(function (el) {
+    el.addEventListener('input', apply);
+    el.addEventListener('change', apply);
+  });
+
+  /* ===== TABS ===== */
+
+  document.querySelectorAll('#tabs button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('#tabs button').forEach(function (x) {
+        x.classList.remove('active');
+      });
+
+      btn.classList.add('active');
+
+      document.getElementById('panelTitle').textContent =
+        btn.dataset.tab === 'all' ? 'All Notices' : btn.dataset.tab + ' Notices';
+
+      apply();
+    });
+  });
+
+  /* ===== VIEW TOGGLE ===== */
+
+  document.querySelectorAll('.viewtoggle button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.viewtoggle button').forEach(function (x) {
+        x.classList.remove('active');
+      });
+
+      btn.classList.add('active');
+
+      if (btn.dataset.view === 'grid') {
+        grid.style.display = 'grid';
+        twrap.style.display = 'none';
+      } else {
+        grid.style.display = 'none';
+        twrap.style.display = 'block';
+      }
+    });
+  });
+
+  /* ===== DISMISS FLASH MESSAGE ON NEXT ACTION ===== */
+
+  const flashEls = document.querySelectorAll('.flash');
+
+  if (flashEls.length) {
+    const dismissFlash = function () {
+      flashEls.forEach(function (el) { el.style.display = 'none'; });
+    };
+
+    /* Any click (tab switch, filter, button, etc.) dismisses it, but only once */
+    document.addEventListener('click', dismissFlash, { once: true });
+  }
+
+  /* ===== INITIALIZE ===== */
+
+  stats();
+  apply();
+  applyDateRules(true);
+
+});
+
+</script>
+{% endblock %}

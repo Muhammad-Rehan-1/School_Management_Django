@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Passout Students & Alumni{% endblock %}
+{% block page_title %}Passout Students Registry{% endblock %}
+{% block nav_passouts %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --green: #3E9E6B;
+    --green-soft: #E8F7EF;
+    --red: #E15C5C;
+    --red-soft: #FDECEC;
+    --orange: #F08A5D;
+    --orange-hover: #E8794C;
+    --orange-soft: #FDEDE4;
+    --blue: #3E6FB0;
+    --blue-soft: #E8F1FC;
+    --line: #E5E7EB;
+    --primary: #1E2740;
+    --muted: #6B7280;
+  }
+  .content { padding: 6px 26px 30px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Alerts */
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: var(--green-soft); color: var(--green); }
+  .alert.error { background: var(--red-soft); color: var(--red); }
+
+  /* Toolbar */
+  .toolbar-wrapper {
+    background: #fff; border-radius: 16px; padding: 16px 20px;
+    border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .toolbar-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .toolbar-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toolbar-wrapper select, .toolbar-wrapper input {
+    padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none;
+  }
+  .toolbar-wrapper select:focus, .toolbar-wrapper input:focus { border-color: var(--orange); background: #fff; }
+
+  .stat-badge {
+    background: var(--orange-soft); color: var(--orange); border: 1px solid #FCD9C8;
+    padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px;
+  }
+
+  /* Table */
+  .table-card {
+    background: #fff; border-radius: 16px; border: 1px solid var(--line);
+    box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line);
+  }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #FAFBFD; }
+
+  .badge-session { background: var(--blue-soft); color: var(--blue); padding: 4px 10px; border-radius: 14px; font-size: 11.5px; font-weight: 700; }
+  .badge-dues-zero { background: var(--green-soft); color: var(--green); padding: 4px 10px; border-radius: 14px; font-size: 12px; font-weight: 700; }
+  .badge-dues-pending { background: var(--red-soft); color: var(--red); padding: 4px 10px; border-radius: 14px; font-size: 12px; font-weight: 700; }
+
+  .btn-unlock {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--blue); background: var(--blue-soft);
+    color: var(--blue); font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    transition: all .15s;
+  }
+  .btn-unlock:hover { background: var(--blue); color: #fff; }
+
+  /* Confirmation Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(20,24,40,.55);
+    align-items: center; justify-content: center; z-index: 700; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 18px; width: 100%; max-width: 460px;
+    padding: 26px; box-shadow: 0 20px 50px rgba(20,24,40,.25); text-align: center;
+  }
+  .btn-primary {
+    padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange);
+    color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--orange-hover); }
+  .btn-secondary {
+    padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff;
+    color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-secondary:hover { background: #F5F6FA; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="toolbar-wrapper">
+    <div class="toolbar-top">
+      <div class="toolbar-filters">
+        <h2 style="font-size:16px; font-weight:700; margin-right:6px;">Alumni & Passout Students Registry</h2>
+        
+        <form method="get" id="filterForm" style="display:flex; gap:10px;">
+          <!-- Session Filter Dropdown -->
+          <select name="session" onchange="document.getElementById('filterForm').submit()">
+            {% for s in available_sessions %}
+              <option value="{{ s }}" {% if selected_session == s %}selected{% endif %}>Academic Session {{ s }}</option>
+            {% empty %}
+              <option value="">No Sessions Found</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="stat-badge">Total Outstanding Dues: Rs. {{ total_dues }}</span>
+      </div>
+    </div>
+
+    <div>
+      <input type="text" id="liveAlumniSearch" placeholder="⚡ Search by student name, Reg No, father name, or class..." style="width:100%; box-sizing:border-box;">
+    </div>
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Reg No (Permanent)</th>
+          <th>Father's Name</th>
+          <th>Passed Class & Sec</th>
+          <th>Passed Session</th>
+          <th>Remaining Dues</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="alumniTableBody">
+        {% for a in alumni_records %}
+        <tr class="alumni-row">
+          <td><b>{{ a.student_name }}</b></td>
+          <td><b style="color:var(--orange);">{{ a.reg_no }}</b></td>
+          <td>{{ a.father_name }}</td>
+          <td><span style="font-weight:600;">{{ a.passed_class }} ({{ a.passed_section }})</span></td>
+          <td><span class="badge-session">{{ a.passed_session }}</span></td>
+          <td>
+            {% if a.remaining_dues > 0 %}
+              <span class="badge-dues-pending">Rs. {{ a.remaining_dues }} (Pending)</span>
+            {% else %}
+              <span class="badge-dues-zero">Cleared (Rs. 0.00)</span>
+            {% endif %}
+          </td>
+          <td>
+            <span style="color:var(--green); font-weight:700; font-size:12px;">🎓 Graduated</span>
+          </td>
+          <td>
+            <!-- Re-admit / Unlock Button -->
+            <button type="button" class="btn-unlock" 
+              onclick="openRevertModal('{{ a.id }}', '{{ a.student_name }}', '{{ a.reg_no }}', '{{ a.passed_class }}', '{{ a.passed_section }}')">
+              🔓 Re-admit / Unlock
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="text-align:center; padding:40px; color:var(--muted);">
+            No passout records found for Session {{ selected_session|default:"Selected" }}.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ================= MODAL: REVERT / UNLOCK CONFIRMATION ================= -->
+<div class="modal-overlay" id="revertConfirmOverlay">
+  <div class="modal">
+    <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
+      <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" fill="none" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+    </div>
+    
+    <h3 style="font-size: 17px; font-weight: 700; color: var(--primary); margin-bottom: 6px;">Unlock & Re-admit Student?</h3>
+    <p id="revertModalDesc" style="font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5;"></p>
+
+    <form method="post" id="revertForm" action="">
+      {% csrf_token %}
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button type="button" class="btn-secondary" onclick="closeRevertModal()">Cancel</button>
+        <button type="submit" class="btn-primary" style="background:var(--blue);">
+          Confirm & Restore Student
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('liveAlumniSearch').addEventListener('input', function() {
+    const filter = this.value.toLowerCase().trim();
+    document.querySelectorAll('.alumni-row').forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+    });
+  });
+
+  function openRevertModal(alumniId, name, regNo, cls, sec) {
+    document.getElementById('revertModalDesc').innerHTML = `
+      Are you sure you want to remove <b>${name} (${regNo})</b> from Passout registry?<br><br>
+      This student will be restored back to <b>Class ${cls} (${sec})</b> as an active student and will automatically receive the next available roll number.
+    `;
+    document.getElementById('revertForm').action = `/students/passouts/revert/${alumniId}/`;
+    document.getElementById('revertConfirmOverlay').classList.add('show');
+  }
+
+  function closeRevertModal() {
+    document.getElementById('revertConfirmOverlay').classList.remove('show');
+  }
+
+  document.getElementById('revertConfirmOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeRevertModal();
+  });
+</script>
+{% endblock %}

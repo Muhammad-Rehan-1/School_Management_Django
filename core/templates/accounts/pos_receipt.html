@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Receipt #{{ fee.challan_no }}</title>
+<style>
+  @page {
+    size: 80mm auto;
+    margin: 3mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+  body {
+    background: #f1f3f7;
+    padding: 16px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .actions-toolbar {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+  .btn-print {
+    padding: 8px 18px; border-radius: 8px;
+    background: #1E2740; color: #fff; border: none; font-size: 13px; font-weight: bold;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .btn-print:hover { background: #2B3754; }
+
+  .receipt-card {
+    background: #fff;
+    width: 80mm;
+    padding: 14px 12px;
+    border: 1px dashed #aaa;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .r-head { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+  .r-head h2 { font-size: 15px; font-weight: bold; text-transform: uppercase; line-height: 1.2; }
+  .r-head p { font-size: 10px; color: #333; margin-top: 2px; }
+  .r-title {
+    display: inline-block; font-size: 11px; font-weight: bold;
+    border: 1px solid #000; padding: 2px 8px; margin-top: 6px; text-transform: uppercase;
+  }
+
+  .meta-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 6px; }
+  .meta-table td { padding: 2px 0; vertical-align: top; }
+  .meta-table td.lbl { width: 45%; color: #444; }
+  .meta-table td.val { font-weight: bold; text-align: right; }
+
+  .items-table { width: 100%; border-collapse: collapse; font-size: 10.5px; margin: 6px 0; }
+  .items-table th { border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; text-align: left; }
+  .items-table td { padding: 3px 0; }
+  .items-table td.r { text-align: right; font-weight: bold; }
+
+  .total-sec { border-top: 1px dashed #000; padding-top: 6px; margin-top: 4px; font-size: 11px; }
+  .total-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .total-row.highlight { font-size: 13px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 4px 0; margin: 4px 0; }
+
+  .r-footer { text-align: center; font-size: 9.5px; margin-top: 12px; border-top: 1px dashed #000; padding-top: 6px; }
+  .sig-box { display: flex; justify-content: space-between; margin-top: 20px; font-size: 9.5px; }
+  .sig-line { border-top: 1px dotted #444; width: 45%; text-align: center; padding-top: 2px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .actions-toolbar { display: none; }
+    .receipt-card { width: 100%; border: none; box-shadow: none; padding: 2mm 1mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="actions-toolbar">
+  <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  <button class="btn-print" style="background:#555;" onclick="window.close()">✕ Close</button>
+</div>
+
+<div class="receipt-card">
+  <div class="r-head">
+    <h2>{{ school.school_name }}</h2>
+    <p>{{ school.campus_name }}</p>
+    <p>{{ school.address }}</p>
+    <p>Ph: {{ school.phone_number }}</p>
+    <div class="r-title">OFFICIAL FEE RECEIPT</div>
+  </div>
+
+  <table class="meta-table">
+    <tr><td class="lbl">Receipt / Challan:</td><td class="val">{{ fee.challan_no }}</td></tr>
+    <tr><td class="lbl">Student Name:</td><td class="val">{{ student.name }}</td></tr>
+    <tr><td class="lbl">Father Name:</td><td class="val">{{ student.father_name }}</td></tr>
+    <tr><td class="lbl">Reg No:</td><td class="val">{{ student.reg_no|default:"—" }}</td></tr>
+    <tr><td class="lbl">Class & Roll:</td><td class="val">{{ student.student_class }} (#{{ student.roll_no }})</td></tr>
+    <tr><td class="lbl">Billing Period:</td><td class="val">{{ month_name }} {{ fee.fee_year }}</td></tr>
+    <tr><td class="lbl">Payment Day:</td><td class="val">{{ day_name }}</td></tr>
+    <tr><td class="lbl">Payment Date:</td><td class="val">{{ payment_date_formatted }}</td></tr>
+    <tr><td class="lbl">Payment Mode:</td><td class="val">{{ fee.payment_method|default:"Cash" }}</td></tr>
+  </table>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th style="text-align:right;">Amt</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Monthly Tuition Fee</td><td class="r">{{ fee.tuition_fee }}</td></tr>
+      {% if fee.transport_fee > 0 %}<tr><td>Transport Charges</td><td class="r">{{ fee.transport_fee }}</td></tr>{% endif %}
+      {% if fee.admission_fee > 0 %}<tr><td>Admission Fee</td><td class="r">{{ fee.admission_fee }}</td></tr>{% endif %}
+      {% if fee.other_charges > 0 %}<tr><td>Exam / Extra Charges</td><td class="r">{{ fee.other_charges }}</td></tr>{% endif %}
+      {% if fee.previous_arrears > 0 %}<tr><td>Previous Arrears</td><td class="r">{{ fee.previous_arrears }}</td></tr>{% endif %}
+    </tbody>
+  </table>
+
+  <div class="total-sec">
+    <div class="total-row"><span>Total Month Billed:</span><b>Rs. {{ fee.total_amount }}</b></div>
+    <div class="total-row highlight"><span>PAID NOW:</span><b>Rs. {{ received_amount }}</b></div>
+    <div class="total-row"><span>Total Paid:</span><span>Rs. {{ fee.paid_amount }}</span></div>
+    {% if fee.advance_fee > 0 %}
+      <div class="total-row" style="color:#2563EB;"><span>Advance Balance:</span><b>Rs. {{ fee.advance_fee }}</b></div>
+    {% endif %}
+    <div class="total-row">
+      <span>Remaining Balance:</span>
+      <b style="color:{% if fee.balance > 0 %}#DC2626{% else %}#16A34A{% endif %};">Rs. {{ fee.balance }}</b>
+    </div>
+    <div class="total-row">
+      <span>Status:</span>
+      <b>{{ fee.status|upper }}</b>
+    </div>
+  </div>
+
+  <div class="sig-box">
+    <div class="sig-line">Cashier Signature</div>
+    <div class="sig-line">Depositor Copy</div>
+  </div>
+
+  <div class="r-footer">
+    <p>*** Computer Generated Fee Slip ***</p>
+    <p>Thank You!</p>
+  </div>
+</div>
+
+</body>
+</html>

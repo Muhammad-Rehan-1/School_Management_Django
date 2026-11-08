@@ -1,0 +1,1227 @@
+{% extends 'base.html' %}
+
+{% block title %}Timetable — {{ school.school_name }}{% endblock %}
+{% block nav_timetable %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.page{padding:0 26px 40px;}
+
+/* ══════════ HEADER ═══════════ */
+.pg-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.pg-ic{width:46px;height:46px;border-radius:13px;background:#EEF0FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pg-ic svg{width:22px;height:22px;stroke:var(--primary);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.pg-txt h1{font-size:24px;font-weight:700;letter-spacing:-.3px;color:var(--text);margin:0;}
+.pg-txt p{font-size:13px;color:var(--muted);margin-top:4px;}
+.pg-acts{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;}
+
+.btn{border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-family:inherit;transition:.15s;text-decoration:none;}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-primary{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(240,138,93,.25);}
+.btn-primary:hover{background:#E67D50;}
+.btn-outline{background:#fff;color:var(--text);border:1.4px solid var(--line);}
+.btn-outline:hover{background:#F8F9FC;}
+.btn-danger{background:#FDECEC;color:#C94A48;}
+.btn-danger:hover{background:#FBD9D9;}
+.btn-sm{padding:8px 13px;font-size:12.5px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+
+/* ═══════════ KPI ═══════════ */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px;}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 18px rgba(20,24,40,.04);}
+.kpi .ic{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.kpi h3{font-size:20px;font-weight:700;margin:0;color:var(--text);line-height:1.1;}
+.kpi p{font-size:12px;color:var(--muted);margin-top:3px;}
+.k-blue{background:#E9F0FC;} .k-green{background:#E5F6EE;} .k-amber{background:#FEF2E4;} .k-purple{background:#F0EDFB;}
+.kpi.k-alert h3{color:#C94A48;}
+
+/* ═══════════ PANEL ═══════════ */
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(20,24,40,.04);margin-bottom:18px;}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.panel-head h3{font-size:15px;font-weight:600;margin:0;color:var(--text);display:flex;align-items:center;gap:9px;}
+.panel-head h3 svg{width:18px;height:18px;stroke:var(--primary);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.panel-head .grow{flex:1;}
+.panel-body{padding:20px;}
+.chip{font-size:11.5px;font-weight:600;color:var(--muted);background:#F1F2F7;padding:5px 11px;border-radius:20px;}
+.chip.bad{background:#FDECEC;color:#C94A48;}
+
+/* ═══════════ FILTERS ══════════ */
+.f-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.f-item label{display:block;font-size:12px;font-weight:600;color:#5C6479;margin-bottom:6px;}
+.f-sel,.form-control{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);background:#fff;outline:none;transition:.15s;box-sizing:border-box;}
+.f-sel:focus,.form-control:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(240,138,93,.12);}
+.form-control.bad{border-color:#E4605E !important;background:#FEF5F5 !important;}
+select.f-sel,select.form-control{appearance:none;cursor:pointer;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239AA1B2' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+
+.seg{display:inline-flex;background:#F1F2F7;border-radius:10px;padding:3px;}
+.seg button{border:none;background:transparent;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s;}
+.seg button.on{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(20,24,40,.08);}
+
+/* ═══════════ TIMETABLE GRID ═══════════ */
+.tt-wrap{overflow:auto;}
+.tt{width:100%;border-collapse:separate;border-spacing:0;min-width:980px;}
+.tt th{background:#F8F9FB;padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid var(--line);}
+.tt th .ph-n{font-size:12px;font-weight:700;color:var(--text);}
+.tt th .ph-t{font-size:10.5px;font-weight:500;color:var(--muted);margin-top:2px;}
+.tt td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:6px;vertical-align:top;height:88px;}
+.tt th:last-child,.tt td:last-child{border-right:none;}
+.tt tbody tr:last-child td{border-bottom:none;}
+
+.tt th.day-h,.tt td.day-c{position:sticky;left:0;z-index:2;background:#fff;min-width:130px;text-align:left;box-shadow:2px 0 0 var(--line);}
+.tt th.day-h{background:#F8F9FB;z-index:3;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding-left:14px;}
+.tt td.day-c{vertical-align:middle;padding:10px 14px;}
+.tt td.day-c b{display:block;font-size:13.5px;color:var(--text);}
+.tt td.day-c span{font-size:11px;color:var(--muted);}
+.tt td.day-c em{font-style:normal;font-size:9.5px;font-weight:700;background:var(--orange);color:#fff;padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:middle;}
+.tt tr.today td{background:#FFFBF8;}
+.tt tr.today td.day-c{background:#FFF6F0;}
+
+/* Filled slot */
+.slot{position:relative;min-height:74px;border-radius:10px;padding:9px 10px;background:var(--sb);border-left:3px solid var(--sf);cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:2px;}
+.slot:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(20,24,40,.10);}
+.slot .s-sub{font-size:12.5px;font-weight:700;color:var(--sf);line-height:1.25;padding-right:18px;}
+.slot .s-tch{font-size:11px;color:var(--text);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.slot .s-room{font-size:10.5px;color:var(--muted);margin-top:auto;}
+.slot .s-del{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:6px;border:none;background:rgba(255,255,255,.9);color:#C94A48;font-size:14px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;font-family:inherit;}
+.slot:hover .s-del{display:flex;}
+
+/* 🔴 CLASH highlight on grid */
+.slot.clash{outline:2px dashed #E4605E;outline-offset:-2px;}
+.slot .s-clash{position:absolute;top:6px;right:6px;background:#E4605E;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px;letter-spacing:.4px;}
+.slot:hover .s-clash{display:none;}
+
+/* Empty slot */
+.slot-empty{width:100%;min-height:74px;border:1.5px dashed var(--line);border-radius:10px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;transition:.15s;}
+.slot-empty:hover{border-color:var(--orange);color:var(--orange);background:#FFF9F5;}
+.slot-empty svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;}
+
+/* Free slot (teacher view) */
+.free{width:100%;min-height:74px;border:1.5px dashed #C6EAD9;background:#F6FCF9;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#2A9364;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:.15s;}
+.free:hover{background:#E5F6EE;border-color:#2A9364;}
+
+/* Break / Off */
+.tt th.brk-th{background:#F1F2F7;width:54px;min-width:54px;}
+.tt td.brk-td{background:repeating-linear-gradient(135deg,#F8F9FB 0 8px,#F1F2F7 8px 16px);vertical-align:middle;text-align:center;width:54px;min-width:54px;padding:0;}
+.tt td.brk-td span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:700;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.tt td.off-td{background:#FAFBFC;}
+.off{min-height:74px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#C7CBD6;font-weight:700;letter-spacing:1px;}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:14px 20px;border-top:1px solid var(--line);}
+.lg{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;background:var(--sb);color:var(--sf);}
+.lg i{width:8px;height:8px;border-radius:50%;background:var(--sf);}
+
+/* ═══════════ MODAL ═══════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,24,40,.5);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.active{display:flex;}
+.modal-box{background:#fff;border-radius:14px;width:92%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(20,24,40,.25);transition:max-width .2s;}
+.modal-box.modal-lg{max-width:800px;}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.modal-head h3{margin:0;font-size:16px;font-weight:600;color:var(--text);}
+.modal-close{width:30px;height:30px;border-radius:8px;border:none;background:#F5F6FA;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.modal-close svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;}
+.modal-body{padding:22px;}
+.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:#F8F9FB;}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.form-group label{font-size:12px;font-weight:500;color:var(--text);}
+.form-group label .req{color:var(--orange);}
+.m-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* 🔴 Warning box */
+.m-warn{display:none;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.6;margin-bottom:14px;}
+.m-warn.show{display:block;}
+.m-warn.err{background:#FDECEC;border:1px solid #F3C3C2;color:#A13330;}
+.m-warn.warn{background:#FFF7E8;border:1px solid #F5DFA8;color:#8A6D2B;}
+.m-warn b{font-weight:700;}
+.m-warn ul{margin:6px 0 0 16px;padding:0;}
+.m-warn li{margin:2px 0;}
+
+.m-class{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px 22px 4px;background:#FBFBFD;border-bottom:1px solid var(--line);}
+.m-class .form-group{margin-bottom:12px;}
+.m-class .form-control:disabled{background:#F1F2F7;color:var(--muted);cursor:not-allowed;}
+.m-class-note{grid-column:1 / -1;font-size:11.5px;font-weight:600;color:var(--orange);margin:-6px 0 10px;}
+.m-class-note:empty{display:none;}
+
+.m-tabs{display:flex;gap:2px;padding:10px 22px 0;border-bottom:1px solid var(--line);}
+.m-tabs button{border:none;background:transparent;padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:6px 6px 0 0;transition:.15s;}
+.m-tabs button:hover{color:var(--text);background:#F8F9FC;}
+.m-tabs button.on{color:var(--orange);border-bottom-color:var(--orange);background:transparent;}
+.m-hint{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px;}
+.m-grid3{display:grid;grid-template-columns:1.2fr 1.5fr 1fr;gap:12px;}
+.m-lbl{display:block;font-size:12px;font-weight:600;color:#5C6479;margin-bottom:6px;}
+.m-count{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:12.5px;color:var(--text);flex-wrap:wrap;}
+.m-count b{color:var(--orange);}
+.m-count .bad{color:#C94A48;font-weight:700;}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text);cursor:pointer;white-space:nowrap;}
+.chk input{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;margin:0;}
+
+.mini-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;}
+.mini{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+.mini th{background:#F8F9FB;padding:8px 6px;font-size:11px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;}
+.mini th:first-child,.mini td:first-child{text-align:left;padding-left:12px;min-width:96px;}
+.mini td{padding:7px 6px;text-align:center;border-bottom:1px solid #F1F2F7;transition:.15s;}
+.mini tbody tr:last-child td{border-bottom:none;}
+.mini tbody tr:hover td{background:#FAFBFC;}
+.mini td.cl{background:#FDECEC !important;position:relative;}
+.mini td.cl .lock{font-size:11px;color:#C94A48;font-weight:700;}
+.mini label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:var(--text);}
+.mini input[type=checkbox]{width:16px;height:16px;accent-color:var(--orange);cursor:pointer;margin:0;}
+.mini input[type=checkbox]:disabled{cursor:not-allowed;opacity:.4;}
+.mini .cell{display:inline-flex;flex-direction:column;align-items:center;gap:4px;}
+.mini .dot{width:6px;height:6px;border-radius:50%;}
+.mini .off-x{color:#C7CBD6;font-weight:700;}
+
+.d-tools{display:flex;align-items:flex-end;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.d-tools .f-sel{width:auto;min-width:150px;}
+.d-tools .right{margin-left:auto;display:flex;align-items:flex-end;gap:8px;}
+.d-tools .btn{padding:10px 14px;}
+.dayrows{border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.d-head,.drow{display:grid;grid-template-columns:108px 1.3fr 1.5fr 1fr 22px;gap:10px;align-items:center;padding:8px 12px;}
+.d-head{background:#F8F9FB;border-bottom:1px solid var(--line);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+.drow{border-bottom:1px solid #F1F2F7;}
+.drow:last-child{border-bottom:none;}
+.drow:nth-child(odd){background:#FAFBFC;}
+.drow.has-clash{background:#FEF5F5 !important;}
+.drow .pn{font-size:12px;font-weight:700;color:var(--text);}
+.drow .pn span{display:block;font-size:10.5px;font-weight:500;color:var(--muted);}
+.drow.is-off{opacity:.55;}
+.drow.is-off .off-lbl{grid-column:2 / -1;font-size:11px;font-weight:700;color:#9AA1B2;letter-spacing:1px;}
+.drow .form-control{padding:8px 10px;font-size:12.5px;}
+.drow .r-clash{font-size:14px;visibility:hidden;cursor:help;}
+.drow .r-clash.on{visibility:visible;}
+
+/* ── Modal live-refresh states ── */
+.m-class-note{display:flex;align-items:center;gap:8px;}
+.m-class-note.busy{color:var(--muted);}
+.m-class-note .mini-spin{width:12px;height:12px;border:2px solid rgba(240,138,93,.3);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;}
+.modal-body.ctx-loading{opacity:.45;pointer-events:none;}
+.m-empty{padding:26px 10px;text-align:center;font-size:12.5px;color:var(--muted);border:1.5px dashed var(--line);border-radius:10px;}
+
+.print-head{display:none;}
+@media print{
+  @page{size:A4 landscape;margin:10mm;}
+  .sidebar,.topbar,.no-print,.toast,.modal-overlay{display:none !important;}
+  .page{padding:0;}
+  .print-head{display:block;text-align:center;border-bottom:2px solid var(--primary);padding-bottom:8px;margin-bottom:12px;}
+  .print-head h2{font-size:18px;color:var(--primary);margin:0;text-transform:uppercase;letter-spacing:1px;}
+  .print-head p{font-size:10px;color:#666;margin:2px 0 6px;}
+  .print-head .print-title{display:inline-block;background:var(--primary);color:#fff;padding:4px 14px;border-radius:5px;font-size:11px;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .panel{box-shadow:none;border:none;margin:0;}
+  .panel-head{padding:0 0 8px;border:none;}
+  .tt-wrap{overflow:visible;}
+  .tt{min-width:0;}
+  .tt td{height:auto;padding:3px;}
+  .tt th.day-h,.tt td.day-c{position:static;box-shadow:none;}
+  .slot,.free{min-height:0;padding:5px 6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .slot .s-del,.slot .s-clash{display:none !important;}
+  .slot-empty{min-height:40px;color:transparent;border-color:#E5E7EB;}
+  .slot-empty svg{display:none;}
+}
+
+@media(max-width:760px){
+  .page{padding:0 16px 40px;}
+  .pg-acts{width:100%;}
+  .pg-acts .btn{flex:1;justify-content:center;}
+  .m-grid,.m-grid3,.m-class{grid-template-columns:1fr;}
+  .d-head{display:none;}
+  .drow{grid-template-columns:1fr 1fr;}
+  .drow .pn{grid-column:1 / -1;}
+}
+
+.loading{opacity:.5;pointer-events:none;position:relative;}
+.spin{width:20px;height:20px;border:2.5px solid rgba(240,138,93,.3);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .es-ic{font-size:48px;margin-bottom:12px;opacity:.5;}
+.empty-state h4{font-size:16px;color:var(--text);margin:0 0 6px;}
+.empty-state p{font-size:13px;margin:0;}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="page">
+
+  <div class="print-head">
+    <h2>{{ school.school_name }}</h2>
+    <p>{% if school.campus_name %}{{ school.campus_name }}{% if school.address %}, {% endif %}{% endif %}{{ school.address }}{% if school.phone_number %} · Ph: {{ school.phone_number }}{% endif %}</p>
+    <div class="print-title" id="printTitle">Weekly Timetable</div>
+  </div>
+
+  <div class="pg-head no-print">
+    <div class="pg-ic">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 13h3M13 13h3M8 17h3M13 17h3"/></svg>
+    </div>
+    <div class="pg-txt">
+      <h1>Timetable</h1>
+      <p>Create and manage weekly class &amp; teacher schedules</p>
+    </div>
+    <div class="pg-acts">
+      {% if perms.can_edit or user.is_superuser %}
+      <a href="{% url 'tt_settings' %}" class="btn btn-outline">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </a>
+      {% endif %}
+
+      {% if perms.can_print or user.is_superuser %}
+      <button class="btn btn-outline" id="btnPrint">
+        <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print
+      </button>
+      {% endif %}
+
+      {% if perms.can_add or perms.can_edit or user.is_superuser %}
+      <button class="btn btn-primary" id="btnAdd">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add Period
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="kpis no-print">
+    <div class="kpi"><div class="ic k-blue">📚</div><div><h3 id="kPeriods">0</h3><p id="kPeriodsL">Periods / Week</p></div></div>
+    <div class="kpi"><div class="ic k-green">📖</div><div><h3 id="kSubjects">0</h3><p id="kSubjectsL">Subjects</p></div></div>
+    <div class="kpi"><div class="ic k-purple">👩‍🏫</div><div><h3 id="kTeachers">0</h3><p id="kTeachersL">Teachers Assigned</p></div></div>
+    <div class="kpi" id="kpiClash"><div class="ic k-amber">⚠️</div><div><h3 id="kFree">0</h3><p id="kFreeL">Free Slots</p></div></div>
+  </div>
+
+  <div class="panel no-print">
+    <div class="panel-head">
+      <h3><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Timetable Filters</h3>
+      <div class="grow"></div>
+      <div class="seg" id="viewSeg">
+        <button type="button" class="on" data-view="class">Class Timetable</button>
+        <button type="button" data-view="teacher">Teacher Timetable</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="f-grid">
+        <div class="f-item" id="fClass"><label>Class</label><select id="selClass" class="f-sel"></select></div>
+        <div class="f-item" id="fSection"><label>Section</label><select id="selSection" class="f-sel"></select></div>
+        <div class="f-item" id="fTeacher" style="display:none;"><label>Teacher</label><select id="selTeacher" class="f-sel"></select></div>
+        <div class="f-item">
+          <label>Academic Session</label>
+          <select id="selSession" class="f-sel"></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+        <span id="gridTitle">Weekly Timetable</span>
+      </h3>
+      <span class="chip" id="gridMeta"></span>
+      <span class="chip bad" id="gridClash" style="display:none;"></span>
+      <div class="grow"></div>
+      <div class="no-print" style="display:flex;gap:8px;">
+        {% if perms.can_add or perms.can_edit or user.is_superuser %}
+        <button class="btn btn-outline btn-sm" id="btnCopy">Copy From…</button>
+        {% endif %}
+        {% if perms.can_delete or user.is_superuser %}
+        <button class="btn btn-danger btn-sm" id="btnClear">Clear All</button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="tt-wrap" id="ttWrap"><table class="tt" id="ttTable"></table></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+</div>
+
+<script id="backendData" type="application/json">
+{
+  "class_sections": {{ class_sections|safe }},
+  "teachers": {{ teachers_json|safe }},
+  "subjects": {{ subjects_json|safe }},
+  "sessions": {{ sessions|safe }},
+  "default_session": "{{ default_session }}",
+  "periods": {{ periods_json|safe }},
+  "days": {{ days_json|safe }},
+  "off": {{ off_json|safe }}
+}
+</script>
+{% endblock %}
+
+
+{% block modals %}
+<div class="modal-overlay" id="periodModal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h3 id="mTitle">Add Period</h3>
+      <button class="modal-close" type="button" data-close>
+        <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="periodForm" novalidate>
+
+      <div class="m-class">
+        <div class="form-group">
+          <label>Class <span class="req">*</span></label>
+          <select id="mCls" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label>Section <span class="req">*</span></label>
+          <select id="mSec" class="form-control"></select>
+        </div>
+        <div class="m-class-note" id="mTargetNote"></div>
+      </div>
+
+      <div class="m-tabs" id="mTabs">
+        <button type="button" class="on" data-mode="single">Single Period</button>
+        <button type="button" data-mode="multi">Multiple Slots</button>
+        <button type="button" data-mode="day">Fill Whole Day</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="m-warn" id="mWarn"></div>
+
+        <div class="m-pane" data-pane="single">
+          <div class="m-grid">
+            <div class="form-group"><label>Day <span class="req">*</span></label><select id="mDay" class="form-control"></select></div>
+            <div class="form-group"><label>Period <span class="req">*</span></label><select id="mPeriod" class="form-control"></select></div>
+          </div>
+          <div class="form-group"><label>Subject <span class="req">*</span></label><select id="mSubject" class="form-control"></select></div>
+          <div class="form-group"><label>Teacher <span class="req">*</span></label><select id="mTeacher" class="form-control"></select></div>
+          <div class="form-group" style="margin-bottom:0;"><label>Room</label><input type="text" id="mRoom" class="form-control" placeholder="e.g. Room 101, Physics Lab"></div>
+        </div>
+
+        <div class="m-pane" data-pane="multi" style="display:none;">
+          <div class="m-hint">Pick one subject &amp; teacher, then tick every slot where this period should go. <b style="color:#C94A48;">Red cells</b> = teacher already busy in another class.</div>
+          <div class="m-grid3">
+            <div class="form-group"><label>Subject <span class="req">*</span></label><select id="xSubject" class="form-control"></select></div>
+            <div class="form-group"><label>Teacher <span class="req">*</span></label><select id="xTeacher" class="form-control"></select></div>
+            <div class="form-group"><label>Room</label><input type="text" id="xRoom" class="form-control" placeholder="Room"></div>
+          </div>
+          <div class="mini-wrap"><table class="mini" id="miniGrid"></table></div>
+          <div class="m-count">
+            <span id="xCount"><b>0</b> slots selected</span>
+            <label class="chk"><input type="checkbox" id="xOverwrite"> Overwrite already-filled slots</label>
+          </div>
+        </div>
+
+        <div class="m-pane" data-pane="day" style="display:none;">
+          <div class="m-hint">Set the subject for every period of one day in a single go.</div>
+          <div class="d-tools">
+            <div><label class="m-lbl">Day</label><select id="dDay" class="f-sel"></select></div>
+            <div class="right">
+              <div><label class="m-lbl">Copy from</label><select id="dCopyFrom" class="f-sel"></select></div>
+              <button type="button" class="btn btn-outline btn-sm" id="dCopyBtn">Copy</button>
+            </div>
+          </div>
+          <div class="dayrows" id="dayRows"></div>
+          <div class="m-count">
+            <span style="color:var(--muted);">Tip: use <b>Copy from</b> to reuse another day's schedule.</span>
+            <label class="chk"><input type="checkbox" id="dClearBlank"> Remove periods left blank</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-danger btn-sm" id="mDelete" style="margin-right:auto;display:none;">Delete</button>
+        <button type="button" class="btn btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary" id="mSave">
+          <span class="btn-text">Save Period</span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  /* ═══════════════ BACKEND DATA ═══════════════ */
+  const backendData = JSON.parse(document.getElementById('backendData').textContent);
+  const CLASS_SECTIONS = backendData.class_sections || [];
+  const TEACHERS = backendData.teachers || [];
+  const SUBJECTS = backendData.subjects || [];
+  const SESSIONS = backendData.sessions || ['2027-2028'];
+  const DEFAULT_SESSION = backendData.default_session || SESSIONS[0];
+
+  const API_DATA = "{% url 'tt_data' %}";
+  const API_SAVE = "{% url 'tt_save' %}";
+  const API_BUSY = "{% url 'tt_busy' %}";
+
+  /* ═══════════════ STATE ═══════════════ */
+  const state = {
+    view: 'class', cls: '', sec: '', emp_id: '',
+    session: DEFAULT_SESSION,   // ✅ Ab seedha current session 2027-2028 aayega
+    editKey: null, mode: 'single', lastMode: 'single', seed: null,
+    periods: backendData.periods || [],
+    days: backendData.days || [],
+    off: backendData.off || {},
+    slots: [],
+    mSlots: [],
+    mCls: '', mSec: '',
+    busy: {}
+  };
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const toast = m => (typeof showToast === 'function') ? showToast(m) : alert(m);
+  const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  const teacher = id => TEACHERS.find(t => t.emp_id === String(id));
+  const tName = id => (teacher(id) || {}).name || id || '—';
+  const dName = d => (state.days.find(x => x.day === +d) || {}).name || ('Day ' + d);
+  const todayName = (state.days.find(d => d.day === new Date().getDay()) || {}).name || '';
+  const isOff = (day, periodNo) => state.off[day] && state.off[day].includes(periodNo);
+
+  const clashOf = (emp_id, day, period) => emp_id ? (state.busy[`${emp_id}|${day}|${period}`] || null) : null;
+  const mSlotAt = (day, p) => state.mSlots.find(s => s.key === `${day}|${p}`) || null;
+
+  /* ═══════════════ LOAD ══════════════ */
+  async function loadBusy(cls, sec) {
+    try {
+      const q = new URLSearchParams({ session: state.session, class: cls || '', section: sec || '' });
+      const r = await fetch(`${API_BUSY}?${q}`);
+      const d = await r.json();
+      state.busy = d.busy || {};
+    } catch (e) { console.error(e); state.busy = {}; }
+  }
+
+  async function fetchSlots(cls, sec) {
+    const q = new URLSearchParams({ session: state.session, view: 'class', class: cls, section: sec });
+    const r = await fetch(`${API_DATA}?${q}`);
+    const d = await r.json();
+    return (d.success && d.slots) ? d.slots : [];
+  }
+
+  async function loadTimetableData() {
+    const params = new URLSearchParams({
+      session: state.session, view: state.view,
+      class: state.cls, section: state.sec, emp_id: state.emp_id
+    });
+    try {
+      $('ttWrap').classList.add('loading');
+      const res = await fetch(`${API_DATA}?${params}`);
+      const data = await res.json();
+      if (data.success) {
+        if (data.periods && data.periods.length) state.periods = data.periods;
+        if (data.days && data.days.length) state.days = data.days;
+        if (data.off) state.off = data.off;
+        state.slots = data.slots || [];
+        await loadBusy(state.cls, state.sec);
+        render();
+        // 🔴 modal khula ho to uske dropdowns reset mat karo
+        if (!modal.classList.contains('active')) initModal();
+      } else toast('Error loading timetable data');
+    } catch (err) {
+      console.error('Error:', err); render();
+    } finally { $('ttWrap').classList.remove('loading'); }
+  }
+
+  /* ═══════════════ RENDER HELPERS ═══════════════ */
+  function theadHTML() {
+    return `<thead><tr><th class="day-h">Day / Period</th>${state.periods.map(p => p.is_break
+      ? `<th class="brk-th"><div class="ph-n">${esc(p.name || 'Break')}</div><div class="ph-t">${p.start_time} – ${p.end_time}</div></th>`
+      : `<th><div class="ph-n">Period ${p.period_no}</div><div class="ph-t">${p.start_time} – ${p.end_time}</div></th>`
+    ).join('')}</tr></thead>`;
+  }
+
+  const dayCell = (day, sub) => `<td class="day-c"><b>${day}${day === todayName ? '<em>Today</em>' : ''}</b><span>${sub}</span></td>`;
+  const brkCell = () => `<td class="brk-td" rowspan="${state.days.filter(d=>d.is_working).length}"><span>Break</span></td>`;
+  const offCell = () => `<td class="off-td"><div class="off">OFF</div></td>`;
+  const emptyHTML = (day, p) => `<button type="button" class="slot-empty" data-add="${day}|${p}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</button>`;
+
+  function getSubjectColor(sub) {
+    const colors = {
+      'Mathematics':['#FEF2E4','#C67C2E'],'Maths':['#FEF2E4','#C67C2E'],
+      'English':['#E9F0FC','#3F68B4'],'Urdu':['#E5F6EE','#2A9364'],
+      'Physics':['#F0EDFB','#6B5CC4'],'Chemistry':['#FDECEC','#C94A48'],
+      'Biology':['#E6F7F5','#1F8A7A'],'Computer':['#EEF2FF','#4F46E5'],
+      'Computer Science':['#EEF2FF','#4F46E5'],'Islamiyat':['#F0FDF4','#166534'],
+    };
+    return colors[sub] || ['#F1F2F7','#7A8194'];
+  }
+
+  const CAN_EDIT = ("{{ perms.can_edit }}" === "True" || "{{ user.is_superuser }}" === "True");
+  const CAN_DELETE = ("{{ perms.can_delete }}" === "True" || "{{ user.is_superuser }}" === "True");
+  const CAN_ADD = ("{{ perms.can_add }}" === "True" || "{{ user.is_superuser }}" === "True");
+
+  // slotHTML function mein delete button hide karna agar delete right na ho:
+  function slotHTML(day, p, e) {
+    const t = teacher(e.emp_id);
+    const [bg, fg] = getSubjectColor(e.subject);
+    const c = clashOf(e.emp_id, day, p);
+    const tip = c
+      ? `⛔ CLASH — ${tName(e.emp_id)} is also in Class ${c.class}-${c.section} (${c.subject})`
+      : (t ? t.name : 'Click to edit');
+    const delBtn = CAN_DELETE ? `<button type="button" class="s-del" data-del="${day}|${p}" title="Remove">×</button>` : '';
+
+    return `<div class="slot${c ? ' clash' : ''}" style="--sb:${bg};--sf:${fg}" data-key="${day}|${p}" title="${esc(tip)}">
+      ${c ? '<span class="s-clash">CLASH</span>' : ''}
+      <div class="s-sub">${esc(e.subject)}</div>
+      <div class="s-tch">${esc(t ? t.name : '—')}</div>
+      <div class="s-room">📍 ${esc(e.room || '—')}</div>
+      ${delBtn}
+    </div>`;
+  }
+
+  function showEmptyState(msg) {
+    $('ttWrap').innerHTML = `<div class="empty-state"><div class="es-ic">🗓️</div><h4>${msg}</h4><p>Configure it or select filters to view the timetable.</p></div>`;
+  }
+  function ensureTable() { if (!$('ttTable')) $('ttWrap').innerHTML = '<table class="tt" id="ttTable"></table>'; }
+
+  function renderClass() {
+    if (!state.periods.length) { showEmptyState('No periods configured'); setKpi(0,'Periods / Week',0,'Subjects',0,'Teachers Assigned',0,'Free Slots'); return; }
+    if (!state.cls || !state.sec) { showEmptyState('Select a Class & Section'); setKpi(0,'Periods / Week',0,'Subjects',0,'Teachers Assigned',0,'Free Slots'); return; }
+    ensureTable();
+
+    const map = {}; state.slots.forEach(s => { map[s.key] = s; });
+    const workingDays = state.days.filter(d => d.is_working);
+    let body = '<tbody>', clashCount = 0;
+
+    workingDays.forEach((day, di) => {
+      const filled = state.slots.filter(s => s.key.startsWith(`${day.day}|`)).length;
+      const avail = state.periods.filter(p => !p.is_break).length;
+      body += `<tr class="${day.name === todayName ? 'today' : ''}">${dayCell(day.name, `${filled} / ${avail} periods`)}`;
+      state.periods.forEach(p => {
+        if (p.is_break) { if (di === 0) body += brkCell(); return; }
+        if (isOff(day.day, p.period_no)) { body += offCell(); return; }
+        const e = map[day.day + '|' + p.period_no];
+        if (e && clashOf(e.emp_id, day.day, p.period_no)) clashCount++;
+        body += `<td>${e ? slotHTML(day.day, p.period_no, e) : emptyHTML(day.day, p.period_no)}</td>`;
+      });
+      body += '</tr>';
+    });
+
+    $('ttTable').innerHTML = theadHTML() + body + '</tbody>';
+    $('gridTitle').textContent = `Class ${state.cls} – ${state.sec} · Weekly Timetable`;
+    $('printTitle').textContent = `Class ${state.cls} – Section ${state.sec} · Weekly Timetable`;
+
+    const gc = $('gridClash');
+    if (clashCount) { gc.style.display=''; gc.textContent = `⚠ ${clashCount} teacher clash${clashCount>1?'es':''}`; }
+    else gc.style.display = 'none';
+
+    const entries = state.slots;
+    renderLegend(entries.map(e => e.subject));
+    const avail = workingDays.length * state.periods.filter(p => !p.is_break).length;
+    setKpi(entries.length, 'Periods / Week',
+           new Set(entries.map(e => e.subject)).size, 'Subjects',
+           new Set(entries.filter(e => e.emp_id).map(e => e.emp_id)).size, 'Teachers Assigned',
+           Math.max(avail - entries.length, 0), 'Free Slots');
+  }
+
+  function renderTeacher() {
+    if (!state.periods.length) { showEmptyState('No periods configured'); return; }
+    if (!state.emp_id) { showEmptyState('Select a Teacher'); setKpi(0,'Periods / Week',0,'Classes Taught',0,'Free Periods',0,'Clashes'); return; }
+    ensureTable();
+    $('gridClash').style.display = 'none';
+
+    const t = teacher(state.emp_id);
+    let periods = 0, avail = 0, clashes = 0;
+    const classes = new Set(), subs = [];
+    const workingDays = state.days.filter(d => d.is_working);
+    let body = '<tbody>';
+
+    workingDays.forEach((day, di) => {
+      let cells = '', dayCount = 0;
+      state.periods.forEach(p => {
+        if (p.is_break) { if (di === 0) cells += brkCell(); return; }
+        if (isOff(day.day, p.period_no)) { cells += offCell(); return; }
+        avail++;
+        const hits = state.slots.filter(s => s.key === `${day.day}|${p.period_no}` && s.emp_id === state.emp_id);
+        if (!hits.length) {
+          cells += `<td><button type="button" class="free" data-add="${day.day}|${p.period_no}" title="Add a period here">Free</button></td>`;
+          return;
+        }
+        periods++; dayCount++;
+        if (hits.length > 1) clashes++;
+        hits.forEach(k => classes.add(k.class));
+        const e = hits[0];
+        subs.push(e.subject);
+        const [bg, fg] = getSubjectColor(e.subject);
+        const dbl = hits.length > 1;
+        cells += `<td><div class="slot${dbl?' clash':''}" style="--sb:${bg};--sf:${fg}" data-key="${day.day}|${p.period_no}" data-cls="${esc(e.class)}-${esc(e.section)}" title="${dbl ? 'DOUBLE BOOKED: ' + hits.map(h=>h.class+'-'+h.section).join(', ') : 'Class '+esc(e.class)+' - '+esc(e.subject)}">
+          ${dbl ? '<span class="s-clash">CLASH</span>' : ''}
+          <div class="s-sub">Class ${esc(e.class)}</div>
+          <div class="s-tch">${esc(e.subject)}</div>
+          <div class="s-room">📍 ${esc(e.room || '—')}</div>
+        </div></td>`;
+      });
+      body += `<tr class="${day.name === todayName ? 'today' : ''}">${dayCell(day.name, plural(dayCount, 'period'))}${cells}</tr>`;
+    });
+
+    $('ttTable').innerHTML = theadHTML() + body + '</tbody>';
+    $('gridTitle').textContent = `${t ? t.name : '—'} · Weekly Schedule`;
+    $('printTitle').textContent = `${t ? t.name : ''} · Teacher Timetable`;
+    renderLegend(subs);
+    setKpi(periods, 'Periods / Week', classes.size, 'Classes Taught', avail - periods, 'Free Periods', clashes, 'Clashes');
+  }
+
+  function setKpi(a, al, b, bl, c, cl, d, dl) {
+    $('kPeriods').textContent = a;  $('kPeriodsL').textContent = al;
+    $('kSubjects').textContent = b; $('kSubjectsL').textContent = bl;
+    $('kTeachers').textContent = c; $('kTeachersL').textContent = cl;
+    $('kFree').textContent = d;     $('kFreeL').textContent = dl;
+    $('kpiClash').classList.toggle('k-alert', dl === 'Clashes' && d > 0);
+  }
+
+  function renderLegend(subs) {
+    const uniq = [...new Set(subs)].sort();
+    const lg = $('legend');
+    lg.style.display = uniq.length ? 'flex' : 'none';
+    lg.innerHTML = uniq.map(s => { const [bg, fg] = getSubjectColor(s); return `<span class="lg" style="--sb:${bg};--sf:${fg}"><i></i>${esc(s)}</span>`; }).join('');
+  }
+
+  function render() { state.view === 'class' ? renderClass() : renderTeacher(); }
+
+  /* ═══════════════ FILTERS ═══════════════ */
+  function initFilters() {
+    $('selClass').innerHTML = '<option value="">-- Select Class --</option>' +
+      [...new Set(CLASS_SECTIONS.map(c => c.class_field))].map(c => `<option value="${esc(c)}">Class ${esc(c)}</option>`).join('');
+    $('selSection').innerHTML = '<option value="">-- Select Section --</option>';
+    $('selTeacher').innerHTML = '<option value="">-- Select Teacher --</option>' + TEACHERS.map(t =>
+      `<option value="${esc(t.emp_id)}">${esc(t.name)} — ${esc(t.subject || 'N/A')}</option>`).join('');
+    $('selSession').innerHTML = SESSIONS.map(s =>
+      `<option value="${esc(s)}"${s === state.session ? ' selected' : ''}>${esc(s)}</option>`).join('')
+      || `<option value="${state.session}">${state.session}</option>`;
+
+    updateGridMeta();
+
+    $('selClass').onchange = e => { state.cls = e.target.value; updateSections(); render(); };
+    $('selSection').onchange = e => { state.sec = e.target.value; if(state.cls && state.sec) loadTimetableData(); else render(); };
+    $('selTeacher').onchange = e => { state.emp_id = e.target.value; if(state.emp_id) loadTimetableData(); else render(); };
+    $('selSession').onchange = e => {
+      state.session = e.target.value;
+      if((state.view==='class'&&state.cls&&state.sec)||(state.view==='teacher'&&state.emp_id)) loadTimetableData();
+    };
+
+    const uniqueClasses = [...new Set(CLASS_SECTIONS.map(c => c.class_field))];
+    if (uniqueClasses.length === 1) {
+      state.cls = uniqueClasses[0];
+      $('selClass').value = state.cls;
+      updateSectionsKeep();
+      const secs = [...new Set(CLASS_SECTIONS.filter(c => c.class_field === state.cls).map(c => c.section))];
+      if (secs.length === 1) { state.sec = secs[0]; $('selSection').value = state.sec; }
+    }
+  }
+
+  function updateGridMeta() { $('gridMeta').textContent = `${state.periods.filter(p => !p.is_break).length} periods/day`; }
+  function updateSections() { updateSectionsKeep(); state.sec = ''; }
+  function updateSectionsKeep() {
+    const sections = CLASS_SECTIONS.filter(c => c.class_field === state.cls).map(c => c.section);
+    $('selSection').innerHTML = '<option value="">-- Select Section --</option>' +
+      [...new Set(sections)].map(s => `<option value="${esc(s)}">Section ${esc(s)}</option>`).join('');
+  }
+
+  $('viewSeg').querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      $('viewSeg').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      state.view = b.dataset.view;
+      const cls = state.view === 'class';
+      $('fClass').style.display = $('fSection').style.display = cls ? 'block' : 'none';
+      $('fTeacher').style.display = cls ? 'none' : 'block';
+      $('btnClear').style.display = $('btnCopy').style.display = cls ? '' : 'none';
+      if ((cls && state.cls && state.sec) || (!cls && state.emp_id)) loadTimetableData();
+      else render();
+    };
+  });
+
+  /* ═══════════════ GRID CLICKS ═══════════════ */
+  $('ttWrap').addEventListener('click', e => {
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      const [day, period] = del.dataset.del.split('|');
+      if (confirm(`Remove period from ${dName(day)} · Period ${period}?`)) {
+        $('mCls').value = state.cls; $('mSec').value = state.sec;
+        state.mCls = state.cls; state.mSec = state.sec;
+        saveToBackend([{day: +day, period: +period, delete: true}]);
+      }
+      return;
+    }
+    const add = e.target.closest('[data-add]');
+    if (add) {
+      const [d, p] = add.dataset.add.split('|');
+      openModal({ day:+d, p:+p, emp_id: state.view === 'teacher' ? state.emp_id : null });
+      return;
+    }
+    const slot = e.target.closest('.slot[data-key]');
+    if (slot) {
+      const [d, p] = slot.dataset.key.split('|');
+      openModal({ day:+d, p:+p, edit:true, cls: slot.dataset.cls || null });
+    }
+  });
+
+  /* ═══════════════ SAVE ═══════════════ */
+  function busyBtn(on) {
+    $('mSave').disabled = on;
+    $('mSave').innerHTML = on
+      ? '<div class="spin" style="width:16px;height:16px;border-width:2px;"></div>'
+      : '<span class="btn-text">Save Period</span>';
+  }
+
+  async function saveToBackend(items) {
+    const clsVal = ($('mCls').value || state.mCls || state.cls);
+    const secVal = ($('mSec').value || state.mSec || state.sec);
+
+    if (!clsVal || !secVal) { toast('Please select Class and Section'); return; }
+    if (!state.session)     { toast('Please select Academic Session'); return; }
+
+    try {
+      busyBtn(true);
+      const payload = {
+        session: state.session, class: clsVal, section: secVal, items,
+        overwrite: $('xOverwrite') ? $('xOverwrite').checked : false,
+        delete: items[0] && items[0].delete ? true : false
+      };
+      const res = await fetch(API_SAVE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        showConflicts(data.error, data.conflicts);
+        toast(data.error || 'Save failed');
+        return;
+      }
+      if (data.conflicts && data.conflicts.length) {
+        showConflicts('Some slots were blocked due to teacher clash:', data.conflicts);
+        await refreshModalContext();       // modal khula rahe, data fresh ho
+      } else {
+        closeModal(true);
+      }
+
+      // grid ko us class par le jao jo abhi save hui
+      state.cls = clsVal; state.sec = secVal;
+      if ($('selClass')) { $('selClass').value = clsVal; updateSectionsKeep(); $('selSection').value = secVal; }
+      await loadTimetableData();
+      toast(data.message || 'Saved successfully');
+
+    } catch (err) {
+      console.error(err); toast('Network error');
+    } finally { busyBtn(false); }
+  }
+
+  function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.substring(0, name.length + 1) === (name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+      });
+    }
+    return v;
+  }
+
+  /* ══════════════ WARNING BOX ═══════════════ */
+  function warn(html, type) { const w = $('mWarn'); w.className = 'm-warn show ' + (type || 'err'); w.innerHTML = html; }
+  function warnHide() { $('mWarn').className = 'm-warn'; $('mWarn').innerHTML = ''; }
+  function showConflicts(title, list) {
+    if (!list || !list.length) { warn(`<b>${esc(title)}</b>`, 'err'); return; }
+    warn(`<b>${esc(title)}</b><ul>` + list.map(c =>
+      `<li>${esc(c.teacher)} → ${esc(c.day_name)} · Period ${c.period} — already in <b>Class ${esc(c.class)}-${esc(c.section)}</b> (${esc(c.subject)})</li>`
+    ).join('') + '</ul>', 'err');
+  }
+
+  /* ══════════════ MODAL ═══════════════ */
+  const modal = $('periodModal');
+  const box = modal.querySelector('.modal-box');
+
+  function initModal() {
+    $('mCls').innerHTML = '<option value="">-- Select Class --</option>' +
+      [...new Set(CLASS_SECTIONS.map(c => c.class_field))].map(c => `<option value="${esc(c)}">Class ${esc(c)}</option>`).join('');
+    fillModalSections('');
+
+    const dayOpts = state.days.filter(d => d.is_working).map(d => `<option value="${d.day}">${esc(d.name)}</option>`).join('');
+    $('mDay').innerHTML = dayOpts; $('dDay').innerHTML = dayOpts; $('dCopyFrom').innerHTML = dayOpts;
+
+    $('mPeriod').innerHTML = state.periods.filter(p => !p.is_break).map(p =>
+      `<option value="${p.period_no}">Period ${p.period_no} · ${p.start_time} – ${p.end_time}</option>`).join('');
+
+    const subjectOpts = SUBJECTS.map(s => `<option>${esc(s)}</option>`).join('');
+    $('mSubject').innerHTML = '<option value="">Select subject</option>' + subjectOpts;
+    $('xSubject').innerHTML = '<option value="">Select subject</option>' + subjectOpts;
+
+    const teacherOpts = TEACHERS.map(t => `<option value="${esc(t.emp_id)}">${esc(t.name)} — ${esc(t.subject || 'N/A')}</option>`).join('');
+    $('mTeacher').innerHTML = '<option value="">Select teacher</option>' + teacherOpts;
+    $('xTeacher').innerHTML = '<option value="">Select teacher</option>' + teacherOpts;
+  }
+
+  function fillModalSections(cls, keep) {
+    const secs = cls
+      ? CLASS_SECTIONS.filter(c => c.class_field === cls).map(c => c.section)
+      : [...new Set(CLASS_SECTIONS.map(c => c.section))];
+    $('mSec').innerHTML = '<option value="">-- Select Section --</option>' +
+      [...new Set(secs)].map(s => `<option value="${esc(s)}">Section ${esc(s)}</option>`).join('');
+    if (keep) $('mSec').value = keep;
+  }
+
+  /* 🔴🔴 YEH HAI ASAL FIX — Class/Section change hote hi sab refresh */
+  $('mCls').addEventListener('change', async () => {
+    const c = $('mCls').value;
+    const secs = [...new Set(CLASS_SECTIONS.filter(x => x.class_field === c).map(x => x.section))];
+    fillModalSections(c);
+    // agar us class me sirf 1 section hai to khud select kar do
+    if (secs.length === 1) $('mSec').value = secs[0];
+    await refreshModalContext();
+  });
+
+  $('mSec').addEventListener('change', refreshModalContext);
+
+  function modalCtxLoading(on) {
+    modal.querySelector('.modal-body').classList.toggle('ctx-loading', on);
+    $('mSave').disabled = on;
+    const n = $('mTargetNote');
+    if (on) { n.className = 'm-class-note busy'; n.innerHTML = '<span class="mini-spin"></span> Loading this class timetable…'; }
+  }
+
+  async function refreshModalContext() {
+    const c = $('mCls').value, s = $('mSec').value;
+    state.mCls = c; state.mSec = s;
+    warnHide();
+
+    const note = $('mTargetNote');
+    if (!c || !s) {
+      state.mSlots = []; state.busy = {};
+      note.className = 'm-class-note';
+      note.textContent = '⚠ Select Class & Section first';
+      applyModalPane();
+      return;
+    }
+
+    modalCtxLoading(true);
+    try {
+      state.mSlots = await fetchSlots(c, s);
+      await loadBusy(c, s);                       // is class ko exclude karke busy map
+      note.className = 'm-class-note';
+      const filled = state.mSlots.length;
+      note.textContent = `Editing: Class ${c} – Section ${s}  ·  ${filled} period${filled===1?'':'s'} already set`;
+    } catch (e) {
+      console.error(e);
+      state.mSlots = [];
+      note.textContent = 'Could not load this class timetable';
+    } finally {
+      modalCtxLoading(false);
+    }
+    applyModalPane();
+  }
+
+  /* Active pane ko naye data se dobara bharo */
+  function applyModalPane() {
+    if (state.mode === 'single') { prefillSingle(); checkSingle(); }
+    if (state.mode === 'multi')  { buildMini(); checkMulti(); }
+    if (state.mode === 'day')    { buildDayRows(); checkDay(); }
+  }
+
+  function prefillSingle() {
+    const day = +$('mDay').value, p = +$('mPeriod').value;
+    const ex = mSlotAt(day, p);
+    if (ex) {
+      $('mSubject').value = ex.subject || '';
+      $('mTeacher').value = ex.emp_id || '';
+      $('mRoom').value    = ex.room || '';
+      $('mTitle').textContent = 'Edit Period';
+      $('mDelete').style.display = '';
+      state.editKey = `${day}|${p}`;
+    } else {
+      if (!state.keepFields) { $('mSubject').value = ''; $('mTeacher').value = ''; $('mRoom').value = ''; }
+      $('mTitle').textContent = 'Add Period';
+      $('mDelete').style.display = 'none';
+      state.editKey = null;
+    }
+  }
+
+  async function openModal({ day = null, p = null, edit = false, cls = null, emp_id = null } = {}) {
+    // Dropdowns ko ensure karein ke options mojood hon
+    initModal();
+
+    if (day === null) day = (state.days.find(d=>d.is_working) || {day:1}).day;
+    if (p === null)   p   = (state.periods.find(x=>!x.is_break) || {period_no:1}).period_no;
+
+    let c = state.cls, s = state.sec;
+    if (cls) { const i = cls.lastIndexOf('-'); c = cls.slice(0, i); s = cls.slice(i + 1); }
+
+    $('mCls').value = c || '';
+    fillModalSections(c, s);
+    $('mCls').disabled = $('mSec').disabled = false;   // 🔴 ab hamesha change ho sakta hai
+
+    state.seed = { day, p };
+    $('mDay').value = day;
+    $('mPeriod').value = p;
+    $('dDay').value = day;
+    $('dClearBlank').checked = false;
+    $('xRoom').value = ''; $('xOverwrite').checked = false;
+
+    const t = emp_id ? teacher(emp_id) : null;
+    state.keepFields = !!emp_id;
+    if (t) { $('mSubject').value = t.subject || ''; $('mTeacher').value = emp_id; }
+    $('xSubject').value = t ? (t.subject || '') : '';
+    $('xTeacher').value = emp_id || '';
+
+    warnHide();
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    state.mode = (edit || emp_id) ? 'single' : state.lastMode;
+    setModeUI(state.mode);
+    await refreshModalContext();       // 🔴 data load + pane build
+    state.keepFields = false;
+  }
+
+  function closeModal(skipRestore) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    warnHide();
+    // grid ka busy map wapas grid wali class par set karo
+    if (!skipRestore && (state.mCls !== state.cls || state.mSec !== state.sec)) {
+      loadBusy(state.cls, state.sec).then(render);
+    }
+  }
+
+  function setModeUI(mode) {
+    $('mTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+    modal.querySelectorAll('.m-pane').forEach(pn => pn.style.display = pn.dataset.pane === mode ? '' : 'none');
+    box.classList.toggle('modal-lg', mode !== 'single');
+  }
+
+  function setMode(mode) {
+    state.mode = mode;
+    setModeUI(mode);
+    warnHide();
+    applyModalPane();
+  }
+
+  $('mTabs').querySelectorAll('button').forEach(b => b.onclick = () => { state.lastMode = b.dataset.mode; setMode(b.dataset.mode); });
+  modal.querySelectorAll('[data-close]').forEach(b => b.onclick = () => closeModal());
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
+
+  /* ══════════════ CLASH CHECKS ═══════════════ */
+  function checkSingle() {
+    if (state.mode !== 'single') return;
+    if (!state.mCls || !state.mSec) { $('mSave').disabled = true; return; }
+    const emp = $('mTeacher').value, day = +$('mDay').value, p = +$('mPeriod').value;
+    const c = clashOf(emp, day, p);
+    $('mTeacher').classList.toggle('bad', !!c);
+    if (c) {
+      warn(`<b>⛔ Teacher Clash!</b><br><b>${esc(tName(emp))}</b> is already teaching <b>${esc(c.subject)}</b> to
+            <b>Class ${esc(c.class)}-${esc(c.section)}</b> on <b>${esc(dName(day))} · Period ${p}</b>.`, 'err');
+      $('mSave').disabled = true;
+    } else { warnHide(); $('mSave').disabled = false; }
+  }
+  ['mDay','mPeriod'].forEach(id => $(id).addEventListener('change', () => { prefillSingle(); checkSingle(); }));
+  $('mTeacher').addEventListener('change', checkSingle);
+
+  function checkMulti() {
+    if (state.mode !== 'multi') return;
+    if (!state.mCls || !state.mSec) { $('mSave').disabled = true; return; }
+    const emp = $('xTeacher').value;
+    let blocked = 0;
+    $('miniGrid').querySelectorAll('input[data-slot]').forEach(i => {
+      const [d, p] = i.dataset.slot.split('|');
+      const c = clashOf(emp, +d, +p);
+      const td = i.closest('td');
+      td.classList.toggle('cl', !!c);
+      i.disabled = !!c;
+      if (c) { i.checked = false; blocked++; td.title = `⛔ Busy: Class ${c.class}-${c.section} (${c.subject})`; }
+      else td.title = '';
+    });
+    const sel = $('miniGrid').querySelectorAll('input[data-slot]:checked').length;
+    $('xCount').innerHTML = `<b>${sel}</b> slot${sel === 1 ? '' : 's'} selected` +
+      (blocked ? ` <span class="bad">· ${blocked} blocked (clash)</span>` : '');
+    if (blocked) warn(`<b>⚠ ${esc(tName(emp))}</b> is already booked in <b>${blocked}</b> of these slots — locked (red).`, 'warn');
+    else warnHide();
+    $('mSave').disabled = false;
+  }
+  $('xTeacher').addEventListener('change', checkMulti);
+  $('miniGrid').addEventListener('change', e => {
+    const t = e.target, g = $('miniGrid');
+    if (t.dataset.row) g.querySelectorAll(`input[data-slot^="${t.dataset.row}|"]:not(:disabled)`).forEach(i => i.checked = t.checked);
+    if (t.dataset.col) g.querySelectorAll(`input[data-slot$="|${t.dataset.col}"]:not(:disabled)`).forEach(i => i.checked = t.checked);
+    checkMulti();
+  });
+
+  function checkDay() {
+    if (state.mode !== 'day') return;
+    if (!state.mCls || !state.mSec) { $('mSave').disabled = true; return; }
+    const day = +$('dDay').value;
+    let n = 0;
+    $('dayRows').querySelectorAll('.drow[data-p]').forEach(r => {
+      const emp = r.querySelector('.d-tch').value;
+      const c = clashOf(emp, day, +r.dataset.p);
+      const ic = r.querySelector('.r-clash');
+      ic.classList.toggle('on', !!c);
+      r.classList.toggle('has-clash', !!c);
+      r.querySelector('.d-tch').classList.toggle('bad', !!c);
+      if (c) { ic.title = `⛔ ${tName(emp)} busy: Class ${c.class}-${c.section} (${c.subject})`; n++; }
+    });
+    if (n) { warn(`<b>⛔ ${n} clash${n>1?'es':''} found.</b> Fix marked rows before saving.`, 'err'); $('mSave').disabled = true; }
+    else { warnHide(); $('mSave').disabled = false; }
+  }
+
+  /* ══════════════ MULTI GRID (mSlots se) ═══════════════ */
+  function buildMini() {
+    if (!state.mCls || !state.mSec) { $('miniGrid').innerHTML = ''; $('miniGrid').closest('.mini-wrap').innerHTML = '<div class="m-empty">Select a Class & Section above</div>'; return; }
+    const wrap = document.querySelector('.mini-wrap');
+    if (!$('miniGrid')) wrap.innerHTML = '<table class="mini" id="miniGrid"></table>';
+
+    const map = {}; state.mSlots.forEach(s => { map[s.key] = s; });
+    const nonBreak = state.periods.filter(p => !p.is_break);
+    let h = `<thead><tr><th>Day</th>${nonBreak.map(p => `<th><label><input type="checkbox" data-col="${p.period_no}">P${p.period_no}</label></th>`).join('')}</tr></thead><tbody>`;
+    state.days.filter(d => d.is_working).forEach(d => {
+      h += `<tr><td><label><input type="checkbox" data-row="${d.day}">${esc(d.name.slice(0, 3))}</label></td>`;
+      nonBreak.forEach(p => {
+        if (isOff(d.day, p.period_no)) { h += '<td><span class="off-x">—</span></td>'; return; }
+        const k = d.day + '|' + p.period_no;
+        const e = map[k];
+        const pre = (state.seed && state.seed.day === d.day && state.seed.p === p.period_no) ? ' checked' : '';
+        h += `<td title="${e ? esc(e.subject) : ''}"><span class="cell"><input type="checkbox" data-slot="${k}"${pre}><i class="dot" style="background:${e ? getSubjectColor(e.subject)[1] : 'transparent'}"></i></span></td>`;
+      });
+      h += '</tr>';
+    });
+    $('miniGrid').innerHTML = h + '</tbody>';
+  }
+
+  /* ═══════════════ DAY ROWS (mSlots se) ═══════════════ */
+  function buildDayRows() {
+    if (!state.mCls || !state.mSec) { $('dayRows').innerHTML = '<div class="m-empty">Select a Class & Section above</div>'; return; }
+    const day = +$('dDay').value;
+    const map = {}; state.mSlots.forEach(s => { map[s.key] = s; });
+    let h = '<div class="d-head"><span>Period</span><span>Subject</span><span>Teacher</span><span>Room</span><span></span></div>';
+    state.periods.filter(p => !p.is_break).forEach(p => {
+      if (isOff(day, p.period_no)) {
+        h += `<div class="drow is-off"><div class="pn">Period ${p.period_no}<span>${p.start_time} – ${p.end_time}</span></div><div class="off-lbl">OFF — HALF DAY</div></div>`;
+        return;
+      }
+      const ex = map[day + '|' + p.period_no];
+      const subSel = SUBJECTS.map(s => `<option ${ex && ex.subject===s?'selected':''}>${esc(s)}</option>`).join('');
+      const tchSel = TEACHERS.map(t => `<option value="${esc(t.emp_id)}" ${ex && ex.emp_id===t.emp_id?'selected':''}>${esc(t.name)}</option>`).join('');
+      h += `<div class="drow" data-p="${p.period_no}">
+        <div class="pn">Period ${p.period_no}<span>${p.start_time} – ${p.end_time}</span></div>
+        <select class="form-control d-sub"><option value="">— Free —</option>${subSel}</select>
+        <select class="form-control d-tch"><option value="">— Teacher —</option>${tchSel}</select>
+        <input type="text" class="form-control d-room" placeholder="Room" value="${ex ? esc(ex.room||'') : ''}">
+        <span class="r-clash">⚠️</span></div>`;
+    });
+    $('dayRows').innerHTML = h;
+  }
+
+  $('dDay').onchange = () => { buildDayRows(); checkDay(); };
+  $('dCopyBtn').onclick = () => {
+    const f = +$('dCopyFrom').value, to = +$('dDay').value;
+    if (f === to) return toast('Source and target day are the same');
+    const srcMap = {};
+    state.mSlots.forEach(s => { const [d,pp] = s.key.split('|'); if(+d===f) srcMap[+pp]=s; });
+    $('dayRows').querySelectorAll('.drow[data-p]').forEach(r => {
+      const e = srcMap[+r.dataset.p];
+      if (e) {
+        r.querySelector('.d-sub').value = e.subject || '';
+        r.querySelector('.d-tch').value = e.emp_id || '';
+        r.querySelector('.d-room').value = e.room || '';
+      }
+    });
+    checkDay();
+    toast(`${dName(f)}'s periods copied — review then Save`);
+  };
+  $('dayRows').addEventListener('change', e => {
+    const r = e.target.closest('.drow[data-p]'); if (!r) return;
+    if (e.target.classList.contains('d-sub')) {
+      const sub = e.target.value, tch = r.querySelector('.d-tch');
+      if (sub) { const t = TEACHERS.find(x => x.subject === sub); if (t) tch.value = t.emp_id; }
+    }
+    checkDay();
+  });
+
+  /* ═══════════════ SUBJECT → TEACHER AUTO ═══════════════ */
+  $('mSubject').onchange = () => {
+    const t = TEACHERS.find(x => x.subject === $('mSubject').value);
+    if (t) $('mTeacher').value = t.emp_id;
+    checkSingle();
+  };
+  $('xSubject').onchange = () => {
+    const t = TEACHERS.find(x => x.subject === $('xSubject').value);
+    if (t) $('xTeacher').value = t.emp_id;
+    checkMulti();
+  };
+
+  /* ═══════════════ SUBMIT ═══════════════ */
+  $('periodForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (!$('mCls').value || !$('mSec').value) { warn('<b>Please select Class and Section.</b>', 'warn'); return; }
+
+    if (state.mode === 'single') {
+      const day = +$('mDay').value, p = +$('mPeriod').value;
+      const sub = $('mSubject').value, emp_id = $('mTeacher').value, room = $('mRoom').value.trim();
+      if (!sub || !emp_id) { warn('<b>Please select both Subject and Teacher.</b>', 'warn'); return; }
+      if (clashOf(emp_id, day, p)) { checkSingle(); toast('⛔ Teacher clash — cannot save'); return; }
+      if (mSlotAt(day, p)) $('xOverwrite').checked = true;    // existing ko update karo
+      saveToBackend([{ day, period: p, subject: sub, emp_id, room }]);
+      return;
+    }
+
+    if (state.mode === 'multi') {
+      const sub = $('xSubject').value, emp_id = $('xTeacher').value, room = $('xRoom').value.trim();
+      const sel = [...$('miniGrid').querySelectorAll('input[data-slot]:checked')].map(i => i.dataset.slot);
+      if (!sub || !emp_id || !sel.length) { warn('<b>Select subject, teacher and at least one slot.</b>', 'warn'); return; }
+      if (sel.some(k => { const [d,p]=k.split('|'); return clashOf(emp_id, +d, +p); })) { checkMulti(); toast('⛔ Some slots clash'); return; }
+      saveToBackend(sel.map(key => { const [day, period] = key.split('|'); return { day:+day, period:+period, subject:sub, emp_id, room }; }));
+      return;
+    }
+
+    if (state.mode === 'day') {
+      const day = +$('dDay').value;
+      const items = []; let clash = 0;
+      $('dayRows').querySelectorAll('.drow[data-p]').forEach(r => {
+        const sub = r.querySelector('.d-sub').value;
+        const emp_id = r.querySelector('.d-tch').value;
+        const period = +r.dataset.p;
+        if (!sub) {
+          if ($('dClearBlank').checked && mSlotAt(day, period)) items.push({ day, period, delete: true });
+          return;
+        }
+        if (clashOf(emp_id, day, period)) { clash++; return; }
+        items.push({ day, period, subject: sub, emp_id, room: r.querySelector('.d-room').value.trim() });
+      });
+      if (clash) { checkDay(); toast('⛔ Fix teacher clashes first'); return; }
+      if (!items.length) { warn('<b>Nothing to save.</b>', 'warn'); return; }
+      $('xOverwrite').checked = true;
+      saveToBackend(items);
+      return;
+    }
+  });
+
+  $('mDelete').onclick = () => {
+    if (!state.editKey || !confirm('Remove this period?')) return;
+    const [day, period] = state.editKey.split('|');
+    saveToBackend([{day: +day, period: +period, delete: true}]);
+  };
+
+  /* ═══════════════ HEADER BUTTONS ══════════════ */
+  $('btnAdd').onclick = () => openModal();
+  $('btnClear').onclick = () => {
+    if (!state.cls || !state.sec) { toast('Select a class & section first'); return; }
+    if (!confirm(`Clear the entire timetable of Class ${state.cls} – ${state.sec}?`)) return;
+    const items = state.slots.map(s => { const [d,p]=s.key.split('|'); return {day:+d, period:+p, delete:true}; });
+    if (!items.length) { toast('Nothing to clear'); return; }
+    $('mCls').value = state.cls; fillModalSections(state.cls, state.sec);
+    state.mCls = state.cls; state.mSec = state.sec;
+    saveToBackend(items);
+  };
+  $('btnCopy').onclick = () => toast('Copy From… — Coming soon');
+  $('btnPrint').onclick = () => window.print();
+
+  /* ═══════════════ INIT ═══════════════ */
+  initFilters();
+  initModal();
+  if (state.cls && state.sec) loadTimetableData();
+  else render();
+
+})();
+</script>
+{% endblock %}

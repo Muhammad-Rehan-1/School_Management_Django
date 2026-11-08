@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Exams{% endblock %}
+{% block page_title %}Exams{% endblock %}
+{% block nav_exam %}active{% endblock %}
+
+{% block content %}
+<div style="padding:6px 26px 26px; display:flex; flex-direction:column; gap:16px;">
+
+  <!-- ══════════ CREATE EXAM (PERMISSION CHECK) ══════════ -->
+  {% if perms.can_add or user.is_superuser %}
+  <div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <h2 style="font-size:16px; font-weight:600; margin-bottom:12px;">Create Exam</h2>
+
+    <form method="post" action="{% url 'exam_create' %}" id="examForm"
+          style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px;">
+      {% csrf_token %}
+
+      <!-- CLASS -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Class <span style="color:var(--orange);">*</span></label>
+        <select name="class" id="fClass" required
+                style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="">Select Class</option>
+          {% for cls, secs in class_sections.items %}
+            <option value="{{ cls }}">{{ cls }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- SECTION (cascading) -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Section <span style="color:var(--orange);">*</span></label>
+        <select name="section" id="fSection" required disabled
+                style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F1F2F7;">
+          <option value="">Select class first</option>
+        </select>
+        <span id="secHint" style="font-size:10.5px;color:var(--muted);"></span>
+      </div>
+
+      <!-- TERM -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Term</label>
+        <select name="term" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="1st">1st Term</option>
+          <option value="2nd">2nd Term</option>
+          <option value="3rd">3rd Term</option>
+        </select>
+      </div>
+
+      <!-- START TIME -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Start Time</label>
+        <input type="time" name="start_time" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <!-- END TIME -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">End Time</label>
+        <input type="time" name="end_time" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <!-- SUBJECT -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Subject</label>
+        <select name="subject" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="">Select Subject</option>
+          {% for s in subjects %}
+            <option value="{{ s.subject_name }}">
+              {{ s.subject_name }}{% if s.subject_type %} — {{ s.subject_type }}{% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- TOTAL MARKS -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Total Marks</label>
+        <input type="text" name="total_marks" value="100" min="0"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <!-- PASSING MARKS -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Passing Marks</label>
+        <input type="text" name="passing_marks" min="0" placeholder="Auto (50% if empty)"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <!-- TEACHER -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Teacher</label>
+        <select name="teacher" required style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+          <option value="">Select Teacher</option>
+          {% for t in teachers %}
+            <option value="{{ t.id }}">{{ t.name }} ({{ t.subject }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- EXAM DATE -->
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <label style="font-size:12px;font-weight:500;">Exam Date</label>
+        <input type="date" name="exam_date" required min="{% now 'Y-m-d' %}"
+               style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;">
+      </div>
+
+      <div style="grid-column:1/-1; display:flex; justify-content:flex-end; margin-top:4px;">
+        <button type="submit" style="padding:10px 18px;border-radius:9px;border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+          Create &amp; Enter Marks
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- ══════════ FILTERS ══════════ -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;gap:12px;flex-wrap:wrap;">
+    <h3 style="font-size:15px; font-weight:600; margin:0;">Recent Exams</h3>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+      <select id="filterClass" style="padding:9px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:13px; min-width:130px;">
+        <option value="">All Classes</option>
+        {% for cls, secs in class_sections.items %}
+          <option value="{{ cls }}">{{ cls }}</option>
+        {% endfor %}
+      </select>
+
+      <select id="filterSection" style="padding:9px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:13px; min-width:120px;">
+        <option value="">All Sections</option>
+      </select>
+
+      <select id="filterTerm" style="padding:9px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:13px; min-width:120px;">
+        <option value="">All Terms</option>
+        <option value="1st">1st Term</option>
+        <option value="2nd">2nd Term</option>
+        <option value="3rd">3rd Term</option>
+      </select>
+
+      <input type="number" id="filterYear" placeholder="Year (e.g. 2026)" min="2000" max="2099"
+             style="padding:9px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:13px; width:120px;">
+
+      <input type="text" id="filterQuery" placeholder="Search subject, teacher..."
+             style="padding:9px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; font-size:13px; flex:1; min-width:170px;">
+
+      {% if perms.can_print or user.is_superuser %}
+      <button id="downloadPdfBtn" onclick="downloadExamPdf()"
+              style="padding:9px 16px; border-radius:9px; background:#111827; color:#fff; font-weight:600; font-size:13px; border:none; cursor:pointer;">
+        Download PDF
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════ TABLE ══════════ -->
+  <div style="background:var(--card); border-radius:16px; padding:6px; box-shadow:0 2px 8px rgba(30,40,80,.04); overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; min-width:1020px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Class</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Section</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Term</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Subject</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Teacher</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Date</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Time</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="examTbody">
+        {% for e in exams %}
+        <tr>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ e.student_class }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">
+            <span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:#FEF2E4;color:#C67C2E;">
+              {{ e.section|default:"—" }}
+            </span>
+          </td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ e.term }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ e.subject }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ e.teacher.name|default:"—" }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ e.exam_date|default:"—" }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">
+            {{ e.start_time|default:"—" }} - {{ e.end_time|default:"—" }}
+          </td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap;">
+            <a href="{% url 'exam_marks' e.id %}"
+               style="text-decoration:none; padding:8px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--text); font-weight:600; font-size:12.5px;">
+              {% if perms.can_edit or perms.can_add or user.is_superuser %}Enter Marks{% else %}View Marks{% endif %}
+            </a>
+
+            {% if perms.can_edit or user.is_superuser %}
+            <a href="{% url 'exam_edit' e.id %}"
+               style="margin-left:8px;text-decoration:none; padding:8px 12px; border-radius:9px; border:1px solid #bfdbfe; background:#fff; color:#1d4ed8; font-weight:700; font-size:12.5px;">
+              Edit
+            </a>
+            {% endif %}
+
+            {% if perms.can_delete or user.is_superuser %}
+            <form method="post" action="{% url 'exam_delete' e.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" onclick="return confirm('Delete this exam?');"
+                style="margin-left:8px;padding:8px 12px;border-radius:9px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-weight:700;font-size:12.5px;cursor:pointer;">
+                Delete
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" style="padding:18px 16px; color:var(--muted);">No exams created yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script id="clsData" type="application/json">{{ class_sections_json|safe }}</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CLS_MAP = JSON.parse(document.getElementById('clsData').textContent || '{}');
+const CAN_EDIT = ("{{ perms.can_edit }}" === "True" || "{{ user.is_superuser }}" === "True");
+const CAN_DELETE = ("{{ perms.can_delete }}" === "True" || "{{ user.is_superuser }}" === "True");
+const CAN_ADD = ("{{ perms.can_add }}" === "True" || "{{ user.is_superuser }}" === "True");
+function getCookie(name){
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if(parts.length === 2) return parts.pop().split(';').shift();
+  return "";
+}
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function fillFormSections(){
+  const cls  = document.getElementById('fClass')?.value;
+  const sel  = document.getElementById('fSection');
+  const hint = document.getElementById('secHint');
+  if(!sel) return;
+
+  if(!cls){
+    sel.innerHTML = '<option value="">Select class first</option>';
+    sel.disabled = true;
+    sel.style.background = '#F1F2F7';
+    if(hint) hint.textContent = '';
+    return;
+  }
+
+  const secs = CLS_MAP[cls] || [];
+  if(!secs.length){
+    sel.innerHTML = '<option value="">No sections found</option>';
+    sel.disabled = true;
+    sel.style.background = '#F1F2F7';
+    if(hint) {
+      hint.style.color = '#DC2626';
+      hint.textContent = '⚠ No section defined for this class';
+    }
+    return;
+  }
+
+  sel.innerHTML = (secs.length > 1 ? '<option value="">Select Section</option>' : '') +
+    secs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  sel.disabled = false;
+  sel.style.background = '#F8F9FC';
+
+  if(secs.length === 1){
+    sel.value = secs[0];
+    if(hint) {
+      hint.style.color = '#2A9364';
+      hint.textContent = `✓ Auto-selected: ${secs[0]}`;
+    }
+  } else {
+    if(hint) {
+      hint.style.color = 'var(--muted)';
+      hint.textContent = `${secs.length} sections available`;
+    }
+  }
+}
+
+function fillFilterSections(){
+  const cls = document.getElementById('filterClass').value;
+  const sel = document.getElementById('filterSection');
+  const old = sel.value;
+
+  if(!cls){
+    sel.innerHTML = '<option value="">All Sections</option>';
+    return;
+  }
+  const secs = CLS_MAP[cls] || [];
+  sel.innerHTML = '<option value="">All Sections</option>' +
+    secs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if(secs.includes(old)) sel.value = old;
+}
+
+async function fetchExams() {
+  const cls  = document.getElementById("filterClass")?.value || "";
+  const sec  = document.getElementById("filterSection")?.value || "";
+  const term = document.getElementById("filterTerm")?.value || "";
+  const year = document.getElementById("filterYear")?.value || "";
+  const q    = document.getElementById("filterQuery")?.value || "";
+  const tbody = document.getElementById("examTbody");
+
+  if (!tbody) return;
+
+  const url = new URL("{% url 'exam_list_api' %}", window.location.origin);
+  if (cls)  url.searchParams.set("class", cls);
+  if (sec)  url.searchParams.set("section", sec);
+  if (term) url.searchParams.set("term", term);
+  if (year) url.searchParams.set("year", year);
+  if (q)    url.searchParams.set("q", q);
+
+  tbody.style.opacity = '.45';
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    const rows = data.results || [];
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding:18px 16px; color:var(--muted);">No exams found.</td></tr>`;
+      return;
+    }
+
+    const csrf = getCookie("csrftoken");
+
+    tbody.innerHTML = rows.map(e => {
+      const editBtn = CAN_EDIT ? `<a href="/exam/${e.id}/edit/" style="margin-left:8px;text-decoration:none; padding:8px 12px; border-radius:9px; border:1px solid #bfdbfe; background:#fff; color:#1d4ed8; font-weight:700; font-size:12.5px;">Edit</a>` : '';
+      const delBtn = CAN_DELETE ? `
+        <form method="post" action="/exam/${e.id}/delete/" style="display:inline;">
+          <input type="hidden" name="csrfmiddlewaretoken" value="${csrf}">
+          <button type="submit" onclick="return confirm('Delete this exam?');" style="margin-left:8px;padding:8px 12px;border-radius:9px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-weight:700;font-size:12.5px;cursor:pointer;">Delete</button>
+        </form>
+      ` : '';
+
+      return `
+        <tr>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${esc(e.student_class) || "—"}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">
+            <span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:#FEF2E4;color:#C67C2E;">
+              ${esc(e.section) || "—"}
+            </span>
+          </td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${esc(e.term) || "—"}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>${esc(e.subject) || "—"}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${esc(e.teacher) || "—"}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${esc(e.exam_date) || "—"}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${esc(e.start_time) || "—"} - ${esc(e.end_time) || "—"}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap;">
+            <a href="/exam/${e.id}/marks/" style="text-decoration:none; padding:8px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--text); font-weight:600; font-size:12.5px;">${(CAN_EDIT || CAN_ADD) ? 'Enter Marks' : 'View Marks'}</a>
+            ${editBtn}
+            ${delBtn}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("Failed to fetch exams:", err);
+  } finally {
+    tbody.style.opacity = '1';
+  }
+}
+
+function downloadExamPdf() {
+  const cls  = document.getElementById("filterClass")?.value || "";
+  const sec  = document.getElementById("filterSection")?.value || "";
+  const term = document.getElementById("filterTerm")?.value || "";
+  const year = document.getElementById("filterYear")?.value || "";
+
+  const pdfUrl = new URL("{% url 'exam_list_pdf' %}", window.location.origin);
+  if (cls)  pdfUrl.searchParams.set("class", cls);
+  if (sec)  pdfUrl.searchParams.set("section", sec);
+  if (term) pdfUrl.searchParams.set("term", term);
+  if (year) pdfUrl.searchParams.set("year", year);
+
+  window.open(pdfUrl.toString(), "_blank");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("fClass")?.addEventListener("change", fillFormSections);
+
+  document.getElementById("filterClass")?.addEventListener("change", () => {
+    fillFilterSections();
+    fetchExams();
+  });
+  document.getElementById("filterSection")?.addEventListener("change", fetchExams);
+  document.getElementById("filterTerm")?.addEventListener("change", fetchExams);
+  document.getElementById("filterYear")?.addEventListener("input", fetchExams);
+  document.getElementById("filterQuery")?.addEventListener("input", fetchExams);
+
+  const keys = Object.keys(CLS_MAP);
+  if(keys.length === 1 && document.getElementById('fClass')){
+    document.getElementById('fClass').value = keys[0];
+    fillFormSections();
+  }
+
+  document.getElementById('examForm')?.addEventListener('submit', function(e){
+    const c = document.getElementById('fClass').value;
+    const s = document.getElementById('fSection').value;
+    if(!c || !s){
+      e.preventDefault();
+      alert('Please select both Class and Section');
+    }
+  });
+});
+</script>
+{% endblock %}

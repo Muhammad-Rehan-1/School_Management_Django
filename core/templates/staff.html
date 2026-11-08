@@ -1,0 +1,1289 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Other Staff{% endblock %}
+{% block page_title %}Other Staff{% endblock %}
+{% block staff_open %}open{% endblock %}
+{% block nav_staff %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+  :root { --green: #3E9E6B; --red: #E15C5C; --teal: #2A9D8F; --teal-soft: #A8DADC; --orange: #F08A5D; }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: #E8F7EF; color: var(--green); }
+  .alert.error { background: #FDECEC; color: var(--red); }
+  
+  .toolbar {
+    background: var(--card); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center;
+    gap: 12px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 600; margin-right: auto; }
+  .toolbar select, .toolbar input {
+    padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none; font-family: inherit;
+  }
+  .toolbar input { min-width: 220px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--teal); background: #fff; }
+
+  .badge-active { background: #E8F7EF; color: var(--green); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+  .badge-inactive { background: #FDECEC; color: var(--red); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-secondary:hover { background: #F5F6FA; }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:hover { background: #FAFBFD; }
+  
+  .staff-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .staff-name .av {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--teal-soft); color: #1E2740;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+  }
+  .staff-name .av img { width: 100%; height: 100%; object-fit: cover; }
+  .badge { background: #E0F2F1; color: var(--teal); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  
+  .row-actions { display: flex; gap: 6px; }
+  .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.preview svg { stroke: var(--green); }
+  .icon-action.preview:hover { background: #E8F7EF; }
+  .icon-action.edit svg { stroke: var(--teal); }
+  .icon-action.edit:hover { background: #E0F2F1; }
+  .icon-action.delete svg { stroke: var(--red); }
+  .icon-action.delete:hover { background: #FDECEC; }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 740px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .modal-head .ic { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #E0F2F1; }
+  .modal-head .ic svg { width: 20px; height: 20px; fill: none; stroke: var(--teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-head-txt { flex: 1; margin-left: 12px; }
+  .modal-head-txt h2 { font-size: 16.5px; font-weight: 600; }
+  .modal-head-txt p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .modal-close { width: 32px; height: 32px; border-radius: 9px; border: none; background: #F1F2F7; color: var(--muted); font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .form-section-title { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field label .opt { color: var(--muted); font-weight: 400; }
+  .field input, .field select, .field textarea {
+    padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC;
+    font-size: 13px; outline: none; width: 100%; box-sizing: border-box;
+    transition: border-color .15s, background .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--teal); background: #fff; }
+
+  .relation-group { display: flex; gap: 6px; }
+  .relation-group select { width: 95px; flex-shrink: 0; }
+  .relation-group input { flex: 1; }
+
+  /* Input with Plus (+) Button for Roles */
+  .role-select-group { display: flex; gap: 8px; align-items: center; }
+  .role-select-group select { flex: 1; }
+  .btn-plus-role {
+    width: 38px; height: 38px; border-radius: 9px; border: none; background: var(--orange);
+    color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-plus-role:hover { background: #E8794C; }
+
+  .password-wrap { position: relative; width: 100%; display: flex; align-items: center; }
+  .password-wrap input { padding-right: 40px; }
+  .toggle-pass-btn {
+    position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--muted);
+    padding: 4px; display: flex; align-items: center; justify-content: center;
+  }
+  .toggle-pass-btn:hover { color: var(--primary); }
+  .toggle-pass-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* Inline validation */
+  .field input.error, .field select.error, .field textarea.error {
+    border-color: var(--red) !important; background: #FDECEC; animation: shake 0.4s ease;
+  }
+  .error-message { display: none; color: var(--red); font-size: 11px; font-weight: 500; align-items: center; gap: 4px; }
+  .error-message.show { display: flex; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .preview-item { background: #F8F9FC; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); }
+  .preview-item.full { grid-column: 1 / -1; }
+  .preview-item .p-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .preview-item .p-val { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .preview-img-box { display: flex; gap: 14px; margin-top: 10px; }
+  .preview-img-card { flex: 1; background: #F8F9FC; padding: 12px; border-radius: 10px; text-align: center; border: 1px solid var(--line); }
+  .preview-img-card img { width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px; margin-top: 6px; background: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="toolbar">
+    <h2>Administrative & Support Staff</h2>
+
+    <select id="staffStatusFilter" onchange="filterStaff()">
+      <option value="">All Statuses</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Employees</option>
+      <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Deactivated</option>
+    </select>
+
+    <input type="text" id="liveStaffSearch" placeholder="⚡ Live search by name, ID (e.g. DRI-1, ACC-1), role, CNIC..." value="{{ search_query }}">
+
+    {% if perms.can_add or user.is_superuser %}
+    <button type="button" class="btn-primary" id="openAddStaffModal">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      Add Employee
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>ID</th>
+          <th>CNIC</th>
+          <th>Role</th>
+          <th>Salary</th>
+          <th>Contact</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="staffTableBody">
+        {% for staff in staff_members %}
+        <tr class="staff-row">
+          <td>
+            <div class="staff-name">
+              <span class="av">
+                {% if staff.photo %}<img src="{{ staff.photo.url }}" alt="{{ staff.name }}">
+                {% else %}{{ staff.name|slice:":1"|upper }}{% endif %}
+              </span>
+              <div>
+                <div class="st-name">{{ staff.name }}</div>
+                <small style="color:var(--muted);">
+                  {% if staff.relation_type and staff.relation_name %}{{ staff.relation_type }} {{ staff.relation_name }} · {% endif %}{{ staff.qualification|default:"—" }}
+                </small>
+              </div>
+            </div>
+          </td>
+          <td><b class="st-empid" style="color:var(--teal);">{{ staff.emp_id }}</b></td>
+          <td class="st-cnic">{{ staff.cnic|default:"—" }}</td>
+          <td><span class="badge st-role">{{ staff.role }}</span></td>
+          <td><b>Rs. {{ staff.salary }}</b></td>
+          <td>{{ staff.contact|default:"—" }}</td>
+          <td>
+            <button type="button" 
+              class="{% if staff.is_active %}badge-active{% else %}badge-inactive{% endif %} toggle-staff-status"
+              data-url="{% url 'staff_toggle_status' staff.id %}"
+              data-name="{{ staff.name }}"
+              data-target-action="{{ staff.is_active|yesno:'deactivate,activate' }}">
+              {% if staff.is_active %}Active{% else %}Deactivated{% endif %}
+            </button>
+          </td>
+          <td>
+            <div class="row-actions">
+              <!-- Preview Button -->
+              <button type="button" class="icon-action preview preview-staff-btn"
+                data-name="{{ staff.name }}"
+                data-empid="{{ staff.emp_id }}"
+                data-cnic="{{ staff.cnic|default:'—' }}"
+                data-role="{{ staff.role }}"
+                data-qualification="{{ staff.qualification|default:'—' }}"
+                data-salary="{{ staff.salary }}"
+                data-dob="{{ staff.dob|date:'d/M/Y'|default:'—'|lower }}"
+                data-joining="{{ staff.joining_date|date:'d/M/Y'|default:'—'|lower }}"
+                data-gender="{{ staff.gender|default:'—' }}"
+                data-marital="{{ staff.marital_status|default:'—' }}"
+                data-relation-type="{{ staff.relation_type|default:'' }}"
+                data-relation-name="{{ staff.relation_name|default:'—' }}"
+                data-contact="{{ staff.contact|default:'—' }}"
+                data-emergency="{{ staff.emergency_contact|default:'—' }}"
+                data-ref-name="{{ staff.ref_name|default:'—' }}"
+                data-ref-contact="{{ staff.ref_contact|default:'—' }}"
+                data-email="{{ staff.email|default:'—' }}"
+                data-address="{{ staff.address|default:'—' }}"
+                data-permanent-address="{{ staff.permanent_address|default:'—' }}"
+                data-password="{{ staff.password|default:'' }}"
+                data-active="{{ staff.is_active|yesno:'Active,Deactivated' }}"
+                data-photo="{% if staff.photo %}{{ staff.photo.url }}{% endif %}"
+                data-doc="{% if staff.cnic_photo %}{{ staff.cnic_photo.url }}{% endif %}"
+                title="Preview Profile">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+
+              <!-- Edit Button -->
+              {% if perms.can_edit or user.is_superuser %}
+              <button type="button" class="icon-action edit edit-staff-btn"
+                data-url="{% url 'staff_update' staff.id %}"
+                data-name="{{ staff.name }}"
+                data-empid="{{ staff.emp_id }}"
+                data-cnic="{{ staff.cnic|default:'' }}"
+                data-role="{{ staff.role }}"
+                data-qualification="{{ staff.qualification|default:'' }}"
+                data-salary="{{ staff.salary }}"
+                data-dob="{{ staff.dob|date:'Y-m-d' }}"
+                data-joining="{{ staff.joining_date|date:'Y-m-d' }}"
+                data-gender="{{ staff.gender|default:'' }}"
+                data-marital="{{ staff.marital_status|default:'' }}"
+                data-relation-type="{{ staff.relation_type|default:'S/O' }}"
+                data-relation-name="{{ staff.relation_name|default:'' }}"
+                data-contact="{{ staff.contact|default:'' }}"
+                data-emergency="{{ staff.emergency_contact|default:'' }}"
+                data-ref-name="{{ staff.ref_name|default:'' }}"
+                data-ref-contact="{{ staff.ref_contact|default:'' }}"
+                data-email="{{ staff.email|default:'' }}"
+                data-address="{{ staff.address|default:'' }}"
+                data-permanent-address="{{ staff.permanent_address|default:'' }}"
+                data-password="{{ staff.password|default:'' }}"
+                data-active="{{ staff.is_active|yesno:'1,0' }}"
+                title="Edit">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+              {% endif %}
+
+              <!-- Delete Button -->
+               {% if perms.can_delete or user.is_superuser %}
+              <form method="post" action="{% url 'staff_delete' staff.id %}" onsubmit="return confirm('Delete {{ staff.name }}\'s record?');">
+                {% csrf_token %}
+                <button type="submit" class="icon-action delete" title="Delete">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);">No staff members found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================= PREVIEW STAFF MODAL ================= -->
+<div class="modal-overlay" id="previewStaffOverlay">
+  <div class="modal" style="max-width:740px;">
+    <div class="modal-head">
+      <div class="staff-name">
+        <div class="av" id="sp-avatar-box" style="width:44px;height:44px;font-size:16px;">
+          <span id="sp-avatar-text"></span>
+          <img id="sp-avatar-img" src="" style="display:none;">
+        </div>
+        <div class="modal-head-txt" style="margin-left:8px;">
+          <h2 id="sp-name" style="font-size:18px;"></h2>
+          <p id="sp-sub"></p>
+        </div>
+      </div>
+      <button class="modal-close" type="button" data-close="previewStaffOverlay">✕</button>
+    </div>
+
+    <div class="preview-grid">
+      <div class="preview-item"><div class="p-lbl">Employee ID</div><div class="p-val" id="sp-empid"></div></div>
+      <div class="preview-item"><div class="p-lbl">Portal Password</div><div class="p-val" id="sp-password" style="font-family:monospace;color:var(--orange);"></div></div>
+      <div class="preview-item"><div class="p-lbl">CNIC Number</div><div class="p-val" id="sp-cnic"></div></div>
+      <div class="preview-item"><div class="p-lbl">Guardian / Relation</div><div class="p-val" id="sp-relation"></div></div>
+      <div class="preview-item"><div class="p-lbl">Designation / Role</div><div class="p-val" id="sp-role"></div></div>
+      <div class="preview-item"><div class="p-lbl">Qualification</div><div class="p-val" id="sp-qualification"></div></div>
+      <div class="preview-item"><div class="p-lbl">Monthly Fixed Salary</div><div class="p-val" id="sp-salary" style="color:var(--green);"></div></div>
+      <div class="preview-item"><div class="p-lbl">Date of Birth</div><div class="p-val" id="sp-dob"></div></div>
+      <div class="preview-item"><div class="p-lbl">Joining Date</div><div class="p-val" id="sp-joining"></div></div>
+      <div class="preview-item"><div class="p-lbl">Gender & Marital Status</div><div class="p-val" id="sp-gender-marital"></div></div>
+      <div class="preview-item"><div class="p-lbl">Primary Contact</div><div class="p-val" id="sp-contact"></div></div>
+      <div class="preview-item"><div class="p-lbl">Emergency Contact</div><div class="p-val" id="sp-emergency"></div></div>
+
+      <div class="preview-item full" style="background:#F4F8FD; border-color:#D0E2FB;">
+        <div class="p-lbl" style="color:var(--teal);">Reference Details</div>
+        <div class="p-val" id="sp-ref-info" style="font-size:13px; font-weight:600;"></div>
+      </div>
+
+      <div class="preview-item full"><div class="p-lbl">Email Address</div><div class="p-val" id="sp-email"></div></div>   
+      <div class="preview-item full"><div class="p-lbl">Residential Address</div><div class="p-val" id="sp-address"></div></div>
+      <div class="preview-item full"><div class="p-lbl">Permanent Address</div><div class="p-val" id="sp-permanent-address"></div></div>
+    </div>
+
+    <div class="form-section-title" style="margin-top:16px;">Attached Documents</div>
+    <div class="preview-img-box">
+      <div class="preview-img-card">
+        <div class="p-lbl">Employee Photo</div>
+        <img id="sp-photo-view" src="" style="display:none;">
+        <div id="sp-no-photo" style="font-size:12px;color:var(--muted);padding:20px;">No photo uploaded</div>
+      </div>
+      <div class="preview-img-card" id="sp-doc-container">
+        <div class="p-lbl">Attached Document / PDF</div>
+        <div id="sp-doc-actions" style="display:none; padding: 16px 0;">
+          <a id="sp-doc-link" href="#" target="_blank" class="btn-primary" style="text-decoration:none; display:inline-flex;">
+            📄 View / Download Document
+          </a>
+        </div>
+        <div id="sp-no-doc" style="font-size:12px;color:var(--muted);padding:20px;">No document uploaded</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button type="button" class="btn-secondary" data-close="previewStaffOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STATUS TOGGLE CONFIRMATION MODAL ================= -->
+<div class="modal-overlay" id="statusConfirmOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;padding:26px 20px;">
+    <h3 style="font-size:17px;font-weight:600;margin-bottom:6px;">Confirm Status Change</h3>
+    <p id="statusConfirmMsg" style="font-size:13px;color:var(--muted);margin-bottom:18px;"></p>
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button type="button" class="btn-secondary" data-close="statusConfirmOverlay">Cancel</button>
+      <a id="statusConfirmBtn" href="#" class="btn-primary" style="text-decoration:none;">Confirm & Proceed</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADD STAFF MODAL ================= -->
+<div class="modal-overlay" id="addStaffOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></span>
+      <div class="modal-head-txt">
+        <h2>Register Support Staff</h2>
+        <p>Employee ID will auto-generate based on selected role</p>
+      </div>
+      <button class="modal-close" type="button" data-close="addStaffOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" id="addStaffForm" method="post" action="{% url 'staff_create' %}" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label>Full Name <span style="color:var(--orange);">*</span></label>
+        <input type="text" name="name" required placeholder="Staff full name">
+        <span class="error-message" data-required="Staff name is required">Staff name is required</span>
+      </div>
+
+      <div class="field">
+        <label>Role / Designation <span style="color:var(--orange);">*</span></label>
+        <div class="role-select-group">
+          <select name="role" id="addStaffRoleSelect" required>
+            <option value="">Select Role</option>
+            {% for r in available_roles %}
+              <option value="{{ r.name }}" data-prefix="{{ r.prefix }}">{{ r.name }} ({{ r.prefix }})</option>
+            {% endfor %}
+          </select>
+          <button type="button" class="btn-plus-role" id="openAddRoleBtn" title="Define New Role">+</button>
+        </div>
+        <span class="error-message" data-required="Role is required">Role is required</span>
+      </div>
+
+      <div class="field">
+        <label>Employee ID (Login Username)</label>
+        <input type="text" name="emp_id" id="addStaffEmpId" placeholder="Select role first..." readonly style="font-weight:700;color:var(--teal);background:#ECEEF3;">
+        <span class="error-message">Employee ID is required</span>
+      </div>
+
+      <div class="field">
+        <label>Portal Login Password <span style="color:var(--orange);">*</span></label>
+        <div class="password-wrap">
+          <input type="password" name="password" id="add-staff-password" placeholder="Create password" required>
+          <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility('add-staff-password', this)">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="error-message" data-required="Password is required">Password is required</span>
+      </div>
+
+      <div class="field">
+        <label>Relation & Name <span class="opt">(optional)</span></label>
+        <div class="relation-group">
+          <select name="relation_type">
+            <option value="S/O">S/O</option>
+            <option value="D/O">D/O</option>
+            <option value="W/O">W/O</option>
+          </select>
+          <input type="text" name="relation_name" placeholder="Father or Husband name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>CNIC Number <span style="color:var(--orange);">*</span></label>
+        <input
+          type="text"
+          name="cnic"
+          class="cnic-input"
+          placeholder="34602-3304943-3"
+          inputmode="numeric"
+          maxlength="15"
+          pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
+          required
+        >
+        <span class="error-message"
+              data-required="CNIC is required"
+              data-pattern="CNIC format must be like 34602-3304943-3 (13 digits)">
+          CNIC is required
+        </span>
+      </div>
+
+      <div class="field"><label>Qualification</label><input type="text" name="qualification" placeholder="e.g. Matric / Intermediate"></div>
+
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+      
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+      </div>
+
+      <div class="field">
+        <label>Marital Status</label>
+        <select name="marital_status">
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div class="field"><label>Status</label><select name="is_active"><option value="1" selected>Active</option><option value="0">Deactivated</option></select></div>
+
+      <div class="field">
+        <label>Monthly Fixed Salary (Rs.) <span style="color:var(--orange);">*</span></label>
+        <input type="number" step="0.01" name="salary" required placeholder="25000.00">
+        <span class="error-message" data-required="Salary is required">Salary is required</span>
+      </div>
+
+      <div class="field">
+        <label>Primary Contact <span style="color:var(--orange);">*</span></label>
+        <input
+          type="tel"
+          name="contact"
+          class="contact-input"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+          required
+        >
+        <span class="error-message"
+              data-required="Primary contact is required"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Primary contact is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Emergency Contact <span class="opt">(optional)</span></label>
+        <input
+          type="tel"
+          name="emergency_contact"
+          class="contact-input"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="staff@school.com">
+        <span class="error-message" data-type="Please enter a valid email">Please enter a valid email</span>
+      </div>
+
+      <!-- Reference Details -->
+      <div class="form-section-title">Reference Details</div>
+      <div class="field">
+        <label>Reference Person Name</label>
+        <input type="text" name="ref_name" placeholder="Name of referee">
+      </div>
+      <div class="field">
+        <label>Reference Contact Number <span class="opt">(optional)</span></label>
+        <input
+          type="tel"
+          name="ref_contact"
+          class="contact-input"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="form-section-title">Address Information</div>
+      <div class="field full"><label>Residential Address</label><textarea name="address" id="addStaffResAddress" rows="2" placeholder="Street, area, city..."></textarea></div>
+      <div class="field full" style="margin:-4px 0 2px 0;">
+        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;color:var(--primary);font-weight:600;">
+          <input type="checkbox" id="addStaffSameAddressCheckbox" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer;">
+          Permanent Address is same as Residential Address
+        </label>
+      </div>
+      <div class="field full"><label>Permanent Address</label><textarea name="permanent_address" id="addStaffPermAddress" rows="2" placeholder="Permanent address..."></textarea></div>
+
+      <!-- Documents Uploads -->
+      <div class="form-section-title">Documents & Uploads</div>
+      <div class="field"><label>Employee Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>Add Documents <span class="opt">(PDF / Image)</span></label><input type="file" name="cnic_photo" accept="application/pdf,image/*"></div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+        <button type="button" class="btn-secondary" data-close="addStaffOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= EDIT STAFF MODAL ================= -->
+<div class="modal-overlay" id="editStaffOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>
+      <div class="modal-head-txt"><h2>Edit Staff Profile</h2><p>Update employee details and password</p></div>
+      <button class="modal-close" type="button" data-close="editStaffOverlay">✕</button>
+    </div>
+    
+    <form class="modal-form" method="post" id="editStaffForm" action="" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="name" id="edit-st-name" required>
+        <span class="error-message" data-required="Staff name is required">Staff name is required</span>
+      </div>
+
+      <div class="field">
+        <label>Employee ID (Username)</label>
+        <input type="text" name="emp_id" id="edit-st-empid" required readonly style="background:#ECEEF3;font-weight:700;">
+        <span class="error-message" data-required="Employee ID is required">Employee ID is required</span>
+      </div>
+      
+      <div class="field">
+        <label>Relation & Name</label>
+        <div class="relation-group">
+          <select name="relation_type" id="edit-st-relation-type">
+            <option value="S/O">S/O</option>
+            <option value="D/O">D/O</option>
+            <option value="W/O">W/O</option>
+          </select>
+          <input type="text" name="relation_name" id="edit-st-relation-name" placeholder="Father or Husband name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>CNIC Number</label>
+        <input
+          type="text"
+          name="cnic"
+          class="cnic-input"
+          id="edit-st-cnic"
+          placeholder="34602-3304943-3"
+          inputmode="numeric"
+          maxlength="15"
+          pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
+          required
+        >
+        <span class="error-message"
+              data-required="CNIC is required"
+              data-pattern="CNIC format must be like 34602-3304943-3 (13 digits)">
+          CNIC is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Role / Designation</label>
+        <select name="role" id="edit-st-role" required>
+          {% for r in available_roles %}
+            <option value="{{ r.name }}">{{ r.name }}</option>
+          {% endfor %}
+        </select>
+        <span class="error-message" data-required="Role is required">Role is required</span>
+      </div>
+
+      <div class="field">
+        <label>Change Password <span class="opt">(leave blank to keep current)</span></label>
+        <div class="password-wrap">
+          <input type="password" name="password" id="edit-st-password" placeholder="Enter new password if updating">
+          <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility('edit-st-password', this)">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field"><label>Qualification</label><input type="text" name="qualification" id="edit-st-qualification"></div>
+
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob" id="edit-st-dob">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date" id="edit-st-joining">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+      
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender" id="edit-st-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+      </div>
+
+      <div class="field">
+        <label>Marital Status</label>
+        <select name="marital_status" id="edit-st-marital">
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div class="field"><label>Status</label><select name="is_active" id="edit-st-active"><option value="1">Active</option><option value="0">Deactivated</option></select></div>
+
+      <div class="field">
+        <label>Monthly Fixed Salary (Rs.)</label>
+        <input type="number" step="0.01" name="salary" id="edit-st-salary" required>
+        <span class="error-message" data-required="Salary is required">Salary is required</span>
+      </div>
+
+      <div class="field">
+        <label>Primary Contact</label>
+        <input
+          type="tel"
+          name="contact"
+          class="contact-input"
+          id="edit-st-contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+          required
+        >
+        <span class="error-message"
+              data-required="Primary contact is required"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Primary contact is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Emergency Contact</label>
+        <input
+          type="tel"
+          name="emergency_contact"
+          class="contact-input"
+          id="edit-st-emergency"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="email" id="edit-st-email">
+        <span class="error-message" data-type="Please enter a valid email">Please enter a valid email</span>
+      </div>
+
+      <!-- Reference Details -->
+      <div class="form-section-title">Reference Details</div>
+      <div class="field">
+        <label>Reference Person Name</label>
+        <input type="text" name="ref_name" id="edit-st-ref-name">
+      </div>
+      <div class="field">
+        <label>Reference Contact Number</label>
+        <input
+          type="tel"
+          name="ref_contact"
+          class="contact-input"
+          id="edit-st-ref-contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="form-section-title">Address Information</div>
+      <div class="field full"><label>Residential Address</label><textarea name="address" id="edit-st-address" rows="2"></textarea></div>
+      <div class="field full" style="margin:-4px 0 2px 0;">
+        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;color:var(--primary);font-weight:600;">
+          <input type="checkbox" id="editStaffSameAddressCheckbox" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer;">
+          Permanent Address is same as Residential Address
+        </label>
+      </div>
+      <div class="field full"><label>Permanent Address</label><textarea name="permanent_address" id="edit-st-permanent-address" rows="2"></textarea></div>
+
+      <div class="form-section-title">Update Documents</div>
+      <div class="field"><label>Change Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>Add Documents <span class="opt">(PDF / Image)</span></label><input type="file" name="cnic_photo" accept="application/pdf,image/*"></div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+        <button type="button" class="btn-secondary" data-close="editStaffOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ADD ROLE POPUP MODAL ================= -->
+<div class="modal-overlay" id="addRoleOverlay" style="z-index: 600;">
+  <div class="modal" style="max-width: 440px; padding: 24px;">
+    <div class="modal-head">
+      <h2 style="font-size: 17px; font-weight: 700; color: var(--primary);">Add Role / Designation</h2>
+      <button class="modal-close" type="button" data-close="addRoleOverlay">✕</button>
+    </div>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">
+      Enter a role name. It will be saved directly into the database and immediately added to the Role dropdown.
+    </p>
+    
+    <div class="field" style="margin-bottom: 12px;">
+      <label>Role Name <span style="color:var(--orange);">*</span></label>
+      <input type="text" id="newRoleNameInput" placeholder="e.g. Electrician, Sports Coach">
+      <span class="error-message">Role name is required</span>
+    </div>
+
+    <div class="field" style="margin-bottom: 18px;">
+      <label>ID Prefix <span class="opt">(Optional - e.g. ELE, SPO)</span></label>
+      <input type="text" id="newRolePrefixInput" placeholder="e.g. ELE" maxlength="4" style="text-transform: uppercase;">
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button type="button" class="btn-secondary" data-close="addRoleOverlay">Cancel</button>
+      <button type="button" class="btn-primary" id="saveNewRoleBtn">Add Role</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  function togglePassVisibility(inputId, btn) {
+    const field = document.getElementById(inputId);
+    const svg = btn.querySelector('svg');
+    if (field.type === 'password') {
+      field.type = 'text';
+      svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      field.type = 'password';
+      svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  function formatCNIC(val) {
+    const digits = String(val || '').replace(/\D/g, '').slice(0, 13); // max 13 digits
+    const p1 = digits.slice(0, 5);
+    const p2 = digits.slice(5, 12);
+    const p3 = digits.slice(12, 13);
+
+    let out = p1;
+    if (p2) out += '-' + p2;
+    if (p3) out += '-' + p3;
+    return out;
+  }
+
+  function formatContact(val) {
+    const digits = String(val || '').replace(/\D/g, '').slice(0, 11); // max 11 digits
+    const p1 = digits.slice(0, 4);
+    const p2 = digits.slice(4, 11);
+
+    let out = p1;
+    if (p2) out += ' ' + p2;
+    return out;
+  }
+
+  function initPrettyDates(root = document) {
+    root.querySelectorAll('input[type="date"]').forEach(el => {
+      if (el._flatpickr) return;
+      flatpickr(el, {
+        altInput: true,
+        altFormat: "d/M/Y",   // display: 25/Sep/2026
+        dateFormat: "Y-m-d",  // submit: 2026-09-25
+        allowInput: true,
+        onReady: function(_, __, inst) {
+          if (inst.altInput) inst.altInput.value = inst.altInput.value.toLowerCase(); // 25/sep/2026
+        },
+        onValueUpdate: function(_, __, inst) {
+          if (inst.altInput) inst.altInput.value = inst.altInput.value.toLowerCase();
+        }
+      });
+    });
+  }
+
+  function filterStaff() {
+    const status = document.getElementById('staffStatusFilter').value;
+    const search = document.getElementById('liveStaffSearch').value;
+    window.location.href = `?status=${status}&q=${search}`;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    initPrettyDates();
+
+    const addStaffForm = document.getElementById('addStaffForm');
+    const editStaffForm = document.getElementById('editStaffForm');
+
+    function showFieldError(field, message) {
+      field.classList.remove('error');
+      void field.offsetWidth;
+      field.classList.add('error');
+
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+      if (errorMsg) {
+        if (message) errorMsg.textContent = message;
+        errorMsg.classList.add('show');
+      }
+    }
+
+    function clearFieldError(field) {
+      field.classList.remove('error');
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+      if (errorMsg) errorMsg.classList.remove('show');
+    }
+
+    function getFieldMessage(field) {
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+
+      const requiredMsg = errorMsg?.dataset?.required || errorMsg?.textContent || 'This field is required';
+      const patternMsg  = errorMsg?.dataset?.pattern  || 'Invalid format';
+      const typeMsg     = errorMsg?.dataset?.type     || 'Invalid value';
+
+      if (field.validity.valueMissing) return requiredMsg;
+      if (field.validity.patternMismatch) return patternMsg;
+      if (field.validity.typeMismatch) return typeMsg;
+      return requiredMsg;
+    }
+
+    function liveValidateField(field) {
+      if (!field.value) {
+        clearFieldError(field);
+        return true;
+      }
+      if (field.checkValidity()) {
+        clearFieldError(field);
+        return true;
+      }
+      showFieldError(field, getFieldMessage(field));
+      return false;
+    }
+
+    function validateForm(form) {
+      let isValid = true;
+      let firstInvalid = null;
+
+      form.querySelectorAll('input,select,textarea').forEach(field => {
+        if (field.disabled) return;
+
+        const needsCheck =
+          field.hasAttribute('required') ||
+          field.getAttribute('pattern') ||
+          field.type === 'email';
+
+        if (!needsCheck) return;
+
+        // optional empty => ok
+        if (!field.required && !field.value) {
+          clearFieldError(field);
+          return;
+        }
+
+        if (!field.checkValidity()) {
+          showFieldError(field, getFieldMessage(field));
+          isValid = false;
+          if (!firstInvalid) firstInvalid = field;
+        } else {
+          clearFieldError(field);
+        }
+      });
+
+      if (firstInvalid) firstInvalid.focus();
+      return isValid;
+    }
+
+    function clearAllErrors(form) {
+      if (!form) return;
+      form.querySelectorAll('.error').forEach(f => f.classList.remove('error'));
+      form.querySelectorAll('.error-message.show').forEach(m => m.classList.remove('show'));
+    }
+
+    function bindCnicAndContacts(form) {
+      if (!form) return;
+
+      form.querySelectorAll('input[name="cnic"]').forEach(inp => {
+        inp.addEventListener('input', function() {
+          this.value = formatCNIC(this.value);
+          liveValidateField(this);
+        });
+        inp.addEventListener('blur', function() {
+          if (!this.checkValidity()) showFieldError(this, getFieldMessage(this));
+        });
+      });
+
+      form.querySelectorAll('input[name="contact"], input[name="emergency_contact"], input[name="ref_contact"]').forEach(inp => {
+        inp.addEventListener('input', function() {
+          this.value = formatContact(this.value);
+          liveValidateField(this);
+        });
+        inp.addEventListener('blur', function() {
+          if (!this.checkValidity()) showFieldError(this, getFieldMessage(this));
+        });
+      });
+    }
+
+    [addStaffForm, editStaffForm].forEach(f => {
+      if (!f) return;
+
+      bindCnicAndContacts(f);
+
+      f.addEventListener('submit', function(e) {
+        if (!validateForm(f)) e.preventDefault();
+      });
+
+      f.querySelectorAll('input,select,textarea').forEach(field => {
+        const needsCheck =
+          field.hasAttribute('required') ||
+          field.getAttribute('pattern') ||
+          field.type === 'email';
+
+        if (!needsCheck) return;
+
+        field.addEventListener('input', function(){ liveValidateField(this); });
+        field.addEventListener('change', function(){ liveValidateField(this); });
+      });
+    });
+
+    // Live search
+    const liveSearch = document.getElementById('liveStaffSearch');
+    if (liveSearch) {
+      liveSearch.addEventListener('input', function() {
+        const val = this.value.toLowerCase().trim();
+        document.querySelectorAll('.staff-row').forEach(row => {
+          const text = row.innerText.toLowerCase();
+          row.style.display = text.includes(val) ? '' : 'none';
+        });
+      });
+    }
+
+    // Auto-generate employee ID on role selection
+    const roleSelect = document.getElementById('addStaffRoleSelect');
+    if (roleSelect) {
+      roleSelect.addEventListener('change', function() {
+        const selectedRole = this.value;
+        const empInput = document.getElementById('addStaffEmpId');
+        if (selectedRole) {
+          fetch(`/staff/api/next-id/?role=${encodeURIComponent(selectedRole)}`)
+            .then(res => res.json())
+            .then(data => { empInput.value = data.next_emp_id; })
+            .catch(() => { empInput.value = 'STF-1'; });
+        } else {
+          empInput.value = '';
+        }
+      });
+    }
+
+    // Open Add Staff Modal
+    const openAddStaffModal = document.getElementById('openAddStaffModal');
+    if (openAddStaffModal) {
+      openAddStaffModal.addEventListener('click', () => {
+        clearAllErrors(addStaffForm);
+        document.getElementById('addStaffOverlay').classList.add('show');
+        initPrettyDates(document.getElementById('addStaffOverlay'));
+      });
+    }
+
+    // Open Add Role Modal
+    const openAddRoleBtn = document.getElementById('openAddRoleBtn');
+    if (openAddRoleBtn) {
+      openAddRoleBtn.addEventListener('click', () => {
+        document.getElementById('newRoleNameInput').value = '';
+        document.getElementById('newRolePrefixInput').value = '';
+        document.getElementById('addRoleOverlay').classList.add('show');
+        document.getElementById('newRoleNameInput').focus();
+      });
+    }
+
+    // Save new role
+    const saveNewRoleBtn = document.getElementById('saveNewRoleBtn');
+    if (saveNewRoleBtn) {
+      saveNewRoleBtn.addEventListener('click', function() {
+        const roleName = document.getElementById('newRoleNameInput').value.trim();
+        const prefix = document.getElementById('newRolePrefixInput').value.trim().toUpperCase();
+
+        if (!roleName) {
+          alert('Please enter a role name.');
+          return;
+        }
+
+        fetch("{% url 'add_staff_role_api' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({ role_name: roleName, prefix: prefix })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const addSelect = document.getElementById('addStaffRoleSelect');
+            const editSelect = document.getElementById('edit-st-role');
+
+            const optAdd = document.createElement('option');
+            optAdd.value = data.role_name;
+            optAdd.textContent = `${data.role_name} (${data.prefix})`;
+            addSelect.appendChild(optAdd);
+            addSelect.value = data.role_name;
+
+            const optEdit = document.createElement('option');
+            optEdit.value = data.role_name;
+            optEdit.textContent = data.role_name;
+            editSelect.appendChild(optEdit);
+
+            addSelect.dispatchEvent(new Event('change'));
+
+            document.getElementById('addRoleOverlay').classList.remove('show');
+            if (typeof showToast === "function") showToast(`Role "${data.role_name}" added!`);
+          } else {
+            alert(data.message || 'Error adding role.');
+          }
+        })
+        .catch(() => alert('Failed to connect to server.'));
+      });
+    }
+
+    // Close buttons
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ov = document.getElementById(btn.dataset.close);
+        if (ov) ov.classList.remove('show');
+        const form = ov ? ov.querySelector('form') : null;
+        if (form) clearAllErrors(form);
+      });
+    });
+
+    // Edit Staff Modal Fill
+    const setDateVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el._flatpickr) el._flatpickr.setDate(val || null, true);
+      else el.value = val || '';
+    };
+
+    document.querySelectorAll('.edit-staff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        clearAllErrors(editStaffForm);
+
+        document.getElementById('editStaffForm').action = btn.dataset.url;
+        document.getElementById('edit-st-name').value = btn.dataset.name || '';
+        document.getElementById('edit-st-empid').value = btn.dataset.empid || '';
+        document.getElementById('edit-st-cnic').value = btn.dataset.cnic || '';
+
+        const editRoleSelect = document.getElementById('edit-st-role');
+        const roleVal = btn.dataset.role || '';
+        if (roleVal && ![...editRoleSelect.options].some(o => o.value === roleVal)) {
+          const opt = document.createElement('option');
+          opt.value = roleVal; opt.textContent = roleVal;
+          editRoleSelect.appendChild(opt);
+        }
+        editRoleSelect.value = roleVal;
+
+        document.getElementById('edit-st-password').value = btn.dataset.password || '';
+
+        // dates via flatpickr
+        setDateVal('edit-st-dob', btn.dataset.dob || '');
+        setDateVal('edit-st-joining', btn.dataset.joining || '');
+
+        document.getElementById('edit-st-relation-type').value = btn.dataset.relationType || 'S/O';
+        document.getElementById('edit-st-relation-name').value = btn.dataset.relationName !== '—' ? btn.dataset.relationName : '';
+        document.getElementById('edit-st-marital').value = btn.dataset.marital || 'Single';
+        document.getElementById('edit-st-ref-name').value = btn.dataset.refName !== '—' ? btn.dataset.refName : '';
+        document.getElementById('edit-st-ref-contact').value = btn.dataset.refContact !== '—' ? btn.dataset.refContact : '';
+        document.getElementById('edit-st-qualification').value = btn.dataset.qualification || '';
+        document.getElementById('edit-st-salary').value = btn.dataset.salary || '0.00';
+        document.getElementById('edit-st-gender').value = btn.dataset.gender || 'Male';
+        document.getElementById('edit-st-contact').value = btn.dataset.contact || '';
+        document.getElementById('edit-st-emergency').value = btn.dataset.emergency || '';
+        document.getElementById('edit-st-email').value = btn.dataset.email || '';
+        document.getElementById('edit-st-address').value = btn.dataset.address || '';
+        document.getElementById('edit-st-permanent-address').value = btn.dataset.permanentAddress || '';
+        document.getElementById('edit-st-active').value = btn.dataset.active || '1';
+
+        const sameCheck = document.getElementById('editStaffSameAddressCheckbox');
+        if (sameCheck) {
+          sameCheck.checked = (btn.dataset.address && btn.dataset.address === btn.dataset.permanentAddress);
+        }
+
+        const overlay = document.getElementById('editStaffOverlay');
+        overlay.classList.add('show');
+        initPrettyDates(overlay);
+      });
+    });
+
+    // Preview Staff Modal Fill
+    document.querySelectorAll('.preview-staff-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('sp-name').textContent = btn.dataset.name;
+        document.getElementById('sp-sub').textContent = `${btn.dataset.role} · ${btn.dataset.empid} (${btn.dataset.active})`;
+        document.getElementById('sp-empid').textContent = btn.dataset.empid;
+        document.getElementById('sp-password').textContent = btn.dataset.password || '—';
+        document.getElementById('sp-cnic').textContent = btn.dataset.cnic;
+        document.getElementById('sp-relation').textContent = (btn.dataset.relationType ? btn.dataset.relationType + ' ' : '') + btn.dataset.relationName;
+        document.getElementById('sp-role').textContent = btn.dataset.role;
+        document.getElementById('sp-qualification').textContent = btn.dataset.qualification;
+        document.getElementById('sp-salary').textContent = `Rs. ${btn.dataset.salary}`;
+        document.getElementById('sp-dob').textContent = btn.dataset.dob;
+        document.getElementById('sp-gender-marital').textContent = `${btn.dataset.gender} · ${btn.dataset.marital}`;
+        document.getElementById('sp-joining').textContent = btn.dataset.joining;
+        document.getElementById('sp-contact').textContent = btn.dataset.contact;
+        document.getElementById('sp-emergency').textContent = btn.dataset.emergency;
+        document.getElementById('sp-ref-info').textContent = `${btn.dataset.refName} (${btn.dataset.refContact})`;
+        document.getElementById('sp-email').textContent = btn.dataset.email;
+        document.getElementById('sp-address').textContent = btn.dataset.address;
+        document.getElementById('sp-permanent-address').textContent = btn.dataset.permanentAddress;
+
+        const avImg = document.getElementById('sp-avatar-img');
+        const avTxt = document.getElementById('sp-avatar-text');
+        const photoView = document.getElementById('sp-photo-view');
+        const noPhoto = document.getElementById('sp-no-photo');
+        const docActions = document.getElementById('sp-doc-actions');
+        const docLink = document.getElementById('sp-doc-link');
+        const noDoc = document.getElementById('sp-no-doc');
+
+        if (btn.dataset.photo) {
+          avImg.src = btn.dataset.photo;
+          avImg.style.display = 'block';
+          avTxt.style.display = 'none';
+          photoView.src = btn.dataset.photo;
+          photoView.style.display = 'block';
+          noPhoto.style.display = 'none';
+        } else {
+          avImg.style.display = 'none';
+          avTxt.textContent = btn.dataset.name.charAt(0).toUpperCase();
+          avTxt.style.display = 'block';
+          photoView.style.display = 'none';
+          noPhoto.style.display = 'block';
+        }
+
+        if (btn.dataset.doc) {
+          docLink.href = btn.dataset.doc;
+          docActions.style.display = 'block';
+          noDoc.style.display = 'none';
+        } else {
+          docActions.style.display = 'none';
+          noDoc.style.display = 'block';
+        }
+
+        document.getElementById('previewStaffOverlay').classList.add('show');
+      });
+    });
+
+    // Toggle Status
+    document.querySelectorAll('.toggle-staff-status').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('statusConfirmMsg').innerHTML =
+          `Are you sure you want to <b>${this.dataset.targetAction.toUpperCase()}</b> employee <b>${this.dataset.name}</b>?`;
+        document.getElementById('statusConfirmBtn').href = this.dataset.url;
+        document.getElementById('statusConfirmOverlay').classList.add('show');
+      });
+    });
+
+    // Address Auto Fill
+    const addSRes = document.getElementById('addStaffResAddress');
+    const addSPerm = document.getElementById('addStaffPermAddress');
+    const addSCheck = document.getElementById('addStaffSameAddressCheckbox');
+
+    if (addSCheck && addSRes && addSPerm) {
+      addSCheck.addEventListener('change', function() {
+        if (this.checked) {
+          addSPerm.value = addSRes.value; addSPerm.readOnly = true; addSPerm.style.background = '#ECEEF3';
+        } else {
+          addSPerm.readOnly = false; addSPerm.style.background = '#F8F9FC';
+        }
+      });
+      addSRes.addEventListener('input', function() {
+        if (addSCheck.checked) addSPerm.value = this.value;
+      });
+    }
+
+    const editSRes = document.getElementById('edit-st-address');
+    const editSPerm = document.getElementById('edit-st-permanent-address');
+    const editSCheck = document.getElementById('editStaffSameAddressCheckbox');
+
+    if (editSCheck && editSRes && editSPerm) {
+      editSCheck.addEventListener('change', function() {
+        if (this.checked) {
+          editSPerm.value = editSRes.value; editSPerm.readOnly = true; editSPerm.style.background = '#ECEEF3';
+        } else {
+          editSPerm.readOnly = false; editSPerm.style.background = '#F8F9FC';
+        }
+      });
+      editSRes.addEventListener('input', function() {
+        if (editSCheck.checked) editSPerm.value = this.value;
+      });
+    }
+
+    // Close overlays when clicking outside
+    [document.getElementById('addStaffOverlay'), document.getElementById('editStaffOverlay'),
+     document.getElementById('previewStaffOverlay'), document.getElementById('statusConfirmOverlay'),
+     document.getElementById('addRoleOverlay')].forEach(overlay => {
+      if (!overlay) return;
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
+    });
+
+    // ESC closes all
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+      }
+    });
+  });
+</script>
+{% endblock %}

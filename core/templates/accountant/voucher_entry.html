@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Voucher Entry{% endblock %}
+{% block voucher_entry %}active{% endblock %}
+{% block extra_css %}
+<style>
+.content { padding: 6px 26px 26px; }
+.card { background: var(--card, #fff); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(30,40,80,.04); margin-bottom: 24px;}
+.page-title { font-size: 22px; font-weight: 700; color: #1B2559; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.page-desc { color: #707EAE; font-size: 13px; margin-bottom: 24px; }
+
+.row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 150px; }
+.field label { font-size: 11px; font-weight: 700; color: #707EAE; text-transform: uppercase; }
+.field input, .field select { padding: 10px 14px; border-radius: 10px; border: 1px solid #E2E8F0; background: #F8FAFC; font-size: 13px; outline: none; width: 100%; box-sizing: border-box; color: #2B3674; font-weight: 600; }
+.field input[readonly] { background: #EEF2F8; color: #A3AED0; cursor: not-allowed; }
+
+.entry-box { background: #F4F7FE; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; position: relative; margin-bottom: 24px; }
+.overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.7); backdrop-filter: blur(3px); z-index: 10; display: flex; align-items: center; justify-content: center; border-radius: 16px; }
+.overlay-msg { background: #fff; padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: 700; color: #4318FF; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
+.hidden { display: none !important; }
+
+.dr-action { color: #4318FF !important; background: #E9E3FF !important; text-align: center; }
+.cr-action { color: #EE5D50 !important; background: #FFEDEC !important; text-align: center; }
+
+.btn-add { padding: 10px 20px; border-radius: 10px; border: none; background: #4318FF; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; height: 42px; width: 100%; }
+.btn-add:hover { background: #3311DB; }
+.btn-submit { padding: 12px 28px; border-radius: 10px; border: none; background: #05CD99; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; float: right; display: flex; align-items: center; gap: 8px; }
+.btn-submit:disabled { background: #A3AED0; cursor: not-allowed; }
+
+.table-container { border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; margin-bottom: 24px; background: #fff; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th { background: #1B2559; color: #fff; padding: 14px 16px; font-size: 11px; text-transform: uppercase; font-weight: 700; }
+td { padding: 14px 16px; font-size: 13px; color: #2B3674; border-bottom: 1px solid #F1F5F9; font-weight: 500; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.btn-del { color: #EE5D50; background: #FFEDEC; border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+
+.master-row { background: #F8FAFC; border-top: 2px solid #E2E8F0; }
+.master-row td { font-weight: 700; color: #4318FF; }
+.master-row .narr { color: #A3AED0; font-style: italic; font-weight: 500; }
+
+.totals-row { background: #fff; border-top: 2px solid #1B2559; }
+.totals-row td { font-weight: 700; font-size: 15px; color: #1B2559; }
+#total_dr { color: #4318FF; }
+#total_cr { color: #EE5D50; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    
+    <div class="page-title"><i class="fas fa-file-invoice-dollar" style="color: #4318FF;"></i> Voucher Entry</div>
+    <div class="page-desc">Auto-balancing single entry mode for Cash and Multi-Bank transactions</div>
+
+    <div class="card">
+        <!-- Header Info -->
+        <div class="row">
+            <div class="field">
+                <label># Voucher No (Auto)</label>
+                <input type="text" value="Generated on Save" readonly>
+            </div>
+            <div class="field" style="flex: 1.5;">
+                <label>Voucher Type *</label>
+                <select id="v_type" onchange="onVoucherTypeChange()" style="color: #4318FF; background: #F4F7FE;">
+                    <option value="">Select Type...</option>
+                    <option value="CPV">CPV (Cash Payment Voucher)</option>
+                    <option value="CRV">CRV (Cash Receipt Voucher)</option>
+                    <option value="BPV">BPV (Bank Payment Voucher)</option>
+                    <option value="BRV">BRV (Bank Receipt Voucher)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Date *</label>
+                <input type="date" id="v_date" value="{{ current_date }}">
+            </div>
+            <div class="field" style="flex: 1.5;">
+                <label>Reference / Note</label>
+                <input type="text" id="v_ref" placeholder="Optional reference">
+            </div>
+        </div>
+
+        <!-- Add Entry Box -->
+        <div class="entry-box">
+            <div id="type_overlay" class="overlay">
+                <span class="overlay-msg">Please select Voucher Type first</span>
+            </div>
+            
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="field" style="flex: 2;">
+                    <label>Account ID *</label>
+                    <select id="acc_id" onchange="autoFillAccountName()">
+                        <option value="">Select Account...</option>
+                    </select>
+                </div>
+                <div class="field" style="flex: 1.5;">
+                    <label>Account Title</label>
+                    <input type="text" id="acc_name" placeholder="Auto-filled" readonly>
+                </div>
+                <div class="field">
+                    <label>Action</label>
+                    <input type="text" id="dr_cr_display" readonly>
+                    <input type="hidden" id="dr_cr_val">
+                </div>
+                <div class="field">
+                    <label>Amount *</label>
+                    <input type="number" step="0.01" id="amount" placeholder="0.00">
+                </div>
+                <div class="field" style="flex: 0.8;">
+                    <label>&nbsp;</label>
+                    <button type="button" onclick="addUserRow()" class="btn-add">+ Add Entry</button>
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 0;">
+                <div class="field" style="flex: 1;">
+                    <input type="text" id="narration" placeholder="Entry Narration / Description" style="background: #fff;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">SR</th>
+                        <th style="width: 150px;">ACC ID</th>
+                        <th>ACC NAME</th>
+                        <th>NARRATION</th>
+                        <th class="text-right" style="width: 120px;">DR (Rs)</th>
+                        <th class="text-right" style="width: 120px;">CR (Rs)</th>
+                        <th class="text-center" style="width: 80px;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="table_body">
+                    <tr id="empty_row">
+                        <td colspan="7" class="text-center" style="padding: 40px; color: #A3AED0; font-style: italic;">No entries added yet.</td>
+                    </tr>
+                </tbody>
+                <!-- Master Auto-Balancing Row (Supports Multi-Bank Selection) -->
+                <tbody id="master_row_body" class="hidden master-row">
+                    <tr>
+                        <td>Auto</td>
+                        <td>
+                            <span id="master_id_text">-</span>
+                            <select id="master_bank_select" class="hidden" onchange="renderTable()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #E2E8F0; font-size: 13px; font-weight: 600; color: #4318FF; background: #fff;">
+                            </select>
+                        </td>
+                        <td id="master_name">-</td>
+                        <td class="narr">Auto-generated balancing entry</td>
+                        <td class="text-right" id="master_dr">0.00</td>
+                        <td class="text-right" id="master_cr">0.00</td>
+                        <td class="text-center" style="color: #A3AED0; font-size: 11px;">Balanced</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="totals-row">
+                        <td colspan="4" class="text-right">Totals:</td>
+                        <td class="text-right" id="total_dr">0.00</td>
+                        <td class="text-right" id="total_cr">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div style="overflow: hidden;">
+            <button type="button" id="submit_btn" onclick="submitVoucher()" disabled class="btn-submit">
+                <i class="fas fa-check"></i> Submit Voucher
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load Data from Django Context
+const allAccounts = JSON.parse('{{ accounts_json|escapejs }}');
+const masterAccounts = JSON.parse('{{ master_accounts_json|escapejs }}');
+const bankAccounts = JSON.parse('{{ bank_accounts_json|escapejs }}');
+
+let userRows = [];
+let userTotal = 0;
+
+function onVoucherTypeChange() {
+    const vType = document.getElementById('v_type').value;
+    const overlay = document.getElementById('type_overlay');
+    const accSelect = document.getElementById('acc_id');
+    const actionDisplay = document.getElementById('dr_cr_display');
+    const actionVal = document.getElementById('dr_cr_val');
+
+    userRows = [];
+    userTotal = 0;
+    renderTable();
+
+    if (!vType) {
+        overlay.classList.remove('hidden');
+        return;
+    }
+    
+    if ((vType === 'CPV' || vType === 'CRV') && !masterAccounts.cash_id) {
+        alert("CRITICAL ERROR: No 'Cash' Unique Account found in Level 4. Please set it first.");
+        document.getElementById('v_type').value = "";
+        return;
+    }
+    if ((vType === 'BPV' || vType === 'BRV') && bankAccounts.length === 0) {
+        alert("CRITICAL ERROR: No Bank Accounts registered in Bank File! Please create at least one bank account first.");
+        document.getElementById('v_type').value = "";
+        return;
+    }
+
+    overlay.classList.add('hidden');
+
+    if (vType === 'CPV' || vType === 'BPV') {
+        actionDisplay.value = "Debit (DR)";
+        actionVal.value = "DR";
+        actionDisplay.className = "dr-action";
+    } else if (vType === 'CRV' || vType === 'BRV') {
+        actionDisplay.value = "Credit (CR)";
+        actionVal.value = "CR";
+        actionDisplay.className = "cr-action";
+    }
+
+    accSelect.innerHTML = '<option value="">Select Account...</option>';
+    let keyToCheck = 'allow_' + vType.toLowerCase();
+
+    allAccounts.forEach(acc => {
+        if (acc[keyToCheck] === true) {
+            let opt = document.createElement('option');
+            opt.value = acc.account_id;
+            opt.text = acc.account_id + " - " + acc.account_name;
+            opt.dataset.name = acc.account_name;
+            accSelect.appendChild(opt);
+        }
+    });
+
+    // Populate Master Bank Dropdown if BPV/BRV
+    if (vType === 'BPV' || vType === 'BRV') {
+        const bankSelect = document.getElementById('master_bank_select');
+        bankSelect.innerHTML = "";
+        bankAccounts.forEach(b => {
+            let opt = document.createElement('option');
+            opt.value = b.account_id;
+            opt.text = b.account_id + " - " + b.account_name;
+            opt.dataset.name = b.account_name;
+            bankSelect.appendChild(opt);
+        });
+    }
+}
+
+function autoFillAccountName() {
+    const select = document.getElementById('acc_id');
+    const nameInput = document.getElementById('acc_name');
+    if (select.selectedIndex > 0) {
+        nameInput.value = select.options[select.selectedIndex].dataset.name;
+    } else {
+        nameInput.value = "";
+    }
+}
+
+function addUserRow() {
+    const accId = document.getElementById('acc_id').value;
+    const accName = document.getElementById('acc_name').value;
+    const narration = document.getElementById('narration').value;
+    const amount = parseFloat(document.getElementById('amount').value);
+    const action = document.getElementById('dr_cr_val').value;
+
+    if (!accId || !amount || amount <= 0) {
+        alert("Please select an account and enter a valid amount!");
+        return;
+    }
+
+    userRows.push({
+        id: Date.now(),
+        accId: accId,
+        accName: accName,
+        narration: narration || '-',
+        dr: action === 'DR' ? amount : 0,
+        cr: action === 'CR' ? amount : 0,
+        amount: amount
+    });
+
+    document.getElementById('acc_id').value = "";
+    document.getElementById('acc_name').value = "";
+    document.getElementById('amount').value = "";
+    document.getElementById('narration').value = "";
+
+    renderTable();
+}
+
+function removeRow(id) {
+    userRows = userRows.filter(r => r.id !== id);
+    renderTable();
+}
+
+function renderTable() {
+    const tbody = document.getElementById('table_body');
+    const masterBody = document.getElementById('master_row_body');
+    const btn = document.getElementById('submit_btn');
+    const vType = document.getElementById('v_type').value;
+
+    tbody.innerHTML = "";
+    userTotal = 0;
+
+    if (userRows.length === 0) {
+        tbody.innerHTML = `<tr id="empty_row"><td colspan="7" class="text-center" style="padding: 40px; color: #A3AED0; font-style: italic;">No entries added yet.</td></tr>`;
+        masterBody.classList.add('hidden');
+        btn.disabled = true;
+        document.getElementById('total_dr').innerText = "0.00";
+        document.getElementById('total_cr').innerText = "0.00";
+        return;
+    }
+
+    let userDrTotal = 0;
+    let userCrTotal = 0;
+
+    userRows.forEach((r, index) => {
+        userTotal += r.amount;
+        userDrTotal += r.dr;
+        userCrTotal += r.cr;
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td style="font-weight: 700;">${r.accId}</td>
+                <td>${r.accName}</td>
+                <td style="color: #707EAE;">${r.narration}</td>
+                <td class="text-right font-bold">${r.dr > 0 ? r.dr.toFixed(2) : '-'}</td>
+                <td class="text-right font-bold">${r.cr > 0 ? r.cr.toFixed(2) : '-'}</td>
+                <td class="text-center">
+                    <button type="button" onclick="removeRow(${r.id})" class="btn-del"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+
+    masterBody.classList.remove('hidden');
+    let mId, mName, mDr = 0, mCr = 0;
+
+    const idTextSpan = document.getElementById('master_id_text');
+    const bankSelect = document.getElementById('master_bank_select');
+
+    if (vType === 'CPV' || vType === 'CRV') {
+        mId = masterAccounts.cash_id;
+        mName = masterAccounts.cash_name;
+        idTextSpan.classList.remove('hidden');
+        bankSelect.classList.add('hidden');
+        idTextSpan.innerText = mId;
+    } else {
+        // BPV or BRV -> Multi-bank selector
+        idTextSpan.classList.add('hidden');
+        bankSelect.classList.remove('hidden');
+        
+        if (bankSelect.selectedIndex >= 0) {
+            mId = bankSelect.value;
+            mName = bankSelect.options[bankSelect.selectedIndex].dataset.name;
+        } else if (bankAccounts.length > 0) {
+            mId = bankAccounts[0].account_id;
+            mName = bankAccounts[0].account_name;
+        }
+    }
+
+    if (vType === 'CPV' || vType === 'BPV') {
+        mCr = userTotal;
+    } else {
+        mDr = userTotal;
+    }
+
+    document.getElementById('master_name').innerText = mName;
+    document.getElementById('master_dr').innerText = mDr > 0 ? mDr.toFixed(2) : '-';
+    document.getElementById('master_cr').innerText = mCr > 0 ? mCr.toFixed(2) : '-';
+
+    let grandDr = userDrTotal + mDr;
+    let grandCr = userCrTotal + mCr;
+    
+    document.getElementById('total_dr').innerText = grandDr.toFixed(2);
+    document.getElementById('total_cr').innerText = grandCr.toFixed(2);
+
+    btn.disabled = false;
+}
+
+function submitVoucher() {
+    const vType = document.getElementById('v_type').value;
+    const vDate = document.getElementById('v_date').value;
+    const vRef = document.getElementById('v_ref').value;
+
+    if (!vType || userRows.length === 0) return;
+
+    let finalRows = [...userRows];
+    
+    let mId;
+    if (vType === 'CPV' || vType === 'CRV') {
+        mId = masterAccounts.cash_id;
+    } else {
+        mId = document.getElementById('master_bank_select').value;
+    }
+
+    let mDr = (vType === 'CRV' || vType === 'BRV') ? userTotal : 0;
+    let mCr = (vType === 'CPV' || vType === 'BPV') ? userTotal : 0;
+
+    finalRows.push({
+        accId: mId,
+        narration: 'Auto-balanced ' + vType + ' entry',
+        dr: mDr,
+        cr: mCr
+    });
+
+    const payload = {
+        voucher_type: vType,
+        voucher_date: vDate,
+        reference: vRef,
+        rows: finalRows
+    };
+
+    fetch('{% url "voucher_entry" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            alert(data.message + " Voucher No: " + data.voucher_no);
+            window.location.reload();
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(err => alert("System Error: " + err));
+}
+</script>
+{% endblock %}

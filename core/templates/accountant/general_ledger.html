@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}General Ledger{% endblock %}
+{% block coa_open %}open{% endblock %}
+{% block nav_general_ledger %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.content { padding: 12px 26px 30px; background: #F4F7FE; min-height: 100vh; }
+.card-box { background: #ffffff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 24px; }
+
+.page-title { font-size: 22px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
+.page-desc { color: #64748B; font-size: 13px; margin-bottom: 20px; }
+
+.filter-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; position: relative; }
+.field label { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; }
+.field input, .field select { padding: 10px 14px; border-radius: 8px; border: 1px solid #CBD5E1; background: #F8FAFC; font-size: 13px; outline: none; color: #1E293B; font-weight: 500; width: 100%; box-sizing: border-box; }
+.field input:focus { border-color: #4338CA; background: #FFFFFF; }
+
+/* Custom Searchable Dropdown Styles */
+.dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    max-height: 190px; /* ~4 to 5 items height */
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    display: none;
+    margin-top: 4px;
+}
+.dropdown-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    border-bottom: 1px solid #F1F5F9;
+    font-weight: 500;
+}
+.dropdown-item:hover {
+    background: #EEF2FF;
+    color: #4338CA;
+}
+
+.btn-view { background: #4338CA; color: #FFF; padding: 10px 22px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; height: 42px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn-view:hover { background: #3730A3; }
+.btn-print { background: #10B981; color: #FFF; padding: 10px 22px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; height: 42px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn-print:hover { background: #059669; }
+
+/* Summary Cards */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #FFFFFF; border-radius: 12px; padding: 18px; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+.stat-title { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-bottom: 6px; }
+.stat-value { font-size: 18px; font-weight: 700; color: #1E293B; }
+
+/* Table Styles */
+table { width: 100%; border-collapse: collapse; }
+th { background: #0F172A; color: #FFFFFF; font-size: 11px; text-transform: uppercase; padding: 14px; text-align: left; }
+th:first-child { border-top-left-radius: 8px; }
+th:last-child { border-top-right-radius: 8px; text-align: right; }
+td { padding: 14px; font-size: 13px; border-bottom: 1px solid #E2E8F0; vertical-align: middle; color: #334155; font-weight: 500; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="page-title">Ledger</div>
+    <div class="page-desc">View complete transaction history of any account</div>
+
+    <form method="get" action="{% url 'general_ledger' %}" id="ledgerForm">
+        <div class="card-box">
+            <div class="filter-row">
+                <!-- Searchable Account Dropdown Field -->
+                <div class="field" style="flex: 2;">
+                    <label>Search Account</label>
+                    <input type="text" id="accountSearchInput" name="q" value="{{ search_query }}" placeholder="Type code or account name..." autocomplete="off">
+                    
+                    <!-- Dropdown Box with Scrollbar -->
+                    <div id="accountDropdown" class="dropdown-list">
+                        {% for acc in all_accounts %}
+                        <div class="dropdown-item" onclick="selectAccount('{{ acc.account_id }}', '{{ acc.account_id }} - {{ acc.account_name|escapejs }}')">
+                            <strong>{{ acc.account_id }}</strong> — {{ acc.account_name }}
+                        </div>
+                        {% empty %}
+                        <div class="dropdown-item" style="color: #94A3B8;">No active accounts found</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>From Date</label>
+                    <input type="date" name="from_date" value="{{ from_date }}">
+                </div>
+
+                <div class="field">
+                    <label>To Date</label>
+                    <input type="date" name="to_date" value="{{ to_date }}">
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-view">View Ledger</button>
+    
+                    {% if selected_account %}
+                    <!-- Reset Button -->
+                    <a href="{% url 'general_ledger' %}" class="btn-view" style="background: #64748B;" title="Reset Filter">Reset</a>
+    
+                    <!-- NAYA PRINT / PDF BUTTON YAHAN HAI -->
+                    <button type="button" class="btn-print" onclick="window.print()">
+                        <i class="fas fa-print" style="margin-right: 6px;"></i> Print / PDF
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if selected_account %}
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-title">Opening Balance</div>
+            <div class="stat-value" style="color: {% if opening_balance < 0 %}#DC2626{% else %}#1E293B{% endif %};">Rs. {{ opening_balance|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Total Debit</div>
+            <div class="stat-value" style="color: #4338CA;">Rs. {{ total_debit|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Total Credit</div>
+            <div class="stat-value" style="color: #059669;">Rs. {{ total_credit|floatformat:2 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Closing Balance</div>
+            <div class="stat-value" style="color: {% if closing_balance < 0 %}#DC2626{% else %}#1E293B{% endif %};">Rs. {{ closing_balance|floatformat:2 }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Table Section -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Narration</th>
+                    <th class="text-right">Debit (Rs)</th>
+                    <th class="text-right">Credit (Rs)</th>
+                    <th class="text-right">Balance (Rs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.date|date:"d-M-Y" }}</td>
+                    <td style="font-weight: 700; color: #0F172A;">{{ entry.voucher_no }}</td>
+                    <td style="color: #64748B;">{{ entry.narration|default:"-" }}</td>
+                    <td class="text-right" style="font-weight: 600;">{% if entry.debit > 0 %}Rs {{ entry.debit|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="text-right" style="font-weight: 600;">{% if entry.credit > 0 %}Rs {{ entry.credit|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="text-right" style="font-weight: 700; color: #1E293B;">Rs {{ entry.balance|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center" style="padding: 50px; color: #94A3B8; font-style: italic;">
+                        {% if search_query %}
+                            No transactions found for this account in the selected date range.
+                        {% else %}
+                            Please search an account and select a valid date range to view ledger transactions.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Searchable Dropdown Interaction Script
+    const searchInput = document.getElementById('accountSearchInput');
+    const dropdown = document.getElementById('accountDropdown');
+    const items = dropdown.getElementsByClassName('dropdown-item');
+
+    searchInput.addEventListener('focus', function() {
+        dropdown.style.display = 'block';
+    });
+
+    searchInput.addEventListener('input', function() {
+        dropdown.style.display = 'block';
+        let filter = searchInput.value.toLowerCase();
+        
+        for (let i = 0; i < items.length; i++) {
+            let text = items[i].textContent || items[i].innerText;
+            if (text.toLowerCase().indexOf(filter) > -1) {
+                items[i].style.display = "";
+            } else {
+                items[i].style.display = "none";
+            }
+        }
+    });
+
+    function selectAccount(accId, accText) {
+        searchInput.value = accId; // Or accText if you want full name
+        dropdown.style.display = 'none';
+        document.getElementById('ledgerForm').submit(); // Automatically submit on selection
+    }
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

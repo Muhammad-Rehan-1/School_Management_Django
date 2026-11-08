@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Result — {{ student.name }}{% endblock %}
+{% block page_title %}Student Result{% endblock %}
+{% block nav_results %}active{% endblock %}
+
+{% block content %}
+<div style="padding:6px 26px 26px; display:flex; flex-direction:column; gap:16px;">
+
+  <!-- Header -->
+  <div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+      <div>
+        <h2 style="font-size:16px;font-weight:700;">{{ student.name }}</h2>
+        <p style="margin-top:6px; color:var(--muted); font-size:12.5px;">
+          Roll: #{{ student.roll_no }} |
+          Class: {{ student_class }} |
+          Term: {{ term }} |
+          Status: <b>{{ result_status }}</b>
+        </p>
+        <p style="margin-top:6px; color:var(--muted); font-size:12.5px;">
+          Position: <b>{{ position }}</b> / {{ class_strength }} |
+          Overall: <b>{{ overall_pct }}%</b> ({{ overall_grade }})
+        </p>
+      </div>
+
+      <div style="display:flex; gap:10px;">
+        <a href="{% url 'results_list' %}"
+           style="text-decoration:none;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text);font-weight:600;font-size:13px;">
+          Back
+        </a>
+        
+        {% if perms.can_print or user.is_superuser %}
+        <a href="{% url 'student_result_pdf' student.id %}?class={{ student_class }}&term={{ term }}"
+           target="_blank" rel="noopener"
+           style="text-decoration:none;background:#111827;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700;font-size:13px;">
+          Download PDF
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Marks Table -->
+  <div style="background:var(--card); border-radius:16px; padding:6px; box-shadow:0 2px 8px rgba(30,40,80,.04); overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; min-width:950px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Subject</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Obtained</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Total</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">%</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Grade</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ r.subject }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ r.obtained }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ r.total }}</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ r.percentage }}%</td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ r.grade }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);">{{ r.status }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="padding:18px 16px; color:var(--muted);">No exams found for this term.</td></tr>
+        {% endfor %}
+
+        <tr style="background:#f3f4f6;">
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>TOTAL</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ total_obtained }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ total_marks }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ overall_pct }}%</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ overall_grade }}</b></td>
+          <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>{{ result_status }}</b></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Summary + Remarks + Chart -->
+  <!-- Teacher Remarks -->
+<div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+  <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Teacher Remarks</h3>
+
+  <p style="color:var(--muted); font-size:12.5px; margin-bottom:10px;">
+    Auto Performance: <b>{{ auto_label }}</b>
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="class" value="{{ student_class }}">
+    <input type="hidden" name="term" value="{{ term }}">
+
+    <textarea name="remarks" rows="4"
+      placeholder="Write remarks..."
+      {% if not perms.can_edit and not perms.can_add and not user.is_superuser %}readonly style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#ECEEF3;color:var(--muted);outline:none;"{% else %}style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#F8F9FC;outline:none;"{% endif %}>{{ teacher_remarks }}</textarea>
+
+    {% if perms.can_edit or perms.can_add or user.is_superuser %}
+    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+      <button type="submit"
+        style="padding:10px 16px;border-radius:10px;border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;">
+        Save Remarks
+      </button>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Subject-wise Performance Graph (BELOW remarks) -->
+<div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+  <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">Subject-wise Performance (%)</h3>
+  <canvas id="chartBar" height="120"></canvas>
+</div>
+       
+      
+
+  <!-- Signatures -->
+  <div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <div style="display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; padding-top:14px;">
+      <div style="flex:1; min-width:200px; text-align:center;">
+        <div style="border-bottom:1px solid var(--line); height:20px;"></div>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted);">Class Teacher</div>
+      </div>
+      <div style="flex:1; min-width:200px; text-align:center;">
+        <div style="border-bottom:1px solid var(--line); height:20px;"></div>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted);">Principal</div>
+      </div>
+      <div style="flex:1; min-width:200px; text-align:center;">
+        <div style="border-bottom:1px solid var(--line); height:20px;"></div>
+        <div style="margin-top:8px; font-size:12px; color:var(--muted);">Parent / Guardian</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadBar(){
+  const url = new URL("{% url 'student_result_chart_api' student.id %}", window.location.origin);
+  url.searchParams.set("class", "{{ student_class }}");
+  url.searchParams.set("term", "{{ term }}");
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const ctx = document.getElementById("chartBar").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: data.labels || [],
+      datasets: [{
+        label: "% Score",
+        data: data.percentages || [],
+        backgroundColor: "rgba(240,138,93,.85)",
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display:false } },
+      scales: { y: { beginAtZero:true, max:100 } }
+    }
+  });
+}
+document.addEventListener("DOMContentLoaded", loadBar);
+</script>
+{% endblock %}

@@ -1,0 +1,1423 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — {{ school.school_name|default:"School Management" }}{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+  @property --p {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
+  :root {
+    --dash-bg: #f5f7fb;
+    --dash-surface: rgba(255, 255, 255, 0.82);
+    --dash-surface-strong: rgba(255, 255, 255, 0.94);
+    --dash-border: rgba(25, 32, 56, 0.08);
+    --dash-text: #182033;
+    --dash-muted: #7b8498;
+    --dash-primary: #f07f4f;
+    --dash-primary-soft: #fff0e8;
+    --dash-green: #2fa36b;
+    --dash-green-soft: #e9f7ef;
+    --dash-blue: #4776d0;
+    --dash-blue-soft: #ebf1ff;
+    --dash-purple: #745fd0;
+    --dash-purple-soft: #f0edff;
+    --dash-pink: #c05786;
+    --dash-pink-soft: #fbeaf2;
+    --dash-teal: #168f8a;
+    --dash-teal-soft: #e6f8f6;
+    --dash-yellow: #d79222;
+    --dash-yellow-soft: #fff4de;
+    --dash-red: #d65a5a;
+    --dash-red-soft: #fdecec;
+
+    --lift-0: 0 1px 2px rgba(28, 34, 58, .04);
+    --lift-1: 0 10px 24px rgba(35, 43, 71, .07), 0 2px 6px rgba(35, 43, 71, .05);
+    --lift-2: 0 22px 48px rgba(30, 37, 62, .11), 0 6px 16px rgba(30, 37, 62, .06);
+    --lift-3: 0 32px 70px rgba(24, 32, 51, .16), 0 10px 22px rgba(24, 32, 51, .08);
+
+    --dash-radius-xl: 28px;
+    --dash-radius-lg: 22px;
+    --dash-radius-md: 16px;
+  }
+
+  .dashboard-shell,
+  .dashboard-shell * {
+    box-sizing: border-box;
+  }
+
+  .dashboard-shell {
+    position: relative;
+    padding: 4px 26px 42px;
+    color: var(--dash-text);
+    isolation: isolate;
+    perspective: 1600px;
+  }
+
+  .dashboard-shell::before,
+  .dashboard-shell::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(10px);
+    opacity: .7;
+    border-radius: 999px;
+  }
+
+  .dashboard-shell::before {
+    width: 300px;
+    height: 300px;
+    right: 6%;
+    top: 84px;
+    background: radial-gradient(circle, rgba(240,127,79,.17), rgba(240,127,79,0) 70%);
+  }
+
+  .dashboard-shell::after {
+    width: 320px;
+    height: 320px;
+    left: 18%;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(71,118,208,.11), rgba(71,118,208,0) 70%);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .rise-in {
+      animation: riseIn .6s cubic-bezier(.19,1,.22,1) both;
+    }
+  }
+
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ HERO ============ */
+  .dash-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 176px;
+    border-radius: 30px;
+    padding: 30px 32px;
+    margin-bottom: 20px;
+    background:
+      radial-gradient(circle at 86% 22%, rgba(255,255,255,.30), transparent 25%),
+      linear-gradient(135deg, #20283a 0%, #303b55 55%, #46536f 100%);
+    color: #fff;
+    box-shadow: var(--lift-3);
+  }
+
+  .dash-hero::before,
+  .dash-hero::after {
+    content: "";
+    position: absolute;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 999px;
+  }
+
+  .dash-hero::before {
+    width: 260px;
+    height: 260px;
+    right: -90px;
+    top: -105px;
+  }
+
+  .dash-hero::after {
+    width: 170px;
+    height: 170px;
+    right: 55px;
+    bottom: -115px;
+  }
+
+  .hero-layout {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 28px;
+    align-items: center;
+  }
+
+  .hero-title {
+    margin: 0 0 9px;
+    font-size: clamp(27px, 3vw, 38px);
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    font-weight: 700;
+  }
+
+  .hero-title .school-name {
+    color: var(--dash-primary);
+  }
+
+  .hero-subtitle {
+    max-width: 640px;
+    margin: 0;
+    color: rgba(255,255,255,.66);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .hero-date {
+    min-width: 178px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14);
+  }
+
+  .hero-date span {
+    display: block;
+    color: rgba(255,255,255,.58);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+
+  .hero-date strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 17px;
+    line-height: 1.35;
+  }
+
+  .hero-date small {
+    display: block;
+    margin-top: 3px;
+    color: rgba(255,255,255,.72);
+    font-size: 12px;
+  }
+
+  /* ============ KPI LAYER ============ */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .spatial-card {
+    position: relative;
+    background: var(--dash-surface);
+    border: 1px solid rgba(255,255,255,.72);
+    box-shadow: var(--lift-1);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .kpi-card {
+    min-height: 126px;
+    border-radius: var(--dash-radius-lg);
+    padding: 18px;
+    overflow: hidden;
+    transition: transform .35s cubic-bezier(.19,1,.22,1), box-shadow .35s ease, border-color .35s ease;
+  }
+
+  .kpi-card:hover {
+    box-shadow: var(--lift-2);
+    border-color: rgba(240,127,79,.20);
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    right: -28px;
+    bottom: -33px;
+    background: currentColor;
+    opacity: .055;
+  }
+
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .kpi-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 18px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), var(--lift-0);
+  }
+
+  .kpi-card h3 {
+    margin: 15px 0 2px;
+    font-size: 27px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kpi-card p {
+    margin: 0;
+    color: var(--dash-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .kpi-mini {
+    color: var(--dash-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .tone-blue   { color: var(--dash-blue); }
+  .tone-purple { color: var(--dash-purple); }
+  .tone-teal   { color: var(--dash-teal); }
+  .tone-orange { color: var(--dash-primary); }
+  .tone-green  { color: var(--dash-green); }
+  .tone-pink   { color: var(--dash-pink); }
+
+  .tone-blue .kpi-icon   { background: var(--dash-blue-soft); }
+  .tone-purple .kpi-icon { background: var(--dash-purple-soft); }
+  .tone-teal .kpi-icon   { background: var(--dash-teal-soft); }
+  .tone-orange .kpi-icon { background: var(--dash-primary-soft); }
+  .tone-green .kpi-icon  { background: var(--dash-green-soft); }
+  .tone-pink .kpi-icon   { background: var(--dash-pink-soft); }
+
+  /* ============ MAIN GRID ============ */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(310px, .95fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .panel {
+    border-radius: var(--dash-radius-xl);
+    padding: 22px;
+    margin-bottom: 20px;
+    transition: box-shadow .35s ease, transform .35s cubic-bezier(.19,1,.22,1);
+  }
+
+  .panel:hover {
+    box-shadow: var(--lift-2);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .panel-title-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 13px;
+    background: #f6f7fa;
+    color: #566179;
+    font-size: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+  }
+
+  .panel-title h2 {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -.01em;
+  }
+
+  .panel-title p {
+    margin: 4px 0 0;
+    color: var(--dash-muted);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .panel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 32px;
+    padding: 7px 10px;
+    white-space: nowrap;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--dash-primary);
+    background: var(--dash-primary-soft);
+    font-size: 11.5px;
+    font-weight: 800;
+    transition: .2s ease;
+  }
+
+  .panel-link:hover {
+    transform: translateY(-1px);
+    color: #d5683a;
+    background: #ffe8da;
+  }
+
+  .panel-link:focus-visible,
+  .quick-action:focus-visible,
+  .kpi-card:focus-visible {
+    outline: 2px solid var(--dash-primary);
+    outline-offset: 2px;
+  }
+
+  /* ============ FEE COLLECTION ============ */
+  .fee-layout {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .fee-ring {
+    --p: 0;
+    width: 154px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(closest-side, rgba(255,255,255,.94) 78%, transparent 79% 100%),
+      conic-gradient(var(--dash-primary) calc(var(--p) * 1%), #edf0f4 0);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.02), var(--lift-1);
+    transition: --p 1s cubic-bezier(.19,1,.22,1);
+  }
+
+  .fee-ring-inner {
+    text-align: center;
+  }
+
+  .fee-ring-inner strong {
+    display: block;
+    font-size: 31px;
+    line-height: 1;
+    letter-spacing: -.05em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fee-ring-inner span {
+    display: block;
+    margin-top: 6px;
+    color: var(--dash-muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  .fee-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .fee-stat {
+    padding: 15px;
+    border: 1px solid var(--dash-border);
+    border-radius: var(--dash-radius-md);
+    background: rgba(248,249,252,.72);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  .fee-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lift-1);
+  }
+
+  .fee-stat .stat-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--dash-muted);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .fee-stat .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .fee-stat strong {
+    display: block;
+    margin-top: 9px;
+    font-size: 17px;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fee-stat.collected .dot { background: var(--dash-green); }
+  .fee-stat.pending .dot { background: var(--dash-yellow); }
+  .fee-stat.outstanding .dot { background: var(--dash-red); }
+  .fee-stat.collected strong { color: var(--dash-green); }
+  .fee-stat.pending strong { color: var(--dash-yellow); }
+  .fee-stat.outstanding strong { color: var(--dash-red); }
+
+  /* ============ CLASS STRENGTH ============ */
+  .class-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .class-row {
+    display: grid;
+    grid-template-columns: minmax(82px, .7fr) minmax(160px, 3fr) 78px;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .class-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .class-bar {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #edf0f5;
+  }
+
+  .class-bar > span {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f07f4f, #f6ac82);
+    box-shadow: 0 3px 8px rgba(240,127,79,.22);
+    transition: width 1s cubic-bezier(.19,1,.22,1);
+  }
+
+  .class-count {
+    text-align: right;
+    color: var(--dash-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  /* ============ TABLE ============ */
+  .table-shell {
+    overflow: auto;
+    margin: 0 -4px -3px;
+  }
+
+  .payments-table {
+    width: 100%;
+    min-width: 660px;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .payments-table th {
+    padding: 0 12px 11px;
+    text-align: left;
+    color: #9aa1af;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .payments-table td {
+    padding: 13px 12px;
+    border-top: 1px solid #eff1f5;
+    vertical-align: middle;
+    color: #4b5365;
+    font-size: 12.5px;
+  }
+
+  .payments-table tbody tr {
+    transition: background .2s ease;
+  }
+
+  .payments-table tbody tr:hover {
+    background: rgba(248,249,252,.82);
+  }
+
+  .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .student-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #f39a72, #f0c2a8);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 6px 14px rgba(240,127,79,.18);
+  }
+
+  .student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .student-meta strong {
+    display: block;
+    max-width: 210px;
+    color: var(--dash-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+
+  .student-meta span {
+    color: var(--dash-muted);
+    font-size: 10.5px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--dash-green-soft);
+    color: var(--dash-green);
+    font-size: 10.5px;
+    font-weight: 800;
+  }
+
+  .status-pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ============ QUICK ACTIONS ============ */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px;
+  }
+
+  .quick-action {
+    position: relative;
+    overflow: hidden;
+    min-height: 92px;
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--dash-border);
+    border-radius: 17px;
+    background: rgba(248,249,252,.73);
+    color: var(--dash-text);
+    text-align: center;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 800;
+    transition: transform .28s cubic-bezier(.19,1,.22,1), border-color .28s ease, background .28s ease, box-shadow .28s ease;
+  }
+
+  .quick-action i {
+    font-size: 19px;
+    color: var(--dash-primary);
+    transition: transform .28s cubic-bezier(.19,1,.22,1);
+  }
+
+  .quick-action:hover {
+    transform: translateY(-4px);
+    border-color: rgba(240,127,79,.24);
+    background: #fff8f3;
+    box-shadow: var(--lift-1);
+    color: var(--dash-text);
+  }
+
+  .quick-action:hover i {
+    transform: scale(1.1);
+  }
+
+  /* ============ TRANSPORT ============ */
+  .transport-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 11px;
+  }
+
+  .transport-stat {
+    padding: 15px;
+    border: 1px solid var(--dash-border);
+    border-radius: 17px;
+    background: rgba(248,249,252,.70);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  .transport-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lift-1);
+  }
+
+  .transport-stat .icon-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .transport-stat i {
+    color: #929aab;
+    font-size: 15px;
+  }
+
+  .transport-stat strong {
+    display: block;
+    margin-top: 9px;
+    font-size: 23px;
+    line-height: 1;
+    letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .transport-stat span {
+    display: block;
+    margin-top: 6px;
+    color: var(--dash-muted);
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+
+  .transport-stat.is-good strong { color: var(--dash-green); }
+  .transport-stat.is-alert strong { color: var(--dash-red); }
+
+  /* ============ NOTICES / EXAMS ============ */
+  .notice-list,
+  .exam-list {
+    display: grid;
+  }
+
+  .notice-item,
+  .exam-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    padding: 13px 0;
+    border-top: 1px solid #eff1f5;
+  }
+
+  .notice-item:first-child,
+  .exam-item:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .notice-indicator {
+    width: 9px;
+    height: 9px;
+    margin-top: 5px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px rgba(0,0,0,.025);
+  }
+
+  .notice-indicator.high { background: var(--dash-red); }
+  .notice-indicator.normal { background: var(--dash-yellow); }
+  .notice-indicator.low { background: var(--dash-green); }
+
+  .notice-body strong,
+  .exam-body strong {
+    display: block;
+    color: var(--dash-text);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .notice-body span,
+  .exam-body span {
+    display: block;
+    margin-top: 3px;
+    color: var(--dash-muted);
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  .exam-date-box {
+    width: 44px;
+    padding: 7px 5px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: var(--dash-blue-soft);
+    color: var(--dash-blue);
+    text-align: center;
+  }
+
+  .exam-date-box strong {
+    display: block;
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .exam-date-box span {
+    display: block;
+    margin-top: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .empty-state {
+    padding: 26px 12px;
+    text-align: center;
+    color: var(--dash-muted);
+  }
+
+  .empty-state i {
+    display: block;
+    margin-bottom: 8px;
+    color: #c2c8d2;
+    font-size: 24px;
+  }
+
+  .empty-state span {
+    font-size: 12px;
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1280px) {
+    .kpi-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 1050px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .right-column {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 20px;
+    }
+
+    .right-column .panel {
+      margin-bottom: 0;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .dashboard-shell {
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .hero-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-date {
+      min-width: 0;
+      width: fit-content;
+    }
+
+    .fee-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .fee-ring {
+      margin-inline: auto;
+    }
+
+    .right-column {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .dash-hero {
+      padding: 23px 20px;
+      border-radius: 24px;
+    }
+
+    .hero-title {
+      font-size: 27px;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+    }
+
+    .kpi-card {
+      min-height: 116px;
+      padding: 15px;
+    }
+
+    .kpi-card h3 {
+      font-size: 24px;
+    }
+
+    .panel {
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .panel-header {
+      align-items: center;
+    }
+
+    .panel-title p {
+      display: none;
+    }
+
+    .fee-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .class-row {
+      grid-template-columns: 72px 1fr 62px;
+      gap: 9px;
+    }
+
+    .class-count {
+      font-size: 10px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .dashboard-shell {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .quick-actions {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+
+    .transport-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kpi-card, .panel, .fee-stat, .transport-stat, .quick-action, .quick-action i, .class-bar > span, .fee-ring {
+      transition: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+
+  <!-- Welcome / Spatial Hero -->
+  <section class="dash-hero rise-in">
+    <div class="hero-layout">
+      <div>
+        <h1 class="hero-title"><span class="school-name">{{ school.school_name|default:"there" }}</span>, Dashboard</h1>
+        <p class="hero-subtitle">
+          Monitor students, fees, transport, notices and upcoming examinations from one focused workspace.
+        </p>
+      </div>
+
+      <div class="hero-date">
+        <span>Today</span>
+        <strong>{{ today|date:"l" }}</strong>
+        <small>{{ today|date:"d F Y" }}</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Layer -->
+  <section class="kpi-grid">
+    <div class="spatial-card kpi-card tone-blue tilt rise-in" tabindex="0" style="animation-delay:.05s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-mortarboard-fill"></i></div>
+        <div class="kpi-mini">Active</div>
+      </div>
+      <h3 data-count="{{ s_students }}">0</h3>
+      <p>Students</p>
+    </div>
+
+    <div class="spatial-card kpi-card tone-purple tilt rise-in" tabindex="0" style="animation-delay:.10s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-person-workspace"></i></div>
+        <div class="kpi-mini">Faculty</div>
+      </div>
+      <h3 data-count="{{ s_teachers }}">0</h3>
+      <p>Teachers</p>
+    </div>
+
+    <div class="spatial-card kpi-card tone-teal tilt rise-in" tabindex="0" style="animation-delay:.15s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-person-badge-fill"></i></div>
+        <div class="kpi-mini">Team</div>
+      </div>
+      <h3 data-count="{{ s_staff }}">0</h3>
+      <p>Other Staff</p>
+    </div>
+
+    <div class="spatial-card kpi-card tone-orange tilt rise-in" tabindex="0" style="animation-delay:.20s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-building-fill"></i></div>
+        <div class="kpi-mini">Academic</div>
+      </div>
+      <h3 data-count="{{ s_classes }}">0</h3>
+      <p>Classes / Sections</p>
+    </div>
+
+    <div class="spatial-card kpi-card tone-green tilt rise-in" tabindex="0" style="animation-delay:.25s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-bus-front-fill"></i></div>
+        <div class="kpi-mini">Fleet</div>
+      </div>
+      <h3 data-count="{{ s_vehicles }}">0</h3>
+      <p>Vehicles</p>
+    </div>
+
+    <div class="spatial-card kpi-card tone-pink tilt rise-in" tabindex="0" style="animation-delay:.30s">
+      <div class="kpi-top">
+        <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="kpi-mini">Transport</div>
+      </div>
+      <h3 data-count="{{ s_riders }}">0</h3>
+      <p>Students Riding</p>
+    </div>
+  </section>
+
+  <section class="dashboard-grid">
+    <!-- LEFT -->
+    <div class="left-column">
+
+      <!-- Fees (Only visible if accounts permitted) -->
+      {% if perms_accounts.can_view or user.is_superuser %}
+      <div class="spatial-card panel rise-in" style="animation-delay:.1s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-wallet2"></i></div>
+            <div>
+              <h2>Fee Collection</h2>
+              <p>{{ current_month_name }} {{ current_year }} collection performance</p>
+            </div>
+          </div>
+          <a href="{% url 'fee_records' %}" class="panel-link">
+            View records <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="fee-layout">
+          <div class="fee-ring" data-ring-target="{{ fee_percent }}">
+            <div class="fee-ring-inner">
+              <strong data-count="{{ fee_percent }}" data-suffix="%">0%</strong>
+              <span>Collected</span>
+            </div>
+          </div>
+
+          <div class="fee-stats">
+            <div class="fee-stat collected">
+              <div class="stat-label"><span class="dot"></span> Collected</div>
+              <strong>Rs {{ fee_collected|floatformat:0 }}</strong>
+            </div>
+
+            <div class="fee-stat pending">
+              <div class="stat-label"><span class="dot"></span> Pending</div>
+              <strong>Rs {{ fee_pending|floatformat:0 }}</strong>
+            </div>
+
+            <div class="fee-stat outstanding">
+              <div class="stat-label"><span class="dot"></span> Outstanding</div>
+              <strong>Rs {{ fee_outstanding|floatformat:0 }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Class Strength -->
+      <div class="spatial-card panel rise-in" style="animation-delay:.15s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-bar-chart-fill"></i></div>
+            <div>
+              <h2>Student Strength</h2>
+              <p>Relative enrollment distribution by class</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="class-list">
+          {% for c in class_strength %}
+          <div class="class-row">
+            <div class="class-name" title="{{ c.name }}">{{ c.name }}</div>
+            <div class="class-bar">
+              <span data-bar-target="{{ c.percent }}"></span>
+            </div>
+            <div class="class-count">{{ c.count }} students</div>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <i class="bi bi-bar-chart"></i>
+            <span>No class data available</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Recent Fee Payments (Only visible if accounts permitted) -->
+      {% if perms_accounts.can_view or user.is_superuser %}
+      <div class="spatial-card panel rise-in" style="animation-delay:.2s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+              <h2>Recent Fee Payments</h2>
+              <p>Latest successful student fee transactions</p>
+            </div>
+          </div>
+          <a href="{% url 'fee_records' %}" class="panel-link">
+            All records <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="table-shell">
+          <table class="payments-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Challan</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for f in recent_payments %}
+              <tr>
+                <td>
+                  <div class="student-cell">
+                    <div class="student-avatar">
+                      {% if f.student.photo %}
+                        <img src="{{ f.student.photo.url }}" alt="{{ f.student.name }}">
+                      {% else %}
+                        {{ f.student.name|slice:":1"|upper }}
+                      {% endif %}
+                    </div>
+                    <div class="student-meta">
+                      <strong>{{ f.student.name }}</strong>
+                      <span>{{ f.student.roll_no }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ f.challan_no }}</td>
+                <td><strong>Rs {{ f.paid_amount|floatformat:0 }}</strong></td>
+                <td>{{ f.payment_date|date:"d M Y" }}</td>
+                <td><span class="status-pill">Paid</span></td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <i class="bi bi-receipt"></i>
+                    <span>No payments recorded yet</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- RIGHT -->
+    <aside class="right-column">
+
+      <!-- Quick Actions (Protected) -->
+      <div class="spatial-card panel rise-in" style="animation-delay:.12s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div>
+              <h2>Quick Actions</h2>
+              <p>Frequently used operations</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          {% if perms_students.can_view or user.is_superuser %}
+          <a href="{% url 'student_list' %}" class="quick-action">
+            <i class="bi bi-mortarboard"></i>
+            <span>Students</span>
+          </a>
+          {% endif %}
+
+          {% if perms_accounts.can_add or perms_accounts.can_view or user.is_superuser %}
+          <a href="{% url 'add_fees' %}" class="quick-action">
+            <i class="bi bi-credit-card"></i>
+            <span>Add Fee</span>
+          </a>
+          {% endif %}
+
+          {% if perms_transport.can_view or user.is_superuser %}
+          <a href="{% url 'transport_page' %}?tab=assign" class="quick-action">
+            <i class="bi bi-bus-front"></i>
+            <span>Assign Bus</span>
+          </a>
+          {% endif %}
+
+          {% if perms_exam.can_view or user.is_superuser %}
+          <a href="{% url 'exam_list' %}" class="quick-action">
+            <i class="bi bi-journal-text"></i>
+            <span>Exams</span>
+          </a>
+          {% endif %}
+
+          {% if perms_notice.can_view or user.is_superuser %}
+          <a href="{% url 'notice_board' %}" class="quick-action">
+            <i class="bi bi-megaphone"></i>
+            <span>Notices</span>
+          </a>
+          {% endif %}
+
+          {% if perms_accounts.can_view or user.is_superuser %}
+          <a href="{% url 'payroll_dashboard' %}" class="quick-action">
+            <i class="bi bi-briefcase"></i>
+            <span>Payroll</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Transport Snapshot (Protected) -->
+      {% if perms_transport.can_view or user.is_superuser %}
+      <div class="spatial-card panel rise-in" style="animation-delay:.17s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-geo-alt-fill"></i></div>
+            <div>
+              <h2>Transport Snapshot</h2>
+              <p>Current fleet and rider capacity</p>
+            </div>
+          </div>
+          <a href="{% url 'transport_page' %}" class="panel-link">
+            Manage <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="transport-grid">
+          <div class="transport-stat is-good">
+            <div class="icon-line"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+            <strong data-count="{{ free_seats }}">0</strong>
+            <span>Free Seats</span>
+          </div>
+
+          <div class="transport-stat is-alert">
+            <div class="icon-line"><i class="bi bi-exclamation-circle"></i></div>
+            <strong data-count="{{ full_vehicles }}">0</strong>
+            <span>Full Vehicles</span>
+          </div>
+
+          <div class="transport-stat">
+            <div class="icon-line"><i class="bi bi-signpost-split"></i></div>
+            <strong data-count="{{ s_routes }}">0</strong>
+            <span>Routes</span>
+          </div>
+
+          <div class="transport-stat">
+            <div class="icon-line"><i class="bi bi-people"></i></div>
+            <strong data-count="{{ s_riders }}">0</strong>
+            <span>Riders</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Exams (Protected) -->
+      {% if perms_exam.can_view or user.is_superuser %}
+      <div class="spatial-card panel rise-in" style="animation-delay:.22s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-calendar2-week"></i></div>
+            <div>
+              <h2>Upcoming Exams</h2>
+              <p>Nearest scheduled examinations</p>
+            </div>
+          </div>
+          <a href="{% url 'exam_list' %}" class="panel-link">
+            View all <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="exam-list">
+          {% for exam in upcoming_exams %}
+            <div class="exam-item">
+              <div class="exam-date-box">
+                <strong>{{ exam.exam_date|date:"d" }}</strong>
+                <span>{{ exam.exam_date|date:"M" }}</span>
+              </div>
+              <div class="exam-body">
+                <strong>{{ exam.subject }} · {{ exam.student_class }}</strong>
+                <span>
+                  {{ exam.term }}
+                  · {{ exam.exam_date|date:"l, d F Y" }}
+                  {% if exam.start_time %} · {{ exam.start_time|time:"h:i A" }}{% endif %}
+                </span>
+              </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+              <i class="bi bi-calendar2-check"></i>
+              <span>No upcoming exams</span>
+            </div>
+            {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Notices (Protected) -->
+      {% if perms_notice.can_view or user.is_superuser %}
+      <div class="spatial-card panel rise-in" style="animation-delay:.27s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-icon"><i class="bi bi-bell-fill"></i></div>
+            <div>
+              <h2>Latest Notices</h2>
+              <p>Recent published school announcements</p>
+            </div>
+          </div>
+          <a href="{% url 'notice_board' %}" class="panel-link">
+            All <i class="bi bi-arrow-up-right"></i>
+          </a>
+        </div>
+
+        <div class="notice-list">
+          {% for n in recent_notices %}
+          <div class="notice-item">
+            <div class="notice-indicator {% if n.priority == 'High' %}high{% elif n.priority == 'Normal' %}normal{% else %}low{% endif %}"></div>
+            <div class="notice-body">
+              <strong>{{ n.title }}</strong>
+              <span>
+                {{ n.category }}
+                {% if n.pinned %} · Pinned{% endif %}
+                · {{ n.publish_date|date:"d M Y" }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="empty-state">
+            <i class="bi bi-bell-slash"></i>
+            <span>No published notices</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </aside>
+  </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function animateCount(el) {
+    var target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    var suffix = el.getAttribute('data-suffix') || '';
+    if (reduceMotion || target === 0) {
+      el.textContent = target + suffix;
+      return;
+    }
+    var start = null;
+    var duration = 900;
+    function step(ts) {
+      if (!start) start = ts;
+      var progress = Math.min((ts - start) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(eased * target) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = target + suffix;
+    }
+    requestAnimationFrame(step);
+  }
+  document.querySelectorAll('[data-count]').forEach(function (el) {
+    animateCount(el);
+  });
+
+  var ring = document.querySelector('.fee-ring');
+  if (ring) {
+    var target = parseInt(ring.getAttribute('data-ring-target'), 10) || 0;
+    requestAnimationFrame(function () {
+      ring.style.setProperty('--p', target);
+    });
+  }
+
+  document.querySelectorAll('[data-bar-target]').forEach(function (bar) {
+    var target = bar.getAttribute('data-bar-target');
+    requestAnimationFrame(function () {
+      bar.style.width = target + '%';
+    });
+  });
+
+  if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('.tilt').forEach(function (card) {
+      var maxTilt = 6;
+      card.addEventListener('mousemove', function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width - 0.5;
+        var y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform =
+          'translateY(-5px) rotateX(' + (-y * maxTilt).toFixed(2) + 'deg) rotateY(' + (x * maxTilt).toFixed(2) + 'deg)';
+      });
+      card.addEventListener('mouseleave', function () {
+        card.style.transform = '';
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

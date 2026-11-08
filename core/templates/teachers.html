@@ -1,0 +1,1166 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Teachers{% endblock %}
+{% block page_title %}Teachers{% endblock %}
+{% block staff_open %}open{% endblock %}
+{% block nav_teachers %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+  :root { --green: #3E9E6B; --red: #E15C5C; --blue: #3E6FB0; --blue-soft: #7FB3E8; --orange: #F08A5D; }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: #E8F7EF; color: var(--green); }
+  .alert.error { background: #FDECEC; color: var(--red); }
+
+  .toolbar {
+    background: var(--card); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center;
+    gap: 12px; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(30,40,80,.04);
+  }
+  .toolbar h2 { font-size: 16px; font-weight: 600; margin-right: auto; }
+  .toolbar select, .toolbar input {
+    padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none; font-family: inherit;
+  }
+  .toolbar input { min-width: 220px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); background: #fff; }
+
+  .badge-active { background: #E8F7EF; color: var(--green); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+  .badge-inactive { background: #FDECEC; color: var(--red); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; cursor: pointer; display: inline-block; border: none; }
+
+  .btn-primary { padding: 10px 18px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-secondary { padding: 10px 16px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-secondary:hover { background: #F5F6FA; }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 950px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:hover { background: #FAFBFD; }
+
+  .teacher-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .teacher-name .av {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--blue-soft); color: #1E2740;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+  }
+  .teacher-name .av img { width: 100%; height: 100%; object-fit: cover; }
+  .badge { background: #E8F1FC; color: var(--blue); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+
+  .row-actions { display: flex; gap: 6px; }
+  .icon-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-action svg { width: 14px; height: 14px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-action.preview svg { stroke: var(--green); }
+  .icon-action.preview:hover { background: #E8F7EF; }
+  .icon-action.edit svg { stroke: var(--blue); }
+  .icon-action.edit:hover { background: #E8F1FC; }
+  .icon-action.delete svg { stroke: var(--red); }
+  .icon-action.delete:hover { background: #FDECEC; }
+
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,24,40,.5); align-items: center; justify-content: center; z-index: 500; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: #fff; border-radius: 18px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(20,24,40,.25); }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .modal-head .ic { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #E8F1FC; }
+  .modal-head .ic svg { width: 20px; height: 20px; fill: none; stroke: var(--blue); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-head-txt { flex: 1; margin-left: 12px; }
+  .modal-head-txt h2 { font-size: 16.5px; font-weight: 600; }
+  .modal-head-txt p { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .modal-close { width: 32px; height: 32px; border-radius: 9px; border: none; background: #F1F2F7; color: var(--muted); font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+  form.modal-form { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 12px; }
+  .form-section-title { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--primary); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field label .opt { color: var(--muted); font-weight: 400; }
+  .field input, .field select, .field textarea {
+    padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC;
+    font-size: 13px; outline: none; width: 100%; box-sizing: border-box; transition: border-color .15s, background .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); background: #fff; }
+
+  .relation-group { display: flex; gap: 6px; }
+  .relation-group select { width: 95px; flex-shrink: 0; }
+  .relation-group input { flex: 1; }
+
+  .password-wrap { position: relative; width: 100%; display: flex; align-items: center; }
+  .password-wrap input { padding-right: 40px; }
+  .toggle-pass-btn {
+    position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: var(--muted);
+    padding: 4px; display: flex; align-items: center; justify-content: center;
+  }
+  .toggle-pass-btn:hover { color: var(--primary); }
+  .toggle-pass-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .field input.error, .field select.error, .field textarea.error {
+    border-color: var(--red) !important; background: #FDECEC; animation: shake 0.4s ease;
+  }
+  .error-message { display: none; color: var(--red); font-size: 11px; font-weight: 500; align-items: center; gap: 4px; }
+  .error-message.show { display: flex; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .preview-item { background: #F8F9FC; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line); }
+  .preview-item.full { grid-column: 1 / -1; }
+  .preview-item .p-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .preview-item .p-val { font-size: 13.5px; font-weight: 600; color: var(--text); }
+  .preview-img-box { display: flex; gap: 14px; margin-top: 10px; }
+  .preview-img-card { flex: 1; background: #F8F9FC; padding: 12px; border-radius: 10px; text-align: center; border: 1px solid var(--line); }
+  .preview-img-card img { width: 100%; max-height: 140px; object-fit: contain; border-radius: 6px; margin-top: 6px; background: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="toolbar">
+    <h2>Teaching Faculty</h2>
+
+    <select id="teacherStatusFilter" onchange="filterTeachers()">
+      <option value="">All Statuses</option>
+      <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Teachers</option>
+      <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Deactivated</option>
+    </select>
+
+    <input type="text" id="liveTeacherSearch" placeholder="⚡ Live search name, ID (e.g. TEC-1), subject, CNIC..." value="{{ search_query }}">
+
+    {% if perms.can_add or user.is_superuser %}
+    <button type="button" class="btn-primary" id="openAddTeacherModal">
+      <svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      Add Teacher
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Teacher</th>
+          <th>ID</th>
+          <th>CNIC</th>
+          <th>Subject</th>
+          <th>Salary</th>
+          <th>Contact</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="teacherTableBody">
+        {% for teacher in teachers %}
+        <tr class="teacher-row">
+          <td>
+            <div class="teacher-name">
+              <span class="av">
+                {% if teacher.photo %}<img src="{{ teacher.photo.url }}" alt="{{ teacher.name }}">
+                {% else %}{{ teacher.name|slice:":1"|upper }}{% endif %}
+              </span>
+              <div>
+                <div class="t-name">{{ teacher.name }}</div>
+                <small style="color:var(--muted);">
+                  {% if teacher.relation_type and teacher.relation_name %}{{ teacher.relation_type }} {{ teacher.relation_name }} · {% endif %}{{ teacher.qualification|default:"—" }}
+                </small>
+              </div>
+            </div>
+          </td>
+          <td><b class="t-empid" style="color:var(--primary);">{{ teacher.emp_id }}</b></td>
+          <td class="t-cnic">{{ teacher.cnic|default:"—" }}</td>
+          <td><span class="badge t-subject">{{ teacher.subject }}</span></td>
+          <td><b>Rs. {{ teacher.salary }}</b></td>
+          <td>{{ teacher.contact|default:"—" }}</td>
+          <td>
+            <button type="button"
+              class="{% if teacher.is_active %}badge-active{% else %}badge-inactive{% endif %} toggle-teacher-status"
+              data-url="{% url 'teacher_toggle_status' teacher.id %}"
+              data-name="{{ teacher.name }}"
+              data-target-action="{{ teacher.is_active|yesno:'deactivate,activate' }}">
+              {% if teacher.is_active %}Active{% else %}Deactivated{% endif %}
+            </button>
+          </td>
+          <td>
+            <div class="row-actions">
+              <!-- Preview Button -->
+              <button type="button" class="icon-action preview preview-teacher-btn"
+                data-name="{{ teacher.name }}"
+                data-empid="{{ teacher.emp_id }}"
+                data-cnic="{{ teacher.cnic|default:'—' }}"
+                data-subject="{{ teacher.subject }}"
+                data-qualification="{{ teacher.qualification|default:'—' }}"
+                data-salary="{{ teacher.salary }}"
+                data-dob="{{ teacher.dob|date:'d/M/Y'|default:'—'|lower }}"
+                data-joining="{{ teacher.joining_date|date:'d/M/Y'|default:'—'|lower }}"
+                data-gender="{{ teacher.gender|default:'—' }}"
+                data-marital="{{ teacher.marital_status|default:'—' }}"
+                data-relation-type="{{ teacher.relation_type|default:'' }}"
+                data-relation-name="{{ teacher.relation_name|default:'—' }}"
+                data-contact="{{ teacher.contact|default:'—' }}"
+                data-emergency="{{ teacher.emergency_contact|default:'—' }}"
+                data-ref-name="{{ teacher.ref_name|default:'—' }}"
+                data-ref-contact="{{ teacher.ref_contact|default:'—' }}"
+                data-email="{{ teacher.email|default:'—' }}"
+                data-address="{{ teacher.address|default:'—' }}"
+                data-permanent-address="{{ teacher.permanent_address|default:'—' }}"
+                data-password="{{ teacher.password|default:'' }}"
+                data-active="{{ teacher.is_active|yesno:'Active,Deactivated' }}"
+                data-photo="{% if teacher.photo %}{{ teacher.photo.url }}{% endif %}"
+                data-doc="{% if teacher.cnic_photo %}{{ teacher.cnic_photo.url }}{% endif %}"
+                title="Preview Profile">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+
+              <!-- Edit Button -->
+               {% if perms.can_edit or user.is_superuser %}
+              <button type="button" class="icon-action edit edit-teacher-btn"
+                data-url="{% url 'teacher_update' teacher.id %}"
+                data-name="{{ teacher.name }}"
+                data-empid="{{ teacher.emp_id }}"
+                data-cnic="{{ teacher.cnic|default:'' }}"
+                data-subject="{{ teacher.subject }}"
+                data-qualification="{{ teacher.qualification|default:'' }}"
+                data-salary="{{ teacher.salary }}"
+                data-dob="{{ teacher.dob|date:'Y-m-d' }}"
+                data-joining="{{ teacher.joining_date|date:'Y-m-d' }}"
+                data-gender="{{ teacher.gender|default:'' }}"
+                data-marital="{{ teacher.marital_status|default:'' }}"
+                data-relation-type="{{ teacher.relation_type|default:'S/O' }}"
+                data-relation-name="{{ teacher.relation_name|default:'' }}"
+                data-contact="{{ teacher.contact|default:'' }}"
+                data-emergency="{{ teacher.emergency_contact|default:'' }}"
+                data-ref-name="{{ teacher.ref_name|default:'' }}"
+                data-ref-contact="{{ teacher.ref_contact|default:'' }}"
+                data-email="{{ teacher.email|default:'' }}"
+                data-address="{{ teacher.address|default:'' }}"
+                data-permanent-address="{{ teacher.permanent_address|default:'' }}"
+                data-password="{{ teacher.password|default:'' }}"
+                data-active="{{ teacher.is_active|yesno:'1,0' }}"
+                title="Edit">
+                <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              </button>
+              {% endif %}
+
+              <!-- Delete Button -->
+               {% if perms.can_delete or user.is_superuser %}
+              <form method="post" action="{% url 'teacher_delete' teacher.id %}" onsubmit="return confirm('Delete {{ teacher.name }}\'s record?');">
+                {% csrf_token %}
+                <button type="submit" class="icon-action delete" title="Delete">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted);">No teachers found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ================= PREVIEW TEACHER MODAL ================= -->
+<div class="modal-overlay" id="previewTeacherOverlay">
+  <div class="modal" style="max-width:740px;">
+    <div class="modal-head">
+      <div class="teacher-name">
+        <div class="av" id="tp-avatar-box" style="width:44px;height:44px;font-size:16px;">
+          <span id="tp-avatar-text"></span>
+          <img id="tp-avatar-img" src="" style="display:none;">
+        </div>
+        <div class="modal-head-txt" style="margin-left:8px;">
+          <h2 id="tp-name" style="font-size:18px;"></h2>
+          <p id="tp-sub"></p>
+        </div>
+      </div>
+      <button class="modal-close" type="button" data-close="previewTeacherOverlay">✕</button>
+    </div>
+
+    <div class="preview-grid">
+      <div class="preview-item"><div class="p-lbl">Employee ID</div><div class="p-val" id="tp-empid"></div></div>
+      <div class="preview-item"><div class="p-lbl">Portal Password</div><div class="p-val" id="tp-password" style="font-family:monospace;color:var(--orange);"></div></div>
+      <div class="preview-item"><div class="p-lbl">CNIC Number</div><div class="p-val" id="tp-cnic"></div></div>
+      <div class="preview-item"><div class="p-lbl">Guardian / Relation</div><div class="p-val" id="tp-relation"></div></div>
+      <div class="preview-item"><div class="p-lbl">Subject / Department</div><div class="p-val" id="tp-subject"></div></div>
+      <div class="preview-item"><div class="p-lbl">Qualification</div><div class="p-val" id="tp-qualification"></div></div>
+      <div class="preview-item"><div class="p-lbl">Monthly Fixed Salary</div><div class="p-val" id="tp-salary" style="color:var(--green);"></div></div>
+      <div class="preview-item"><div class="p-lbl">Date of Birth</div><div class="p-val" id="tp-dob"></div></div>
+      <div class="preview-item"><div class="p-lbl">Joining Date</div><div class="p-val" id="tp-joining"></div></div>
+      <div class="preview-item"><div class="p-lbl">Gender & Marital Status</div><div class="p-val" id="tp-gender-marital"></div></div>
+      <div class="preview-item"><div class="p-lbl">Primary Contact</div><div class="p-val" id="tp-contact"></div></div>
+      <div class="preview-item"><div class="p-lbl">Emergency Contact</div><div class="p-val" id="tp-emergency"></div></div>
+
+      <div class="preview-item full" style="background:#F4F8FD; border-color:#D0E2FB;">
+        <div class="p-lbl" style="color:var(--blue);">Reference Details</div>
+        <div class="p-val" id="tp-ref-info" style="font-size:13px; font-weight:600;"></div>
+      </div>
+
+      <div class="preview-item full"><div class="p-lbl">Email Address</div><div class="p-val" id="tp-email"></div></div>
+      <div class="preview-item full"><div class="p-lbl">Residential Address</div><div class="p-val" id="tp-address"></div></div>
+      <div class="preview-item full"><div class="p-lbl">Permanent Address</div><div class="p-val" id="tp-permanent-address"></div></div>
+    </div>
+
+    <div class="form-section-title" style="margin-top:16px;">Attached Documents</div>
+    <div class="preview-img-box">
+      <div class="preview-img-card">
+        <div class="p-lbl">Teacher Photo</div>
+        <img id="tp-photo-view" src="" style="display:none;">
+        <div id="tp-no-photo" style="font-size:12px;color:var(--muted);padding:20px;">No photo uploaded</div>
+      </div>
+      <div class="preview-img-card" id="tp-doc-container">
+        <div class="p-lbl">Attached Document / PDF</div>
+        <div id="tp-doc-actions" style="display:none; padding: 16px 0;">
+          <a id="tp-doc-link" href="#" target="_blank" class="btn-primary" style="text-decoration:none; display:inline-flex;">
+            📄 View / Download Document
+          </a>
+        </div>
+        <div id="tp-no-doc" style="font-size:12px;color:var(--muted);padding:20px;">No document uploaded</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button type="button" class="btn-secondary" data-close="previewTeacherOverlay">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STATUS TOGGLE CONFIRMATION MODAL ================= -->
+<div class="modal-overlay" id="statusConfirmOverlay">
+  <div class="modal" style="max-width:440px;text-align:center;padding:26px 20px;">
+    <h3 style="font-size:17px;font-weight:600;margin-bottom:6px;">Confirm Status Change</h3>
+    <p id="statusConfirmMsg" style="font-size:13px;color:var(--muted);margin-bottom:18px;"></p>
+    <div style="display:flex;justify-content:center;gap:10px;">
+      <button type="button" class="btn-secondary" data-close="statusConfirmOverlay">Cancel</button>
+      <a id="statusConfirmBtn" href="#" class="btn-primary" style="text-decoration:none;">Confirm & Proceed</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADD TEACHER MODAL ================= -->
+<div class="modal-overlay" id="addTeacherOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5"/><path d="M16 4a3.5 3.5 0 010 7"/><path d="M18 14.5c2.5.6 4 2.4 4 5.5"/></svg></span>
+      <div class="modal-head-txt">
+        <h2>Register New Teacher</h2>
+        <p>Assign employee credentials and login password</p>
+      </div>
+      <button class="modal-close" type="button" data-close="addTeacherOverlay">✕</button>
+    </div>
+
+    <form class="modal-form" id="addTeacherForm" method="post" action="{% url 'teacher_create' %}" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label>Teacher ID (Login Username)</label>
+        <input type="text" name="emp_id" id="addTeacherEmpId" value="{{ next_teacher_id }}" required readonly style="font-weight:700;color:var(--primary);background:#ECEEF3;">
+        <span class="error-message">Teacher ID is required</span>
+      </div>
+
+      <div class="field">
+        <label>Portal Login Password <span style="color:var(--orange);">*</span></label>
+        <div class="password-wrap">
+          <input type="password" name="password" id="add-teacher-password" placeholder="Create password" required>
+          <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility('add-teacher-password', this)">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="error-message">Password is required</span>
+      </div>
+
+      <div class="field">
+        <label>Full Name <span style="color:var(--orange);">*</span></label>
+        <input type="text" name="name" placeholder="Teacher full name" required>
+        <span class="error-message">Teacher name is required</span>
+      </div>
+
+      <div class="field">
+        <label>Relation & Name <span class="opt">(optional)</span></label>
+        <div class="relation-group">
+          <select name="relation_type">
+            <option value="S/O">S/O</option>
+            <option value="D/O">D/O</option>
+            <option value="W/O">W/O</option>
+          </select>
+          <input type="text" name="relation_name" placeholder="Father or Husband name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>CNIC Number <span style="color:var(--orange);">*</span></label>
+        <input
+          type="text"
+          name="cnic"
+          placeholder="e.g. 34602-3304943-3"
+          inputmode="numeric"
+          maxlength="15"
+          pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
+          required
+        >
+        <span class="error-message"
+              data-required="CNIC number is required"
+              data-pattern="CNIC format must be like 34602-3304943-3 (13 digits)">
+          CNIC number is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Subject / Department <span style="color:var(--orange);">*</span></label>
+        <select name="subject" required>
+          <option value="">Select Subject</option>
+          {% for subj in available_subjects %}
+            <option value="{{ subj }}">{{ subj }}</option>
+          {% empty %}
+            <option value="" disabled>No subjects defined</option>
+          {% endfor %}
+        </select>
+        <span class="error-message">Please select a subject</span>
+      </div>
+
+      <div class="field">
+        <label>Qualification <span style="color:var(--orange);">*</span></label>
+        <input type="text" name="qualification" placeholder="e.g. M.Sc / BS Mathematics" required>
+        <span class="error-message">Qualification is required</span>
+      </div>
+
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+      </div>
+
+      <div class="field">
+        <label>Marital Status</label>
+        <select name="marital_status">
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select name="is_active"><option value="1" selected>Active</option><option value="0">Deactivated</option></select>
+      </div>
+
+      <div class="field">
+        <label>Monthly Fixed Salary (Rs.) <span style="color:var(--orange);">*</span></label>
+        <input type="number" step="0.01" name="salary" required placeholder="30000.00">
+        <span class="error-message">Salary is required</span>
+      </div>
+
+      <div class="field">
+        <label>Primary Contact <span style="color:var(--orange);">*</span></label>
+        <input
+          type="tel"
+          name="contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+          required
+        >
+        <span class="error-message"
+              data-required="Primary contact is required"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Primary contact is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Emergency Contact</label>
+        <input
+          type="tel"
+          name="emergency_contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="teacher@school.com">
+        <span class="error-message" data-type="Please enter a valid email">Please enter a valid email</span>
+      </div>
+
+      <div class="form-section-title">Reference Details</div>
+      <div class="field">
+        <label>Reference Person Name</label>
+        <input type="text" name="ref_name" placeholder="Name of referee" >
+      </div>
+      <div class="field">
+        <label>Reference Contact Number</label>
+        <input
+          type="tel"
+          name="ref_contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="form-section-title">Address Information</div>
+      <div class="field full"><label>Residential Address</label><textarea name="address" id="addTeacherResAddress" rows="2" placeholder="Street, area, city..." required></textarea><span class="error-message">Address is required</span></div>
+      <div class="field full" style="margin:-4px 0 2px 0;">
+        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;color:var(--primary);font-weight:600;">
+          <input type="checkbox" id="addTeacherSameAddressCheckbox" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer;">
+          Permanent Address is same as Residential Address
+        </label>
+      </div>
+      <div class="field full"><label>Permanent Address</label><textarea name="permanent_address" id="addTeacherPermAddress" rows="2" placeholder="Permanent address..."></textarea></div>
+
+      <div class="form-section-title">Documents & Uploads</div>
+      <div class="field"><label>Teacher Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>Add Documents <span class="opt">(PDF / Image)</span></label><input type="file" name="cnic_photo" accept="application/pdf,image/*"></div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+        <button type="button" class="btn-secondary" data-close="addTeacherOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Teacher</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= EDIT TEACHER MODAL ================= -->
+<div class="modal-overlay" id="editTeacherOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span>
+      <div class="modal-head-txt"><h2>Edit Teacher Profile</h2><p>Update teacher details and password</p></div>
+      <button class="modal-close" type="button" data-close="editTeacherOverlay">✕</button>
+    </div>
+
+    <form class="modal-form" method="post" id="editTeacherForm" action="" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" name="name" id="edit-t-name" required>
+        <span class="error-message">Teacher name is required</span>
+      </div>
+
+      <div class="field">
+        <label>Employee ID (Username)</label>
+        <input type="text" name="emp_id" id="edit-t-empid" required readonly style="background:#ECEEF3;font-weight:700;">
+        <span class="error-message">Employee ID is required</span>
+      </div>
+
+      <div class="field">
+        <label>Relation & Name</label>
+        <div class="relation-group">
+          <select name="relation_type" id="edit-t-relation-type">
+            <option value="S/O">S/O</option>
+            <option value="D/O">D/O</option>
+            <option value="W/O">W/O</option>
+          </select>
+          <input type="text" name="relation_name" id="edit-t-relation-name" placeholder="Father or Husband name">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>CNIC Number</label>
+        <input
+          type="text"
+          name="cnic"
+          id="edit-t-cnic"
+          inputmode="numeric"
+          maxlength="15"
+          pattern="^[0-9]{5}-[0-9]{7}-[0-9]{1}$"
+          required
+        >
+        <span class="error-message"
+              data-required="CNIC number is required"
+              data-pattern="CNIC format must be like 34602-3304943-3 (13 digits)">
+          CNIC number is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Date of Birth</label>
+        <input type="date" name="dob" id="edit-t-dob">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Subject / Department</label>
+        <select name="subject" id="edit-t-subject" required>
+          <option value="">Select Subject</option>
+          {% for subj in available_subjects %}
+            <option value="{{ subj }}">{{ subj }}</option>
+          {% endfor %}
+        </select>
+        <span class="error-message">Please select a subject</span>
+      </div>
+
+      <div class="field">
+        <label>Change Password <span class="opt">(leave blank to keep current)</span></label>
+        <div class="password-wrap">
+          <input type="password" name="password" id="edit-t-password" placeholder="Enter new password if updating">
+          <button type="button" class="toggle-pass-btn" onclick="togglePassVisibility('edit-t-password', this)">
+            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Qualification</label>
+        <input type="text" name="qualification" id="edit-t-qualification" required>
+        <span class="error-message">Qualification is required</span>
+      </div>
+
+      <div class="field">
+        <label>Joining Date</label>
+        <input type="date" name="joining_date" id="edit-t-joining">
+        <span class="error-message" data-pattern="Invalid date">Invalid date</span>
+      </div>
+
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender" id="edit-t-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+      </div>
+
+      <div class="field">
+        <label>Marital Status</label>
+        <select name="marital_status" id="edit-t-marital">
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+      </div>
+
+      <div class="field"><label>Status</label><select name="is_active" id="edit-t-active"><option value="1">Active</option><option value="0">Deactivated</option></select></div>
+
+      <div class="field">
+        <label>Monthly Fixed Salary (Rs.)</label>
+        <input type="number" step="0.01" name="salary" id="edit-t-salary" required>
+        <span class="error-message">Salary is required</span>
+      </div>
+
+      <div class="field">
+        <label>Primary Contact</label>
+        <input
+          type="tel"
+          name="contact"
+          id="edit-t-contact"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+          required
+        >
+        <span class="error-message"
+              data-required="Primary contact is required"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Primary contact is required
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Emergency Contact</label>
+        <input
+          type="tel"
+          name="emergency_contact"
+          id="edit-t-emergency"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" name="email" id="edit-t-email">
+        <span class="error-message" data-type="Please enter a valid email">Please enter a valid email</span>
+      </div>
+
+      <div class="form-section-title">Reference Details</div>
+      <div class="field">
+        <label>Reference Person Name</label>
+        <input type="text" name="ref_name" id="edit-t-ref-name">
+      </div>
+      <div class="field">
+        <label>Reference Contact Number</label>
+        <input
+          type="tel"
+          name="ref_contact"
+          id="edit-t-ref-contact"
+          placeholder="0300 0000000"
+          inputmode="numeric"
+          maxlength="12"
+          pattern="^[0-9]{4}\s[0-9]{7}$"
+        >
+        <span class="error-message"
+              data-pattern="Contact format must be like 0300 0000000 (11 digits)">
+          Invalid contact format
+        </span>
+      </div>
+
+      <div class="form-section-title">Address Information</div>
+      <div class="field full"><label>Residential Address</label><textarea name="address" id="edit-t-address" rows="2"></textarea></div>
+      <div class="field full" style="margin:-4px 0 2px 0;">
+        <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;color:var(--primary);font-weight:600;">
+          <input type="checkbox" id="editTeacherSameAddressCheckbox" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer;">
+          Permanent Address is same as Residential Address
+        </label>
+      </div>
+      <div class="field full"><label>Permanent Address</label><textarea name="permanent_address" id="edit-t-permanent-address" rows="2"></textarea></div>
+
+      <div class="form-section-title">Update Documents</div>
+      <div class="field"><label>Change Photo</label><input type="file" name="photo" accept="image/*"></div>
+      <div class="field"><label>Add Documents <span class="opt">(PDF / Image)</span></label><input type="file" name="cnic_photo" accept="application/pdf,image/*"></div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;margin-top:10px;">
+        <button type="button" class="btn-secondary" data-close="editTeacherOverlay">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  function togglePassVisibility(inputId, btn) {
+    const field = document.getElementById(inputId);
+    const svg = btn.querySelector('svg');
+    if (field.type === 'password') {
+      field.type = 'text';
+      svg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      field.type = 'password';
+      svg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  function filterTeachers() {
+    const statusEl = document.getElementById('teacherStatusFilter');
+    const searchEl = document.getElementById('liveTeacherSearch');
+    const status = statusEl ? statusEl.value : '';
+    const search = searchEl ? searchEl.value : '';
+    window.location.href = `?status=${status}&q=${search}`;
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    const addTeacherForm = document.getElementById('addTeacherForm');
+    const editTeacherForm = document.getElementById('editTeacherForm');
+
+    function initPrettyDates(root = document) {
+      root.querySelectorAll('input[type="date"]').forEach(el => {
+        if (el._flatpickr) return;
+
+        flatpickr(el, {
+          altInput: true,
+          altFormat: "d/M/Y",   // show: 25/Sep/2026
+          dateFormat: "Y-m-d",  // submit: 2026-09-25
+          allowInput: true,
+          onReady: function(_, __, inst) {
+            if (inst.altInput) inst.altInput.value = inst.altInput.value.toLowerCase(); // 25/sep/2026
+          },
+          onValueUpdate: function(_, __, inst) {
+            if (inst.altInput) inst.altInput.value = inst.altInput.value.toLowerCase();
+          }
+        });
+      });
+    }
+
+    initPrettyDates();
+
+    function showFieldError(field, message) {
+      field.classList.remove('error');
+      void field.offsetWidth;
+      field.classList.add('error');
+
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+
+      if (errorMsg) {
+        if (message) errorMsg.textContent = message;
+        errorMsg.classList.add('show');
+      }
+    }
+
+    function clearFieldError(field) {
+      field.classList.remove('error');
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+      if (errorMsg) errorMsg.classList.remove('show');
+    }
+
+    function getFieldMessage(field) {
+      const box = field.closest('.field');
+      const errorMsg = box ? box.querySelector('.error-message') : null;
+
+      const requiredMsg = errorMsg?.dataset?.required || errorMsg?.textContent || 'This field is required';
+      const patternMsg  = errorMsg?.dataset?.pattern  || 'Invalid format';
+      const typeMsg     = errorMsg?.dataset?.type     || 'Invalid value';
+
+      if (field.validity.valueMissing) return requiredMsg;
+      if (field.validity.patternMismatch) return patternMsg;
+      if (field.validity.typeMismatch) return typeMsg;
+      return requiredMsg;
+    }
+
+    function liveValidateField(field) {
+      if (!field.value) {
+        clearFieldError(field);
+        return true;
+      }
+      if (field.checkValidity()) {
+        clearFieldError(field);
+        return true;
+      }
+      showFieldError(field, getFieldMessage(field));
+      return false;
+    }
+
+    function validateForm(form) {
+      let isValid = true;
+      let firstInvalid = null;
+
+      form.querySelectorAll('input,select,textarea').forEach(field => {
+        if (field.disabled) return;
+
+        const needsCheck =
+          field.hasAttribute('required') ||
+          field.getAttribute('pattern') ||
+          field.type === 'email';
+
+        if (!needsCheck) return;
+
+        if (!field.required && !field.value) {
+          clearFieldError(field);
+          return;
+        }
+
+        if (!field.checkValidity()) {
+          showFieldError(field, getFieldMessage(field));
+          isValid = false;
+          if (!firstInvalid) firstInvalid = field;
+        } else {
+          clearFieldError(field);
+        }
+      });
+
+      if (firstInvalid) firstInvalid.focus();
+      return isValid;
+    }
+
+    function clearAllErrors(form) {
+      if (!form) return;
+      form.querySelectorAll('.error').forEach(f => f.classList.remove('error'));
+      form.querySelectorAll('.error-message.show').forEach(m => m.classList.remove('show'));
+    }
+
+    function formatCNIC(val) {
+      const digits = String(val || '').replace(/\D/g, '').slice(0, 13);
+      const p1 = digits.slice(0, 5);
+      const p2 = digits.slice(5, 12);
+      const p3 = digits.slice(12, 13);
+
+      let out = p1;
+      if (p2) out += '-' + p2;
+      if (p3) out += '-' + p3;
+      return out;
+    }
+
+    function formatContact(val) {
+      const digits = String(val || '').replace(/\D/g, '').slice(0, 11);
+      const p1 = digits.slice(0, 4);
+      const p2 = digits.slice(4, 11);
+
+      let out = p1;
+      if (p2) out += ' ' + p2;
+      return out;
+    }
+
+    function bindCnicAndContacts(form) {
+      if (!form) return;
+
+      const cnic = form.querySelector('input[name="cnic"]');
+      if (cnic) {
+        cnic.addEventListener('input', function () {
+          this.value = formatCNIC(this.value);
+          liveValidateField(this);
+        });
+        cnic.addEventListener('blur', function () {
+          if (!this.checkValidity()) showFieldError(this, getFieldMessage(this));
+        });
+      }
+
+      const contacts = form.querySelectorAll('input[name="contact"], input[name="emergency_contact"], input[name="ref_contact"]');
+      contacts.forEach(contact => {
+        contact.addEventListener('input', function () {
+          this.value = formatContact(this.value);
+          liveValidateField(this);
+        });
+        contact.addEventListener('blur', function () {
+          if (!this.checkValidity()) showFieldError(this, getFieldMessage(this));
+        });
+      });
+    }
+
+    [addTeacherForm, editTeacherForm].forEach(f => {
+      if (!f) return;
+
+      bindCnicAndContacts(f);
+
+      f.addEventListener('submit', function (e) {
+        if (!validateForm(f)) e.preventDefault();
+      });
+
+      f.querySelectorAll('input,select,textarea').forEach(field => {
+        const needsCheck =
+          field.hasAttribute('required') ||
+          field.getAttribute('pattern') ||
+          field.type === 'email';
+
+        if (!needsCheck) return;
+
+        field.addEventListener('input', function () { liveValidateField(this); });
+        field.addEventListener('change', function () { liveValidateField(this); });
+      });
+    });
+
+    const liveSearch = document.getElementById('liveTeacherSearch');
+    if (liveSearch) {
+      liveSearch.addEventListener('input', function () {
+        const val = this.value.toLowerCase().trim();
+        document.querySelectorAll('.teacher-row').forEach(row => {
+          const text = row.innerText.toLowerCase();
+          row.style.display = text.includes(val) ? '' : 'none';
+        });
+      });
+    }
+
+    document.querySelectorAll('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const overlay = document.getElementById(btn.dataset.close);
+        if (!overlay) return;
+        overlay.classList.remove('show');
+        const form = overlay.querySelector('form');
+        if (form) clearAllErrors(form);
+      });
+    });
+
+    const openAddBtn = document.getElementById('openAddTeacherModal');
+    if (openAddBtn) {
+      openAddBtn.addEventListener('click', () => {
+        clearAllErrors(addTeacherForm);
+
+        fetch("{% url 'get_next_teacher_id_api' %}")
+          .then(res => res.json())
+          .then(data => {
+            const empInput = document.getElementById('addTeacherEmpId');
+            if (empInput) empInput.value = data.next_emp_id;
+          })
+          .catch(err => console.log('Emp ID fetch error:', err));
+
+        const overlay = document.getElementById('addTeacherOverlay');
+        if (overlay) overlay.classList.add('show');
+
+        initPrettyDates(overlay);
+      });
+    }
+
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
+    const setDateVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el._flatpickr) el._flatpickr.setDate(val || null, true);
+      else el.value = val || '';
+    };
+
+    document.querySelectorAll('.edit-teacher-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        clearAllErrors(editTeacherForm);
+
+        const form = document.getElementById('editTeacherForm');
+        if (form) form.action = btn.dataset.url;
+
+        setVal('edit-t-name', btn.dataset.name || '');
+        setVal('edit-t-empid', btn.dataset.empid || '');
+        setVal('edit-t-cnic', btn.dataset.cnic || '');
+        setVal('edit-t-password', btn.dataset.password || '');
+
+        setDateVal('edit-t-dob', btn.dataset.dob || '');
+        setDateVal('edit-t-joining', btn.dataset.joining || '');
+
+        setVal('edit-t-relation-type', btn.dataset.relationType || 'S/O');
+        setVal('edit-t-relation-name', btn.dataset.relationName !== '—' ? btn.dataset.relationName : '');
+        setVal('edit-t-marital', btn.dataset.marital || 'Single');
+        setVal('edit-t-ref-name', btn.dataset.refName !== '—' ? btn.dataset.refName : '');
+        setVal('edit-t-ref-contact', btn.dataset.refContact !== '—' ? btn.dataset.refContact : '');
+
+        const editSubjectSelect = document.getElementById('edit-t-subject');
+        const subjectVal = btn.dataset.subject || '';
+        if (editSubjectSelect) {
+          if (subjectVal && ![...editSubjectSelect.options].some(o => o.value === subjectVal)) {
+            const opt = document.createElement('option');
+            opt.value = subjectVal; opt.textContent = subjectVal;
+            editSubjectSelect.appendChild(opt);
+          }
+          editSubjectSelect.value = subjectVal;
+        }
+
+        setVal('edit-t-qualification', btn.dataset.qualification || '');
+        setVal('edit-t-salary', btn.dataset.salary || '0.00');
+        setVal('edit-t-gender', btn.dataset.gender || 'Male');
+        setVal('edit-t-contact', btn.dataset.contact || '');
+        setVal('edit-t-emergency', btn.dataset.emergency || '');
+        setVal('edit-t-email', btn.dataset.email || '');
+        setVal('edit-t-address', btn.dataset.address || '');
+        setVal('edit-t-permanent-address', btn.dataset.permanentAddress || '');
+        setVal('edit-t-active', btn.dataset.active || '1');
+
+        const sameCheck = document.getElementById('editTeacherSameAddressCheckbox');
+        if (sameCheck) {
+          sameCheck.checked = (btn.dataset.address && btn.dataset.address === btn.dataset.permanentAddress);
+        }
+
+        const overlay = document.getElementById('editTeacherOverlay');
+        overlay.classList.add('show');
+        initPrettyDates(overlay);
+      });
+    });
+
+    document.querySelectorAll('.preview-teacher-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setTxt('tp-name', btn.dataset.name);
+        setTxt('tp-sub', `${btn.dataset.subject} · ${btn.dataset.empid} (${btn.dataset.active})`);
+        setTxt('tp-empid', btn.dataset.empid);
+        setTxt('tp-password', btn.dataset.password || '—');
+        setTxt('tp-cnic', btn.dataset.cnic);
+        setTxt('tp-relation', (btn.dataset.relationType ? btn.dataset.relationType + ' ' : '') + btn.dataset.relationName);
+        setTxt('tp-dob', btn.dataset.dob);
+        setTxt('tp-gender-marital', `${btn.dataset.gender} · ${btn.dataset.marital}`);
+        setTxt('tp-subject', btn.dataset.subject);
+        setTxt('tp-qualification', btn.dataset.qualification);
+        setTxt('tp-salary', `Rs. ${btn.dataset.salary}`);
+        setTxt('tp-joining', btn.dataset.joining);
+        setTxt('tp-contact', btn.dataset.contact);
+        setTxt('tp-emergency', btn.dataset.emergency);
+        setTxt('tp-ref-info', `${btn.dataset.refName} (${btn.dataset.refContact})`);
+        setTxt('tp-email', btn.dataset.email);
+        setTxt('tp-address', btn.dataset.address);
+        setTxt('tp-permanent-address', btn.dataset.permanentAddress);
+
+        const avImg = document.getElementById('tp-avatar-img');
+        const avTxt = document.getElementById('tp-avatar-text');
+        const photoView = document.getElementById('tp-photo-view');
+        const noPhoto = document.getElementById('tp-no-photo');
+        const docActions = document.getElementById('tp-doc-actions');
+        const docLink = document.getElementById('tp-doc-link');
+        const noDoc = document.getElementById('tp-no-doc');
+
+        if (btn.dataset.photo) {
+          if (avImg) { avImg.src = btn.dataset.photo; avImg.style.display = 'block'; }
+          if (avTxt) avTxt.style.display = 'none';
+          if (photoView) { photoView.src = btn.dataset.photo; photoView.style.display = 'block'; }
+          if (noPhoto) noPhoto.style.display = 'none';
+        } else {
+          if (avImg) avImg.style.display = 'none';
+          if (avTxt) { avTxt.textContent = btn.dataset.name.charAt(0).toUpperCase(); avTxt.style.display = 'block'; }
+          if (photoView) photoView.style.display = 'none';
+          if (noPhoto) noPhoto.style.display = 'block';
+        }
+
+        if (btn.dataset.doc) {
+          docLink.href = btn.dataset.doc;
+          docActions.style.display = 'block';
+          noDoc.style.display = 'none';
+        } else {
+          docActions.style.display = 'none';
+          noDoc.style.display = 'block';
+        }
+
+        document.getElementById('previewTeacherOverlay').classList.add('show');
+      });
+    });
+
+    document.querySelectorAll('.toggle-teacher-status').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const msg = document.getElementById('statusConfirmMsg');
+        const confirmBtn = document.getElementById('statusConfirmBtn');
+        if (msg) msg.innerHTML = `Are you sure you want to <b>${this.dataset.targetAction.toUpperCase()}</b> teacher <b>${this.dataset.name}</b>?`;
+        if (confirmBtn) confirmBtn.href = this.dataset.url;
+        document.getElementById('statusConfirmOverlay').classList.add('show');
+      });
+    });
+
+    const addTRes = document.getElementById('addTeacherResAddress');
+    const addTPerm = document.getElementById('addTeacherPermAddress');
+    const addTCheck = document.getElementById('addTeacherSameAddressCheckbox');
+    if (addTCheck && addTRes && addTPerm) {
+      addTCheck.addEventListener('change', function () {
+        if (this.checked) {
+          addTPerm.value = addTRes.value; addTPerm.readOnly = true; addTPerm.style.background = '#ECEEF3';
+        } else {
+          addTPerm.readOnly = false; addTPerm.style.background = '#F8F9FC';
+        }
+      });
+      addTRes.addEventListener('input', function () {
+        if (addTCheck.checked) addTPerm.value = this.value;
+      });
+    }
+
+    const editTRes = document.getElementById('edit-t-address');
+    const editTPerm = document.getElementById('edit-t-permanent-address');
+    const editTCheck = document.getElementById('editTeacherSameAddressCheckbox');
+    if (editTCheck && editTRes && editTPerm) {
+      editTCheck.addEventListener('change', function () {
+        if (this.checked) {
+          editTPerm.value = editTRes.value; editTPerm.readOnly = true; editTPerm.style.background = '#ECEEF3';
+        } else {
+          editTPerm.readOnly = false; editTPerm.style.background = '#F8F9FC';
+        }
+      });
+      editTRes.addEventListener('input', function () {
+        if (editTCheck.checked) editTPerm.value = this.value;
+      });
+    }
+  });
+</script>
+{% endblock %}

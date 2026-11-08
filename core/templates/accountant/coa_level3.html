@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Accountant — COA Level 3{% endblock %}
+
+{% block coa_open %}open{% endblock %}
+{% block nav_coa_l3 %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  .content{padding:6px 26px 26px;display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 2px 8px rgba(30,40,80,.04);}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0 0;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+  .field{display:flex;flex-direction:column;gap:6px;min-width:160px;flex:1;}
+  .field label{font-size:12px;font-weight:600;color:var(--text);}
+  .field input,.field select{padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;font-size:13px;outline:none;}
+  .field input[readonly]{background:#eef0f3;color:var(--muted);cursor:not-allowed;font-weight:700;}
+  .btn{padding:10px 18px;border-radius:9px;border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .btn:hover{background:#E8794C;}
+
+  .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line);background:#fff;}
+  table{width:100%;border-collapse:collapse;min-width:980px;}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);text-align:left;}
+  td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;}
+  tr:hover{background:#FAFBFD;}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;background:#EEF2FF;color:#2563EB;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;}
+  .actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;}
+  .icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
+  .icon-btn.edit{color:#F08A5D;}
+  .icon-btn.del{color:#E15C5C;}
+  .icon-btn:hover{background:#F5F6FA;}
+
+  .lock-btn{width:34px;height:34px;border-radius:10px;border:1px solid #F8D7DA;background:#FDECEC;color:#E15C5C;cursor:not-allowed;display:inline-flex;align-items:center;justify-content:center;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <div class="card">
+    <h3 style="font-size:16px;margin:0 0 6px 0;">
+      <i class="fa-solid fa-diagram-project" style="color:var(--orange);"></i>
+      Chart of Accounts — Level 3
+    </h3>
+    <p class="hint">Select a Level‑2 category and create Level‑3 groups. IDs auto-generate like 010101, 010102…</p>
+
+    <!-- Parent selector (GET) -->
+    <form method="get" class="row" style="margin-top:10px;">
+      <div class="field" style="max-width:420px;">
+        <label>Second Level *</label>
+        <select name="level2" onchange="this.form.submit()" required>
+          <option value="">Select Level‑2...</option>
+          {% for l2 in level2_list %}
+            <option value="{{ l2.id }}" {% if selected_level2 and selected_level2.id == l2.id %}selected{% endif %}>
+              {{ l2.account_id }} - {{ l2.account_name }}  ({{ l2.level1.account_id }} - {{ l2.level1.account_name }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    {% if selected_level2 %}
+    <!-- Create Level-3 (POST) -->
+    <form method="post" class="row" style="margin-top:14px;">
+      {% csrf_token %}
+      <input type="hidden" name="level2_id" value="{{ selected_level2.id }}">
+
+      <div class="field" style="max-width:200px;">
+        <label>Account ID (Auto)</label>
+        <input value="{{ next_id }}" readonly>
+      </div>
+
+      <div class="field" style="flex:2;min-width:280px;">
+        <label>Account Name *</label>
+        <input name="account_name" required placeholder="e.g. STUDENT FEE INCOME GROUP">
+      </div>
+
+      <button class="btn" type="submit"><i class="fa-solid fa-plus"></i> Add</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3 style="font-size:14px;margin:0 0 10px 0;">Third Level Accounts List</h3>
+
+    {% if selected_level2 %}
+      <p class="hint">Showing: <b>{{ selected_level2.account_id }} - {{ selected_level2.account_name }}</b></p>
+    {% else %}
+      <p class="hint">Select a Level‑2 parent above to view/create Level‑3 accounts.</p>
+    {% endif %}
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:70px;">#</th>
+            <th style="width:120px;">Account ID</th>
+            <th>Account Name</th>
+            <th style="width:210px;">First Level</th>
+            <th style="width:210px;">Second Level</th>
+            <th style="width:140px;text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in accounts %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><b>{{ a.account_id }}</b></td>
+            <td>{{ a.account_name }}</td>
+
+            <td><span class="pill">{{ a.level2.level1.account_id }} - {{ a.level2.level1.account_name }}</span></td>
+            <td><span class="pill">{{ a.level2.account_id }} - {{ a.level2.account_name }}</span></td>
+
+            <td style="text-align:right;">
+              <div class="actions">
+                {% if a.is_locked %}
+                  <button type="button" class="lock-btn"
+                          title="This Level‑3 category cannot be edited/deleted because Level‑4 accounts exist under it.">
+                    <i class="fa-solid fa-lock"></i>
+                  </button>
+                {% else %}
+                  <a class="icon-btn edit" href="{% url 'coa_level3_edit' a.pk %}" title="Edit">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+
+                  <form method="post" action="{% url 'coa_level3_delete' a.pk %}"
+                        style="display:inline;" onsubmit="return confirm('Delete {{ a.account_id }} - {{ a.account_name }} ?');">
+                    {% csrf_token %}
+                    <button class="icon-btn del" type="submit" title="Delete">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:22px;">No Level‑3 accounts found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="hint" style="margin-top:10px;">
+      Note: Level‑3 locks only when Level‑4 exists under it. Level‑2 locks when Level‑3 exists under it.
+    </p>
+  </div>
+
+</div>
+{% endblock %}

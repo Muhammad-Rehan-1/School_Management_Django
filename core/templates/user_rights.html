@@ -1,0 +1,836 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — User Rights & Class Permissions{% endblock %}
+{% block page_title %}User Rights Setup{% endblock %}
+{% block nav_rights %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary: #1E2740;
+    --orange: #F08A5D;
+    --orange-hover: #E0794C;
+    --orange-soft: #FDEEE9;
+    --line: #E5E7EB;
+    --muted: #718096;
+    --card-bg: #FFFFFF;
+    --table-header: #1E2740;
+    --pill-bg: #F1F4F9;
+    --blue-bg: #EFF6FF;
+    --blue-txt: #1E40AF;
+  }
+
+  .content {
+    padding: 6px 26px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .rights-container {
+    background: var(--card-bg);
+    border-radius: 18px;
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 10px rgba(30, 40, 80, 0.03);
+  }
+
+  .head-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+  }
+
+  .head-box h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .head-box p {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Target Switch Tabs */
+  .tab-switch-group {
+    display: inline-flex;
+    background: #F1F4F9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+    margin-bottom: 18px;
+  }
+
+  .tab-btn {
+    padding: 9px 20px;
+    border-radius: 9px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  /* Filter Toolbar (Role Preset removed completely) */
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.2fr 1fr;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 18px;
+  }
+
+  .filter-grid.staff-mode {
+    grid-template-columns: 2fr 1.2fr 1fr;
+  }
+
+  .field-unit {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field-unit label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .field-unit select, .field-unit input {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: #F8F9FC;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .field-unit select:focus, .field-unit input:focus {
+    border-color: var(--orange);
+    background: #fff;
+  }
+
+  /* Notice Bar */
+  .info-bar {
+    background: var(--blue-bg);
+    border: 1px solid #BFDBFE;
+    color: var(--blue-txt);
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Permission Table */
+  .table-box {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow-x: auto;
+  }
+
+  table.rights-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+  }
+
+  table.rights-table thead th {
+    background: var(--table-header);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 13px 16px;
+    text-align: center;
+    letter-spacing: 0.4px;
+  }
+
+  table.rights-table thead th:first-child {
+    text-align: left;
+    padding-left: 20px;
+  }
+
+  .category-row td {
+    background: #F3F5FA;
+    color: var(--primary);
+    font-size: 11.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    letter-spacing: 0.6px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.rights-table tbody tr:not(.category-row) td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+  }
+
+  table.rights-table tbody tr:not(.category-row):hover {
+    background: #FAFBFD;
+  }
+
+  .module-title {
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 6px;
+  }
+
+  .col-chk { text-align: center; }
+
+  input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--orange);
+    cursor: pointer;
+  }
+
+  .auto-badge {
+    background: #E8F7EF;
+    color: #2A9364;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+
+  .footer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .btn-save-rights {
+    padding: 11px 26px;
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(240, 138, 93, 0.25);
+    transition: 0.2s;
+  }
+  .btn-save-rights:hover { background: var(--orange-hover); }
+
+  .btn-ghost {
+    padding: 9px 16px;
+    background: #F8F9FC;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .btn-ghost:hover { background: #EDF0F7; color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <div class="rights-container">
+    
+    <div class="head-box">
+      <div>
+        <h2>System Permissions & Role Control</h2>
+        <p>Set module-level permissions exactly as they appear in the navigation sidebar.</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn-ghost" onclick="toggleAllMatrix(true)">✓ Select All</button>
+        <button type="button" class="btn-ghost" onclick="toggleAllMatrix(false)">✕ Clear All</button>
+      </div>
+    </div>
+
+    <!-- Mode Switch: Students vs Faculty/Staff -->
+    <div class="tab-switch-group">
+      <button type="button" class="tab-btn active" id="tabStudentBtn" onclick="switchMode('student')">
+        🎓 Students Portal (Class & Section Policy)
+      </button>
+      <button type="button" class="tab-btn" id="tabStaffBtn" onclick="switchMode('staff')">
+        👥 Faculty & Administrative Staff
+      </button>
+    </div>
+
+    <!-- Mode 1: Student Class-Wise Form (Preset Dropdown Removed) -->
+    <div id="studentFilterPanel" class="filter-grid">
+      <div class="field-unit">
+        <label>Select Target Class</label>
+        <select id="studentClassSelector" onchange="handleClassChange(this.value)">
+          <option value="ALL" selected>🌟 All Classes (Entire Student Body)</option>
+          {% for cls in available_classes %}
+            <option value="{{ cls }}">Class {{ cls }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field-unit">
+        <label>Target Section</label>
+        <select id="studentSectionSelector" onchange="handleSectionChange(this.value)" disabled style="opacity:0.6;">
+          <option value="">All Sections</option>
+        </select>
+      </div>
+
+      <div class="field-unit">
+        <label>Policy Level</label>
+        <input type="text" id="dispStudentPolicy" value="Global Policy" readonly style="font-weight:700; color:var(--primary); background:#ECEEF3;">
+      </div>
+
+      <div class="field-unit">
+        <label>Enrolled Strength</label>
+        <input type="text" id="dispStudentCount" value="{{ total_students_count }} Students" readonly style="background:#ECEEF3;font-weight:600;">
+      </div>
+    </div>
+
+    <!-- Mode 2: Faculty & Staff Form (Role Preset Dropdown Removed) -->
+    <div id="staffFilterPanel" class="filter-grid staff-mode" style="display:none;">
+      <div class="field-unit">
+        <label>Select Role / Individual Employee</label>
+        <select id="staffSelector" onchange="handleStaffChange(this.value)">
+          <optgroup label="Role Group Policies">
+            <option value="ROLE_TEACHER" selected>All Teaching Faculty (Teachers)</option>
+            {% for r in distinct_roles %}
+              <option value="ROLE_{{ r|upper }}">All {{ r }}s (Role)</option>
+            {% endfor %}
+          </optgroup>
+
+          <optgroup label="Teaching Faculty (Individual)">
+            {% for t in teachers %}
+              <option value="T-{{ t.id }}" data-role="Teacher ({{ t.subject }})">{{ t.name }} ({{ t.emp_id }}) — {{ t.subject }}</option>
+            {% endfor %}
+          </optgroup>
+
+          <optgroup label="Support & Administrative Staff (Individual)">
+            {% for s in staff_members %}
+              <option value="S-{{ s.id }}" data-role="{{ s.role }}">{{ s.name }} ({{ s.emp_id }}) — {{ s.role }}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="field-unit">
+        <label>Designation</label>
+        <input type="text" id="dispStaffRole" value="Teaching Faculty" readonly style="font-weight:700; color:var(--primary); background:#ECEEF3;">
+      </div>
+
+      <div class="field-unit">
+        <label>Active State</label>
+        <input type="text" value="Synchronized" readonly style="background:#ECEEF3;">
+      </div>
+    </div>
+
+    <!-- Information banner -->
+    <div class="info-bar" id="contextInfoBar">
+      <span>ℹ️</span>
+      <span id="contextInfoText">
+        Changes made here will apply instantly to <b>all {{ total_students_count }} students</b> across the school.
+      </span>
+    </div>
+
+    <!-- Permission Matrix Table (Exact Match to Sidebar Names) -->
+    <div class="table-box">
+      <table class="rights-table">
+        <thead>
+          <tr>
+            <th style="width: 34%;">Sidebar Navigation Item</th>
+            <th>Page Access (View)</th>
+            <th>Create / Add</th>
+            <th>Edit / Update</th>
+            <th>Delete / Trash</th>
+            <th>Print / Export</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- 1. DASHBOARDS -->
+          <tr class="category-row"><td colspan="6">Dashboards</td></tr>
+          <tr data-module="dashboard">
+            <td class="module-title"><span>📊 Dashboard</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view" checked></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="teacher_dashboard">
+            <td class="module-title"><span>👨‍🏫 Teacher Dashboard</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+          </tr>
+          <tr data-module="student_dashboard">
+            <td class="module-title"><span>🎓 Student Dashboard</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+          </tr>
+
+          <!-- 2. ACADEMIC DEFINITIONS -->
+          <tr class="category-row"><td colspan="6">Academic Definitions</td></tr>
+          <tr data-module="class_def">
+            <td class="module-title"><span>🏫 Class Defination</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk">—</td>
+          </tr>
+          <tr data-module="subject_def">
+            <td class="module-title"><span>📚 Subject Defination</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk">—</td>
+          </tr>
+
+          <!-- 3. STUDENT DIRECTORY -->
+          <tr class="category-row"><td colspan="6">Student Directory</td></tr>
+          <tr data-module="students">
+            <td class="module-title"><span>🎓 Students</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 4. STAFF DIRECTORY -->
+          <tr class="category-row"><td colspan="6">Staff</td></tr>
+          <tr data-module="teachers">
+            <td class="module-title"><span>👨‍🏫 Teachers</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="staff">
+            <td class="module-title"><span>👥 Other Staff</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 5. ACCOUNTS & FINANCIALS (Exact Sidebar Submenus) -->
+          <tr class="category-row"><td colspan="6">Accounts</td></tr>
+          <tr data-module="fee_records">
+            <td class="module-title"><span>↳ Fee Records</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="add_fees">
+            <td class="module-title"><span>↳ Add Fees &amp; Challan</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="extra_fee">
+            <td class="module-title"><span>↳ Extra / Exam Fees</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk">—</td>
+          </tr>
+          <tr data-module="payroll">
+            <td class="module-title"><span>↳ Staff Payroll</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 6. ATTENDANCE (Separated: Attendance & Staff Attendance) -->
+          <tr class="category-row"><td colspan="6">Attendance Registers</td></tr>
+          <tr data-module="attendance">
+            <td class="module-title"><span>📅 Attendance</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="staff_attendance">
+            <td class="module-title"><span>👥 Staff Attendance</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 7. TIMETABLE -->
+          <tr class="category-row"><td colspan="6">Timetable</td></tr>
+          <tr data-module="timetable">
+            <td class="module-title"><span>⏰ Timetable</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 8. EXAM & RESULTS -->
+          <tr class="category-row"><td colspan="6">Examinations</td></tr>
+          <tr data-module="exam">
+            <td class="module-title"><span>📝 Exam</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="results">
+            <td class="module-title"><span>🎯 Results</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 9. PROMOTE & PASSOUT (Full Access on View) -->
+          <tr class="category-row"><td colspan="6">Enrollment Progression</td></tr>
+          <tr data-module="promote">
+            <td class="module-title"><span>🚀 Promote Students</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk" colspan="4"><span class="auto-badge">⚡ Full Access Automatically Included with View</span></td>
+          </tr>
+          <tr data-module="passouts">
+            <td class="module-title"><span>🎓 Passout Students</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk" colspan="4"><span class="auto-badge">⚡ Full Access Automatically Included with View</span></td>
+          </tr>
+
+          <!-- 10. TRANSPORT -->
+          <tr class="category-row"><td colspan="6">Logistics</td></tr>
+          <tr data-module="transport">
+            <td class="module-title"><span>🚌 Transport</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+          <!-- 11. COMMUNICATION & REPORTS -->
+          <tr class="category-row"><td colspan="6">Communication &amp; Reports</td></tr>
+          <tr data-module="notice">
+            <td class="module-title"><span>📢 Notice</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk"><input type="checkbox" class="p-add"></td>
+            <td class="col-chk"><input type="checkbox" class="p-edit"></td>
+            <td class="col-chk"><input type="checkbox" class="p-del"></td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+          <tr data-module="reports">
+            <td class="module-title"><span>📈 Reports</span></td>
+            <td class="col-chk"><input type="checkbox" class="p-view"></td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk">—</td>
+            <td class="col-chk"><input type="checkbox" class="p-print"></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Save Action Bar -->
+    <div class="footer-bar">
+      <span style="font-size: 12.5px; color: var(--muted);">
+        🔒 Configured permissions will be active for students and staff on their next login session.
+      </span>
+      <button type="button" class="btn-save-rights" id="btnSavePolicy" onclick="saveRights()">
+        💾 Save Group Policy
+      </button>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentMode = 'student';
+
+  function switchMode(mode) {
+    currentMode = mode;
+    const tabStudent = document.getElementById('tabStudentBtn');
+    const tabStaff = document.getElementById('tabStaffBtn');
+    const studentPanel = document.getElementById('studentFilterPanel');
+    const staffPanel = document.getElementById('staffFilterPanel');
+    const infoText = document.getElementById('contextInfoText');
+
+    if (mode === 'student') {
+      tabStudent.classList.add('active');
+      tabStaff.classList.remove('active');
+      studentPanel.style.display = 'grid';
+      staffPanel.style.display = 'none';
+      infoText.innerHTML = 'Changes made here will apply to <b>all students of the selected class & section</b>.';
+    } else {
+      tabStaff.classList.add('active');
+      tabStudent.classList.remove('active');
+      studentPanel.style.display = 'none';
+      staffPanel.style.display = 'grid';
+      infoText.innerHTML = 'Changes made here will apply to <b>faculty and administrative staff roles</b>.';
+    }
+    loadSavedPermissions();
+  }
+
+  function handleClassChange(val) {
+    const policyInput = document.getElementById('dispStudentPolicy');
+    const secSelect = document.getElementById('studentSectionSelector');
+
+    if (val === 'ALL') {
+      policyInput.value = 'Global Policy';
+      secSelect.innerHTML = '<option value="">All Sections</option>';
+      secSelect.disabled = true;
+      secSelect.style.opacity = '0.6';
+      updateStudentStrength('ALL', '');
+      loadSavedPermissions();
+    } else {
+      policyInput.value = `Class ${val}`;
+      secSelect.disabled = false;
+      secSelect.style.opacity = '1';
+      secSelect.innerHTML = '<option value="">Loading...</option>';
+
+      fetch(`/students/api/sections/?class=${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then(data => {
+          secSelect.innerHTML = '<option value="">All Sections</option>';
+          if (data.sections && data.sections.length > 0) {
+            data.sections.forEach(sec => {
+              const opt = document.createElement('option');
+              opt.value = sec;
+              opt.textContent = `Section ${sec}`;
+              secSelect.appendChild(opt);
+            });
+          }
+          updateStudentStrength(val, '');
+          loadSavedPermissions();
+        })
+        .catch(() => {
+          secSelect.innerHTML = '<option value="">All Sections</option>';
+          updateStudentStrength(val, '');
+          loadSavedPermissions();
+        });
+    }
+  }
+
+  function handleSectionChange(secVal) {
+    const classVal = document.getElementById('studentClassSelector').value;
+    const policyInput = document.getElementById('dispStudentPolicy');
+    if (secVal) {
+      policyInput.value = `Class ${classVal} (${secVal})`;
+    } else {
+      policyInput.value = classVal === 'ALL' ? 'Global Policy' : `Class ${classVal}`;
+    }
+    updateStudentStrength(classVal, secVal);
+    loadSavedPermissions();
+  }
+
+  function updateStudentStrength(cls, sec) {
+    const countInput = document.getElementById('dispStudentCount');
+    fetch(`/accounts/api/class-student-count/?class=${encodeURIComponent(cls)}&section=${encodeURIComponent(sec)}`)
+      .then(res => res.json())
+      .then(data => {
+        countInput.value = `${data.count} Students`;
+      })
+      .catch(() => {});
+  }
+
+  function handleStaffChange(val) {
+    const roleInput = document.getElementById('dispStaffRole');
+    const selectElem = document.getElementById('staffSelector');
+    const selectedOption = selectElem.options[selectElem.selectedIndex];
+
+    if (val.startsWith('ROLE_')) {
+      if (val === 'ROLE_TEACHER') {
+        roleInput.value = 'Teaching Faculty';
+      } else if (val.includes('ACCOUNT')) {
+        roleInput.value = 'Accounts Officer';
+      } else {
+        roleInput.value = selectedOption.text;
+      }
+    } else {
+      roleInput.value = selectedOption.dataset.role || 'Employee';
+    }
+    loadSavedPermissions();
+  }
+
+  function toggleAllMatrix(state) {
+    document.querySelectorAll('.table-box input[type="checkbox"]:not(:disabled)').forEach(cb => cb.checked = state);
+  }
+
+  function clearMatrix() {
+    document.querySelectorAll('.table-box input[type="checkbox"]:not(:disabled)').forEach(cb => cb.checked = false);
+  }
+
+  // ✅ DATABASE SE SAVED CHECKS LOAD KARNE KA FUNCTION
+  function loadSavedPermissions() {
+    clearMatrix();
+
+    let target = '';
+    let section = '';
+
+    if (currentMode === 'student') {
+      target = document.getElementById('studentClassSelector').value;
+      section = document.getElementById('studentSectionSelector').value;
+    } else {
+      target = document.getElementById('staffSelector').value;
+    }
+
+    if (!target) return;
+
+    fetch(`/accounts/api/get-user-rights/?mode=${encodeURIComponent(currentMode)}&target=${encodeURIComponent(target)}&section=${encodeURIComponent(section)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.permissions && Object.keys(data.permissions).length > 0) {
+          const perms = data.permissions;
+          document.querySelectorAll('tr[data-module]').forEach(row => {
+            const key = row.dataset.module;
+            const p = perms[key];
+            if (p) {
+              const chkView = row.querySelector('.p-view');
+              const chkAdd = row.querySelector('.p-add');
+              const chkEdit = row.querySelector('.p-edit');
+              const chkDel = row.querySelector('.p-del');
+              const chkPrint = row.querySelector('.p-print');
+
+              if (chkView) chkView.checked = !!p.can_view;
+              if (chkAdd) chkAdd.checked = !!p.can_add;
+              if (chkEdit) chkEdit.checked = !!p.can_edit;
+              if (chkDel) chkDel.checked = !!p.can_delete;
+              if (chkPrint) chkPrint.checked = !!p.can_print;
+            }
+          });
+        }
+      })
+      .catch(err => console.error("Error loading permissions:", err));
+  }
+
+  function collectMatrixData() {
+    const payload = {};
+    document.querySelectorAll('tr[data-module]').forEach(row => {
+      const key = row.dataset.module;
+      const v = row.querySelector('.p-view') ? row.querySelector('.p-view').checked : false;
+      const a = row.querySelector('.p-add') ? row.querySelector('.p-add').checked : false;
+      const e = row.querySelector('.p-edit') ? row.querySelector('.p-edit').checked : false;
+      const d = row.querySelector('.p-del') ? row.querySelector('.p-del').checked : false;
+      const p = row.querySelector('.p-print') ? row.querySelector('.p-print').checked : false;
+
+      payload[key] = {
+        can_view: v,
+        can_add: (key === 'promote' || key === 'passouts') ? v : a,
+        can_edit: (key === 'promote' || key === 'passouts') ? v : e,
+        can_delete: (key === 'promote' || key === 'passouts') ? v : d,
+        can_print: (key === 'promote' || key === 'passouts') ? v : p
+      };
+    });
+    return payload;
+  }
+
+  function saveRights() {
+    const btn = document.getElementById('btnSavePolicy');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const permissions = collectMatrixData();
+    let target = '';
+    let section = '';
+
+    if (currentMode === 'student') {
+      target = document.getElementById('studentClassSelector').value;
+      section = document.getElementById('studentSectionSelector').value;
+    } else {
+      target = document.getElementById('staffSelector').value;
+    }
+
+    fetch('/accounts/api/save-user-rights/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        mode: currentMode,
+        target: target,
+        section: section,
+        permissions: permissions
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      if (data.success) {
+        if (typeof showToast === 'function') {
+          showToast(data.message);
+        } else {
+          alert(data.message);
+        }
+        loadSavedPermissions();
+      } else {
+        alert(data.error || 'Failed to save permissions.');
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = oldText;
+      alert("Failed to connect to server.");
+    });
+  }
+
+  // ✅ PAGE LOAD PAR FORAN SAVED DATA FETCH KARNA
+  document.addEventListener("DOMContentLoaded", function () {
+    loadSavedPermissions();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: school-management-system
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Acero — Exam{% endblock %}
+{% block page_title %}Exam{% endblock %}
+{% block nav_exam %}active{% endblock %}
+
+{% block content %}
+<div style="padding:6px 26px 26px;">
+  <div style="background:var(--card); border-radius:16px; padding:18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <h2 style="font-size:16px; font-weight:600;">Exam Module</h2>
+    <p style="margin-top:8px; color:var(--muted); font-size:13px;">
+      Create exams and enter marks.
+    </p>
+    <a href="{% url 'exam_list' %}" style="display:inline-block;margin-top:12px;text-decoration:none;background:var(--orange);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;">
+      Go to Exam Setup
+    </a>
+  </div>
+</div>
+{% endblock %}

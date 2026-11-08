@@ -1,0 +1,1166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports — {{ school.school_name }}{% endblock %}
+{% block nav_reports %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.page{padding:0 26px 40px;}
+
+/* ===== HEADER ===== */
+.pg-head{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+}
+.pg-ic{
+  width:46px;
+  height:46px;
+  border-radius:13px;
+  background:#EEF0FF;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.pg-ic svg{
+  width:22px;
+  height:22px;
+  stroke:var(--primary);
+  fill:none;
+  stroke-width:2.2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.pg-txt h1{
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.3px;
+  color:var(--text);
+  margin:0;
+}
+.pg-txt p{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* ===== KPI CARDS ===== */
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:16px;
+  margin-bottom:22px;
+}
+.kpi{
+  background:#fff;
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  box-shadow:0 4px 18px rgba(20,24,40,.04);
+  border:1px solid var(--line);
+  transition:.2s;
+}
+.kpi:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(20,24,40,.08);
+}
+.kpi .ic{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  font-size:22px;
+}
+.kpi h3{
+  font-size:22px;
+  font-weight:700;
+  line-height:1.1;
+  margin:0;
+  color:var(--text);
+}
+.kpi h3.sm{font-size:17px;}
+.kpi p{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:3px;
+}
+.k-blue{background:#E9F0FC;}
+.k-green{background:#E5F6EE;}
+.k-amber{background:#FEF2E4;}
+.k-red{background:#FDECEC;}
+
+.kpi.date-kpi{align-items:flex-start;}
+.date-chips{display:flex;flex-direction:column;gap:7px;flex:1;}
+.dchip{
+  border:1.5px solid #C6EAD9;
+  border-radius:10px;
+  padding:7px 12px;
+  background:#fff;
+}
+.dchip span{
+  display:block;
+  font-size:9.5px;
+  font-weight:700;
+  letter-spacing:.5px;
+  color:#2A9364;
+  text-transform:uppercase;
+}
+.dchip b{
+  display:block;
+  font-size:13.5px;
+  font-weight:600;
+  margin-top:2px;
+  color:var(--text);
+}
+.date-kpi small{
+  display:block;
+  font-size:11.5px;
+  color:var(--muted);
+  margin-top:8px;
+}
+
+/* ===== PANEL ===== */
+.rpanel{
+  background:#fff;
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 4px 18px rgba(20,24,40,.04);
+  border:1px solid var(--line);
+  margin-bottom:18px;
+}
+.rp-title{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:16px;
+  font-weight:600;
+  color:var(--text);
+}
+.rp-title svg{
+  width:18px;
+  height:18px;
+  stroke:var(--primary);
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+}
+.rp-sub{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:5px;
+  margin-bottom:20px;
+}
+
+/* ===== FORM ===== */
+.f-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:16px;
+  margin-bottom:20px;
+}
+.f-item label{
+  display:block;
+  font-size:12.5px;
+  font-weight:600;
+  margin-bottom:7px;
+  color:#5C6479;
+}
+.f-item label .req{color:#E4605E;}
+.f-item label .opt{color:var(--muted);font-weight:400;font-size:11px;}
+
+.inp-wrap{position:relative;display:flex;align-items:center;}
+.inp-ic{
+  position:absolute;
+  left:12px;
+  width:18px;
+  display:flex;
+  justify-content:center;
+  pointer-events:none;
+  color:var(--muted);
+  font-size:14px;
+}
+.inp-wrap select,
+.inp-wrap input{
+  width:100%;
+  padding:11px 13px 11px 40px;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  font-size:13.5px;
+  background:#fff;
+  outline:none;
+  font-family:inherit;
+  color:var(--text);
+  transition:.15s;
+  appearance:none;
+}
+.inp-wrap input[type="date"]{appearance:auto;}
+.inp-wrap select:focus,
+.inp-wrap input:focus{
+  border-color:var(--orange);
+  box-shadow:0 0 0 3px rgba(240,138,93,.12);
+}
+.inp-wrap select.filled{border-color:var(--orange);}
+.sel-arrow{
+  position:absolute;
+  right:14px;
+  width:8px;
+  height:8px;
+  border-right:2px solid var(--muted);
+  border-bottom:2px solid var(--muted);
+  transform:rotate(45deg);
+  margin-top:-3px;
+  pointer-events:none;
+}
+.inp-wrap.bad select,
+.inp-wrap.bad input{
+  border-color:#E4605E;
+  background:#FFF8F8;
+}
+
+/* Quick Filters */
+.qf-label{
+  font-size:12.5px;
+  font-weight:600;
+  margin-bottom:10px;
+  color:#5C6479;
+}
+.qf-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.qf{
+  padding:8px 16px;
+  border:1.4px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  font-size:12.5px;
+  font-weight:500;
+  cursor:pointer;
+  transition:.15s;
+  font-family:inherit;
+  color:var(--text);
+}
+.qf:hover{
+  border-color:var(--orange);
+  color:var(--orange);
+}
+.qf.on{
+  background:var(--orange);
+  border-color:var(--orange);
+  color:#fff;
+  font-weight:600;
+}
+
+/* Actions */
+.acts{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  border-top:1px solid var(--line);
+  margin-top:6px;
+  padding-top:20px;
+}
+.rbtn{
+  border:none;
+  border-radius:10px;
+  padding:11px 20px;
+  font-size:13.5px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:.15s;
+  font-family:inherit;
+  text-decoration:none;
+}
+.rbtn:disabled,
+.rbtn.off{
+  opacity:.42;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+.rbtn-clear{
+  background:#fff;
+  border:1.4px solid var(--line);
+  color:var(--text);
+}
+.rbtn-clear:hover{background:#F8F9FC;}
+.rbtn-prep{
+  background:var(--orange);
+  color:#fff;
+  box-shadow:0 4px 14px rgba(240,138,93,.25);
+}
+.rbtn-prep:hover:not(:disabled){
+  background:#E67D50;
+}
+.rbtn-pdf{
+  background:#E4605E;
+  color:#fff;
+  box-shadow:0 4px 14px rgba(228,96,94,.25);
+}
+.rbtn-pdf:hover{background:#D14F4D;}
+.rbtn-reset{
+  background:#fff;
+  border:1.4px solid var(--line);
+  color:var(--text);
+  padding:10px 16px;
+}
+.rbtn-sm{padding:8px 14px;font-size:12.5px;}
+
+/* ===== PREVIEW ===== */
+.preview{display:none;}
+.preview.show{display:block;}
+.pv-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.pv-head .grow{flex:1;}
+.pv-sheet{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:24px;
+  max-height:560px;
+  overflow:auto;
+}
+.pv-lh{
+  text-align:center;
+  padding-bottom:14px;
+  border-bottom:2.5px solid var(--primary);
+  margin-bottom:18px;
+}
+.pv-lh h2{
+  font-size:18px;
+  font-weight:700;
+  color:var(--primary);
+  letter-spacing:.3px;
+  margin:0;
+}
+.pv-lh p{
+  font-size:11.5px;
+  color:var(--muted);
+  margin-top:4px;
+}
+.pv-rt{
+  display:inline-block;
+  background:var(--primary);
+  color:#fff;
+  padding:6px 18px;
+  border-radius:7px;
+  font-size:12.5px;
+  font-weight:600;
+  margin-top:10px;
+}
+.pv-meta{
+  display:flex;
+  justify-content:space-between;
+  font-size:11.5px;
+  color:var(--muted);
+  margin-bottom:16px;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.sum-strip{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:10px;
+  margin-bottom:18px;
+}
+.sum-b{
+  border-radius:10px;
+  padding:12px;
+  text-align:center;
+}
+.sum-b span{
+  display:block;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  opacity:.85;
+  font-weight:600;
+}
+.sum-b b{
+  display:block;
+  font-size:16px;
+  font-weight:700;
+  margin-top:4px;
+}
+
+/* ===== IMPROVED TABLE ===== */
+.rtable{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:13px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  overflow:hidden;
+}
+.rtable thead th{
+  text-align:left;
+  padding:12px 14px;
+  background:var(--primary);
+  color:#fff;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  font-weight:600;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.rtable tbody td{
+  padding:13px 14px;
+  border-bottom:1px solid #F1F2F7;
+  color:var(--text);
+  vertical-align:middle;
+}
+.rtable tbody tr:last-child td{
+  border-bottom:none;
+}
+.rtable tbody tr:nth-child(even){
+  background:#F8F9FC;
+}
+.rtable tbody tr:hover{
+  background:#F0F4FF;
+}
+.rtable tfoot td{
+  padding:12px 14px;
+  font-weight:700;
+  background:#F1F2F7;
+  border-top:2px solid var(--primary);
+  color:var(--text);
+}
+.rtable th.num,
+.rtable td.num{
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.tag{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:10.5px;
+  font-weight:700;
+}
+.t-red{background:#FDECEC;color:#C94A48;}
+.t-amber{background:#FEF2E4;color:#C67C2E;}
+.t-green{background:#E5F6EE;color:#2A9364;}
+.t-blue{background:#E9F0FC;color:#3F68B4;}
+.t-purple{background:#F0EDFB;color:#6B5CC4;}
+.t-grey{background:#F1F2F7;color:#7A8194;}
+
+/* Empty state */
+.pv-empty{
+  text-align:center;
+  padding:56px 20px;
+  color:var(--muted);
+}
+.pv-empty .big{
+  font-size:48px;
+  margin-bottom:12px;
+  opacity:.35;
+}
+.pv-empty h4{
+  font-size:15px;
+  color:var(--text);
+  margin-bottom:6px;
+}
+.pv-empty p{font-size:13px;}
+
+/* Error */
+.rerr{
+  display:none;
+  background:#FDECEC;
+  color:#C94A48;
+  padding:11px 15px;
+  border-radius:10px;
+  font-size:13px;
+  margin-bottom:16px;
+  font-weight:500;
+}
+.rerr.show{display:block;}
+
+.spin{
+  width:14px;
+  height:14px;
+  border:2.2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:sp .65s linear infinite;
+}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+@media(max-width:760px){
+  .page{padding:0 16px 40px;}
+  .f-grid{grid-template-columns:1fr;}
+  .acts .rbtn{flex:1;justify-content:center;}
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="page">
+
+  <div class="pg-head">
+    <div class="pg-ic">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    </div>
+    <div class="pg-txt">
+      <h1>Reports</h1>
+      <p>Generate and download school reports in PDF format</p>
+    </div>
+    <div style="flex:1"></div>
+    <button class="rbtn rbtn-reset" id="btnReset">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+      Reset
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="ic k-blue">📄</div>
+      <div>
+        <h3>{{ report_count }}</h3>
+        <p>Available Reports</p>
+      </div>
+    </div>
+
+    <div class="kpi date-kpi">
+      <div class="ic k-green">📅</div>
+      <div class="date-chips">
+        <div class="dchip"><span>From</span><b id="kFrom">—</b></div>
+        <div class="dchip"><span>To</span><b id="kTo">—</b></div>
+        <small>Selected Period</small>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="ic k-amber" id="kStatIc">👁️</div>
+      <div>
+        <h3 class="sm" id="kStatus">Not Ready</h3>
+        <p>Report Status</p>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="ic k-red">📕</div>
+      <div>
+        <h3 class="sm">PDF</h3>
+        <p>Report Format</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="rpanel">
+    <div class="rp-title">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+      Report Filters
+    </div>
+    <div class="rp-sub">Select report type and date period to generate PDF report</div>
+
+    <div class="rerr" id="errBox"></div>
+
+    <div class="f-grid">
+      <div class="f-item">
+        <label>Report Type <span class="req">*</span></label>
+        <div class="inp-wrap" id="wType">
+          <span class="inp-ic">📋</span>
+          <select id="selType">
+            <option value="">Select Report Type</option>
+            {% for grp, items in groups.items %}
+              <optgroup label="{{ grp }}">
+                {% for it in items %}
+                  <option value="{{ it.key }}">{{ it.label }}</option>
+                {% endfor %}
+              </optgroup>
+            {% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wMode">
+        <label>Date Mode <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">🗓️</span>
+          <select id="selMode">
+            <option value="single">Single Date</option>
+            <option value="range">Date Range</option>
+            <option value="month">Month &amp; Year</option>
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wDate1">
+        <label id="lblDate1">Select Date <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">📆</span>
+          <input type="date" id="date1" value="{{ today }}">
+        </div>
+      </div>
+
+      <div class="f-item" id="wDate2" style="display:none;">
+        <label>To Date <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">📆</span>
+          <input type="date" id="date2" value="{{ today }}">
+        </div>
+      </div>
+
+      <div class="f-item" id="wMonth" style="display:none;">
+        <label>Month <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">📆</span>
+          <select id="selMonth">
+            {% for m in months %}
+              <option value="{{ m.n }}" {% if m.n == cur_month %}selected{% endif %}>{{ m.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wYear" style="display:none;">
+        <label>Year <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">📆</span>
+          <select id="selYear">
+            {% for y in years %}
+              <option {% if y == cur_year %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wClass" style="display:none;">
+        <label>Class <span class="opt">(optional)</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">🏫</span>
+          <select id="selClass">
+            <option value="">All Classes</option>
+            {% for c in classes %}<option>{{ c }}</option>{% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wTerm" style="display:none;">
+        <label>Term <span class="opt">(optional)</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">📚</span>
+          <select id="selTerm">
+            <option value="">All Terms</option>
+            {% for t in terms %}<option>{{ t }}</option>{% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+
+      <div class="f-item" id="wRoute" style="display:none;">
+        <label>Route <span class="opt">(optional)</span></label>
+        <div class="inp-wrap">
+          <span class="inp-ic">🗺️</span>
+          <select id="selRoute">
+            <option value="">All Routes</option>
+            {% for r in routes %}
+              <option value="{{ r.pk }}">{{ r.code }} — {{ r.name }}</option>
+            {% endfor %}
+          </select>
+          <span class="sel-arrow"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="qfWrap">
+      <div class="qf-label">Quick Date Filters</div>
+      <div class="qf-row">
+        <button type="button" class="qf" data-q="today">Today</button>
+        <button type="button" class="qf" data-q="yesterday">Yesterday</button>
+        <button type="button" class="qf" data-q="week">This Week</button>
+        <button type="button" class="qf" data-q="month">This Month</button>
+        <button type="button" class="qf" data-q="year">This Year</button>
+      </div>
+    </div>
+
+    <div class="acts">
+      <button class="rbtn rbtn-clear" id="btnClear">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        Clear
+      </button>
+      <button class="rbtn rbtn-prep" id="btnPrep">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Prepare Report
+      </button>
+      {% if perms.can_print or user.is_superuser %}
+      <a class="rbtn rbtn-pdf off" id="btnPdf" target="_blank">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+        Download PDF
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="rpanel preview" id="pvPanel">
+    <div class="pv-head">
+      <div class="rp-title">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Report Preview
+      </div>
+      <div class="grow"></div>
+      <span class="tag t-green" id="pvRows">0 rows</span>
+      {% if perms.can_print or user.is_superuser %}
+      <a class="rbtn rbtn-pdf rbtn-sm" id="btnPdf2" target="_blank">📥 Open PDF</a>
+      {% endif %}
+    </div>
+    <div class="pv-sheet" id="pvSheet"></div>
+  </div>
+
+  <div class="rpanel" id="pvEmpty">
+    <div class="pv-empty">
+      <div class="big">📄</div>
+      <h4>No Report Prepared</h4>
+      <p>Choose a report type and period, then click <b>Prepare Report</b>.</p>
+    </div>
+  </div>
+
+</div>
+
+{{ meta_json|json_script:"metaJson" }}
+{{ datemode_json|json_script:"dateModeJson" }}
+{{ school|json_script:"schoolJson" }}
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  const API   = "{% url 'report_data' %}";
+  const PRINT = "{% url 'report_print' %}";
+
+  const NEEDS = JSON.parse(document.getElementById('metaJson').textContent);
+  const DMODE = JSON.parse(document.getElementById('dateModeJson').textContent);
+  const SCHOOL = JSON.parse(document.getElementById('schoolJson').textContent || '{}');
+
+  // Safe values
+  const TODAY     = "{{ today }}";
+  const CUR_MONTH = "{{ cur_month }}";
+  const CUR_YEAR  = "{{ cur_year }}";
+
+  const $ = id => document.getElementById(id);
+
+  const selType  = $('selType');
+  const selMode  = $('selMode');
+  const date1    = $('date1');
+  const date2    = $('date2');
+  const selMonth = $('selMonth');
+  const selYear  = $('selYear');
+  const selClass = $('selClass');
+  const selTerm  = $('selTerm');
+  const selRoute = $('selRoute');
+
+  const wMode    = $('wMode');
+  const wDate1   = $('wDate1');
+  const wDate2   = $('wDate2');
+  const wMonth   = $('wMonth');
+  const wYear    = $('wYear');
+  const wClass   = $('wClass');
+  const wTerm    = $('wTerm');
+  const wRoute   = $('wRoute');
+  const qfWrap   = $('qfWrap');
+  const lblDate1 = $('lblDate1');
+  const errBox   = $('errBox');
+
+  const btnPrep  = $('btnPrep');
+  const btnPdf   = $('btnPdf');
+  const btnPdf2  = $('btnPdf2');
+  const pvPanel  = $('pvPanel');
+  const pvEmpty  = $('pvEmpty');
+  const pvSheet  = $('pvSheet');
+
+  const PREP_HTML = btnPrep.innerHTML;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[m]));
+  }
+
+  function schoolLine() {
+    const loc = [SCHOOL.campus_name, SCHOOL.address].filter(Boolean).join(', ');
+    return [
+            loc,
+            SCHOOL.phone_number ? 'Ph: ' + SCHOOL.phone_number : '',
+            SCHOOL.email
+        ].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ');
+    }
+
+    function schoolLine2() {
+        return [
+            SCHOOL.registration_no   ? 'Reg No: ' + SCHOOL.registration_no : '',
+            SCHOOL.board_affiliation ? 'Affiliated with ' + SCHOOL.board_affiliation : ''
+        ].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ');
+    }
+
+  function iso(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  function fmt(d) {
+    if (!d) return '—';
+    const x = new Date(d + 'T00:00:00');
+    return isNaN(x) ? '—' : x.toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
+  }
+
+  function params() {
+    return new URLSearchParams({
+      type:  selType.value,
+      mode:  selMode.value,
+      date1: date1.value,
+      date2: date2.value,
+      month: selMonth.value,
+      year:  selYear.value,
+      cls:   selClass.value,
+      term:  selTerm.value,
+      route: selRoute.value
+    });
+  }
+
+  /* TYPE CHANGE */
+  selType.onchange = () => {
+    const k = selType.value;
+    $('wType').classList.remove('bad');
+    errBox.classList.remove('show');
+    selType.classList.toggle('filled', !!k);
+
+    const need = NEEDS[k] || [];
+    wClass.style.display = need.includes('class') ? 'block' : 'none';
+    wTerm.style.display  = need.includes('term')  ? 'block' : 'none';
+    wRoute.style.display = need.includes('route') ? 'block' : 'none';
+
+    const dm = DMODE[k] || 'single';
+    const dateless = dm === 'none';
+
+    wMode.style.display  = dateless ? 'none' : 'block';
+    qfWrap.style.display = dateless ? 'none' : 'block';
+
+    if (!dateless && (dm === 'month' || dm === 'single')) {
+      selMode.value = dm;
+    }
+
+    applyMode(dateless);
+    invalidate();
+  };
+
+  function applyMode(dateless) {
+    const m = selMode.value;
+
+    if (dateless) {
+      wDate1.style.display = wDate2.style.display = wMonth.style.display = wYear.style.display = 'none';
+    } else {
+      wDate1.style.display = m === 'month' ? 'none' : 'block';
+      wDate2.style.display = m === 'range' ? 'block' : 'none';
+      wMonth.style.display = m === 'month' ? 'block' : 'none';
+      wYear.style.display  = m === 'month' ? 'block' : 'none';
+      lblDate1.innerHTML = (m === 'range' ? 'From Date' : 'Select Date') + ' <span class="req">*</span>';
+    }
+    updKpi(dateless);
+  }
+
+  selMode.onchange = () => {
+    applyMode(false);
+    invalidate();
+  };
+
+  [date1, date2, selMonth, selYear].forEach(el => {
+    el.onchange = () => {
+      updKpi(false);
+      invalidate();
+      clearQf();
+    };
+  });
+
+  [selClass, selTerm, selRoute].forEach(el => {
+    el.onchange = invalidate;
+  });
+
+  function updKpi(dateless) {
+    if (dateless) {
+      $('kFrom').textContent = 'All';
+      $('kTo').textContent   = 'Records';
+      return;
+    }
+
+    const m = selMode.value;
+
+    if (m === 'month') {
+      const y  = +selYear.value;
+      const mo = +selMonth.value;
+      $('kFrom').textContent = fmt(`${y}-${String(mo).padStart(2, '0')}-01`);
+      $('kTo').textContent   = fmt(iso(new Date(y, mo, 0)));
+    } else if (m === 'range') {
+      $('kFrom').textContent = fmt(date1.value);
+      $('kTo').textContent   = fmt(date2.value);
+    } else {
+      $('kFrom').textContent = fmt(date1.value);
+      $('kTo').textContent   = fmt(date1.value);
+    }
+  }
+
+  function invalidate() {
+    btnPdf.classList.add('off');
+    btnPdf.removeAttribute('href');
+    pvPanel.classList.remove('show');
+    pvEmpty.style.display = 'block';
+    $('kStatus').textContent = 'Not Ready';
+    $('kStatIc').className = 'ic k-amber';
+  }
+
+  /* QUICK FILTERS */
+  function clearQf() {
+    document.querySelectorAll('.qf').forEach(b => b.classList.remove('on'));
+  }
+
+  document.querySelectorAll('.qf').forEach(b => {
+    b.onclick = () => {
+      clearQf();
+      b.classList.add('on');
+
+      const t = new Date();
+      const q = b.dataset.q;
+
+      if (q === 'today') {
+        selMode.value = 'single';
+        date1.value = iso(t);
+      } else if (q === 'yesterday') {
+        const y = new Date(t);
+        y.setDate(y.getDate() - 1);
+        selMode.value = 'single';
+        date1.value = iso(y);
+      } else if (q === 'week') {
+        const s = new Date(t);
+        s.setDate(t.getDate() - t.getDay() + 1);
+        selMode.value = 'range';
+        date1.value = iso(s);
+        date2.value = iso(t);
+      } else if (q === 'month') {
+        selMode.value = 'month';
+        selMonth.value = t.getMonth() + 1;
+        selYear.value  = t.getFullYear();
+      } else if (q === 'year') {
+        selMode.value = 'range';
+        date1.value = iso(new Date(t.getFullYear(), 0, 1));
+        date2.value = iso(t);
+      }
+
+      applyMode(false);
+      invalidate();
+    };
+  });
+
+  /* CLEAR */
+  $('btnClear').onclick = () => {
+    selType.value = '';
+    selType.classList.remove('filled');
+    selClass.value = '';
+    selTerm.value  = '';
+    selRoute.value = '';
+    clearQf();
+    errBox.classList.remove('show');
+    $('wType').classList.remove('bad');
+    selType.onchange();
+  };
+
+  /* RESET */
+  $('btnReset').onclick = () => {
+    selType.value = '';
+    selType.classList.remove('filled');
+    selMode.value = 'single';
+    selClass.value = '';
+    selTerm.value  = '';
+    selRoute.value = '';
+
+    date1.value = TODAY;
+    date2.value = TODAY;
+    selMonth.value = CUR_MONTH;
+    selYear.value  = CUR_YEAR;
+
+    clearQf();
+    errBox.classList.remove('show');
+    $('wType').classList.remove('bad');
+    selType.onchange();
+  };
+
+  /* PREPARE */
+  btnPrep.onclick = () => {
+    errBox.classList.remove('show');
+    $('wType').classList.remove('bad');
+
+    if (!selType.value) {
+      $('wType').classList.add('bad');
+      errBox.textContent = '⚠ Please select a report type first.';
+      errBox.classList.add('show');
+      selType.focus();
+      return;
+    }
+
+    if (selMode.value === 'range' && date2.value < date1.value) {
+      errBox.textContent = '⚠ "To Date" cannot be earlier than "From Date".';
+      errBox.classList.add('show');
+      return;
+    }
+
+
+    const CAN_PRINT = ("{{ perms.can_print }}" === "True" || "{{ user.is_superuser }}" === "True");
+
+      // Inside prepare report success callback:
+      if (CAN_PRINT && btnPdf && btnPdf2) {
+        const pdfUrl = PRINT + '?' + qs + '&auto=1';
+        btnPdf.href  = pdfUrl;
+        btnPdf.classList.remove('off');
+        btnPdf2.href = pdfUrl;
+      }
+
+
+    const qs = params().toString();
+    btnPrep.disabled = true;
+    btnPrep.innerHTML = '<span class="spin"></span> Preparing…';
+
+    fetch(API + '?' + qs, {
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => {
+      if (!r.ok) {
+        return r.json().then(d => {
+          throw new Error(d.error || ('Server error ' + r.status));
+        }).catch(() => {
+          throw new Error('Server error ' + r.status);
+        });
+      }
+      return r.json();
+    })
+    .then(d => {
+      btnPrep.disabled = false;
+      btnPrep.innerHTML = PREP_HTML;
+
+      if (!d.ok) {
+        errBox.textContent = '⚠ ' + (d.error || 'Failed to generate report.');
+        errBox.classList.add('show');
+        return;
+      }
+
+      if (!d.rows || !d.rows.length) {
+        errBox.textContent = '⚠ No records found for the selected filters.';
+        errBox.classList.add('show');
+        invalidate();
+        return;
+      }
+
+      renderPreview(d);
+
+      const pdfUrl = PRINT + '?' + qs + '&auto=1';
+      btnPdf.href  = pdfUrl;
+      btnPdf.classList.remove('off');
+      btnPdf2.href = pdfUrl;
+
+      $('kStatus').textContent = 'Ready';
+      $('kStatIc').className = 'ic k-green';
+      pvPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    })
+    .catch(err => {
+      btnPrep.disabled = false;
+      btnPrep.innerHTML = PREP_HTML;
+      errBox.textContent = '⚠ ' + (err.message || 'Network error. Please try again.');
+      errBox.classList.add('show');
+    });
+  };
+
+  /* PREVIEW RENDER */
+  function renderPreview(d) {
+    const sub = d.subtitle ? ' · ' + d.subtitle : '';
+
+    pvSheet.innerHTML = `
+      <div class="pv-lh">
+        <h2>${esc((SCHOOL.school_name || 'School').toUpperCase())}</h2>
+        ${schoolLine()  ? `<p>${schoolLine()}</p>`  : ''}
+        <div class="pv-rt">${esc(d.title + sub)}</div>
+      </div>
+      <div class="pv-meta">
+        <span><b>Period:</b> ${esc(d.period)}</span>
+        <span><b>Generated:</b> ${new Date().toLocaleString('en-GB', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })}</span>
+      </div>
+      ${d.summary && d.summary.length ? `
+        <div class="sum-strip">
+          ${d.summary.map(s => `
+            <div class="sum-b" style="background:${s.bg};color:${s.fg};">
+              <span>${esc(s.label)}</span>
+              <b>${esc(s.value)}</b>
+            </div>
+          `).join('')}
+        </div>` : ''}
+      <table class="rtable">
+        <thead>
+          <tr>
+            ${d.cols.map((c, i) => `<th${d.num.includes(i) ? ' class="num"' : ''}>${esc(c)}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${d.rows.map(r => `
+            <tr>
+              ${r.map((c, i) => {
+                const cell = (c && typeof c === 'object')
+                  ? `<span class="tag ${c.tag}">${esc(c.v)}</span>`
+                  : esc(c);
+                return `<td${d.num.includes(i) ? ' class="num"' : ''}>${cell}</td>`;
+              }).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+        ${d.foot ? `
+          <tfoot>
+            <tr>
+              ${d.foot.map((c, i) => `<td${d.num.includes(i) ? ' class="num"' : ''}>${esc(c)}</td>`).join('')}
+            </tr>
+          </tfoot>` : ''}
+      </table>
+    `;
+
+    $('pvRows').textContent = d.count + ' rows';
+    pvPanel.classList.add('show');
+    pvEmpty.style.display = 'none';
+  }
+
+  // Init
+  applyMode(false);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}COA — Level 1 Main Heads{% endblock %}
+
+{% block coa_open %}open{% endblock %}
+{% block nav_coa_l1 %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  .content{padding:6px 26px 26px;display:flex;flex-direction:column;gap:16px;}
+  .card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 2px 8px rgba(30,40,80,.04);}
+
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+  .field{display:flex;flex-direction:column;gap:6px;min-width:160px;flex:1;}
+  .field label{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;}
+  .field label i{color:var(--muted);font-size:11px;}
+  .field input,.field select{
+    padding:10px 14px;border-radius:9px;border:1px solid var(--line);
+    background:#F8F9FC;font-size:13px;outline:none;
+  }
+  .field input[readonly]{background:#eef0f3;color:var(--muted);cursor:not-allowed;font-weight:700;}
+
+  .btn{
+    padding:10px 18px;border-radius:9px;border:none;background:var(--orange);
+    color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn:hover{background:#E8794C;}
+
+  .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line);background:#fff;}
+  table{width:100%;border-collapse:collapse;min-width:720px;}
+  thead th{
+    font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+    padding:14px 16px;border-bottom:1px solid var(--line);text-align:left;
+  }
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;}
+  tbody tr:hover{background:#FAFBFD;}
+
+  .actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;}
+  .icon-btn{
+    width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  }
+  .icon-btn.edit{color:#F08A5D;}
+  .icon-btn.del{color:#E15C5C;}
+  .icon-btn:hover{background:#F5F6FA;}
+
+  .icon-btn.disabled{
+    opacity:.45; cursor:not-allowed; filter:grayscale(1);
+  }
+
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0 0;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <!-- ADD NEW LEVEL-1 -->
+  <div class="card">
+  <h3 style="font-size:16px;margin:0 0 6px 0;">
+    <i class="fa-solid fa-sitemap" style="color:var(--orange);"></i>
+    Chart of Accounts — Level 1
+  </h3>
+
+  <p class="hint">
+    Define the main accounting categories. Account ID is generated automatically.
+  </p>
+
+  <form method="post" class="row">
+    {% csrf_token %}
+
+    <!-- ACCOUNT ID -->
+    <div class="field" style="max-width:180px;">
+      <label>
+        <i class="fa-solid fa-hashtag"></i>
+        Account ID (Auto)
+      </label>
+
+      <input
+        type="text"
+        value="{{ next_id }}"
+        readonly
+        style="
+          background:#EEF0F3;
+          color:#34405E;
+          font-weight:700;
+          cursor:not-allowed;
+        "
+      >
+    </div>
+
+    <!-- ACCOUNT NAME -->
+    <div class="field" style="flex:1;min-width:300px;">
+      <label>
+        <i class="fa-solid fa-tag"></i>
+        Account Name *
+      </label>
+
+      <input
+        type="text"
+        name="account_name"
+        placeholder="Enter main account name..."
+        required
+        autocomplete="off"
+      >
+    </div>
+
+    <!-- ADD -->
+    <button type="submit" class="btn">
+      <i class="fa-solid fa-circle-plus"></i>
+      Add
+    </button>
+
+  </form>
+</div>
+
+  <!-- LIST: ONLY ID / NAME / EDIT/DELETE -->
+  <div class="card">
+    <h3 style="font-size:14px;margin:0 0 10px 0;">Level 1 Accounts List</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:110px;">Account ID</th>
+            <th>Account Name</th>
+            <th style="width:140px;text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in accounts %}
+          <tr>
+            <td><b>{{ a.account_id }}</b></td>
+            <td>{{ a.account_name }}</td>
+            <td>
+              <div class="actions">
+                {% if a.is_locked %}
+                  <!-- Locked: show disabled edit/delete (auto locked when Level-2 exists) -->
+                  <span class="hint" style="margin-right:6px;">Locked (has sub-categories)</span>
+
+                  <span class="icon-btn disabled" title="Locked: delete Level‑2 children first">
+                    <i class="fa-solid fa-pen"></i>
+                  </span>
+
+                  <span class="icon-btn disabled" title="Locked: delete Level‑2 children first">
+                    <i class="fa-solid fa-trash"></i>
+                  </span>
+                {% else %}
+                  <a class="icon-btn edit" href="{% url 'coa_level1_edit' a.pk %}" title="Edit">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+
+                  <form method="post" action="{% url 'coa_level1_delete' a.pk %}" style="display:inline;" onsubmit="return confirm('Delete {{ a.account_id }} - {{ a.account_name }} ?');">
+                    {% csrf_token %}
+                    <button class="icon-btn del" type="submit" title="Delete">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center;color:var(--muted);padding:22px;">
+              No Level‑1 accounts found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="hint" style="margin-top:10px;">
+      Note: Level‑1 becomes <b>auto‑locked</b> when any Level‑2 account exists under it. It will auto‑unlock when all Level‑2 children are deleted.
+    </p>
+  </div>
+
+</div>
+{% endblock %}

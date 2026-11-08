@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ACERO — Fee Challan Documents</title>
+<style>
+  :root { --primary: #1E2740; }
+
+  @page {
+    size: A4 portrait;
+    margin: 6mm 6mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+  body { background: #f4f5f8; padding: 10px; }
+
+  .print-actions {
+    display: flex; justify-content: center; gap: 12px; margin-bottom: 12px;
+  }
+  .btn-print-action {
+    background: #1E2740; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .btn-print-action:hover { background: #2C3752; }
+
+  .sheet-container {
+    background: #fff;
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto 20px auto;
+    padding: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    page-break-after: always;
+  }
+
+  .student-challan-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1.5px dashed #999;
+    page-break-inside: avoid;
+  }
+  .student-challan-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .challan-copy {
+    border: 1px dashed #555;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    min-height: 132mm;
+  }
+
+  .c-header {
+    text-align: center;
+    border-bottom: 1.2px solid #222;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+  }
+  .c-header h2 { font-size: 12px; font-weight: 800; color: #1E2740; text-transform: uppercase; letter-spacing: 0.3px; }
+  .c-header p { font-size: 8.5px; color: #555; margin-top: 1px; }
+
+  .copy-tag {
+    display: inline-block;
+    background: #1E2740;
+    color: #fff;
+    font-size: 8.5px;
+    font-weight: bold;
+    padding: 1.5px 8px;
+    border-radius: 8px;
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+  .copy-tag.student { background: #3E6FB0; }
+
+  .adv-tag {
+    display: inline-block;
+    background: #E8F7EF;
+    color: #166534;
+    border: 1px solid #86EFAC;
+    font-size: 8.5px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  .info-table { width: 100%; margin-bottom: 6px; border-collapse: collapse; font-size: 9.5px; }
+  .info-table td { padding: 1.5px 0; vertical-align: top; }
+  .info-table td.lbl { color: #555; width: 38%; font-size: 9px; }
+  .info-table td.val { font-weight: bold; color: #111; }
+
+  .fee-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; font-size: 9.5px; }
+  .fee-table th, .fee-table td { border: 1px solid #bbb; padding: 3px 5px; text-align: left; }
+  .fee-table th { background: #f0f1f5; font-size: 9px; text-transform: uppercase; font-weight: bold; }
+  .fee-table td.amt { text-align: right; font-weight: 600; }
+
+  .fee-table tr.arrears-row td {
+    background: #FEF2F2;
+    color: #B91C1C;
+    font-weight: bold;
+    border-top: 1px dashed #DC2626;
+    border-bottom: 1px dashed #DC2626;
+  }
+  .fee-table tr.advance-row td {
+    background: #F0FDF4;
+    color: #15803D;
+    font-weight: bold;
+  }
+  .fee-table tr.total td {
+    font-weight: bold;
+    background: #E8F7EF;
+    border-top: 1.5px solid #000;
+    font-size: 10.5px;
+    color: #166534;
+  }
+
+  .footer-note {
+    font-size: 8px;
+    color: #555;
+    line-height: 1.2;
+    margin-top: 4px;
+    border-top: 1px dotted #ccc;
+    padding-top: 3px;
+  }
+
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 4px;
+  }
+  .sig-line {
+    border-top: 1px solid #444;
+    width: 42%;
+    text-align: center;
+    font-size: 8px;
+    color: #444;
+    padding-top: 1px;
+    font-weight: 600;
+  }
+
+  .no-record-box {
+    max-width: 550px;
+    margin: 80px auto;
+    background: #fff;
+    padding: 36px 28px;
+    text-align: center;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #E5E7EB;
+  }
+  .no-record-icon { font-size: 44px; margin-bottom: 12px; }
+  .no-record-title { font-size: 18px; font-weight: 700; color: #1E2740; margin-bottom: 6px; }
+  .no-record-desc { font-size: 13px; color: #6B7280; line-height: 1.5; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .print-actions { display: none; }
+    .sheet-container {
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="print-actions">
+  <button class="btn-print-action" onclick="window.print()">
+    🖨️ Print / Save PDF Challans ({% if challans %}{{ challans|length }}{% else %}1{% endif %})
+  </button>
+</div>
+
+{% if challans %}
+  {% for item in challans %}
+    {% if forloop.counter0|divisibleby:2 %}
+      <div class="sheet-container">
+    {% endif %}
+
+      <div class="student-challan-row">
+
+        <!-- ====================== 1) SCHOOL COPY ====================== -->
+        <div class="challan-copy">
+          <div>
+            <div class="c-header">
+              <h2>{{ school.school_name }}</h2>
+              <span style="display:block;font-size:9.5px;font-weight:400;color:#555;line-height:1.5;">
+                {{ school.address }} &nbsp;|&nbsp; Ph: {{ school.phone_number }}
+              </span>
+              <div style="display:flex; justify-content:center; gap:6px; align-items:center;">
+                <span class="copy-tag">School Copy</span>
+                {% if item.is_advance_paid %}
+                  <span class="adv-tag">✓ Advance Paid</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <table class="info-table">
+              <tr><td class="lbl">Challan No:</td><td class="val">{{ item.fee.challan_no }}</td></tr>
+              <tr><td class="lbl">Student Name:</td><td class="val">{{ item.student.name }}</td></tr>
+              <tr><td class="lbl">Father Name:</td><td class="val">{{ item.student.father_name }}</td></tr>
+
+              <tr>
+                <td class="lbl">Class & Roll:</td>
+                <td class="val">
+                  Class {{ item.fee.class_field|default:item.student.student_class }}
+                  (Roll #{{ item.fee.roll_no|default:item.student.roll_no }})
+                </td>
+              </tr>
+
+              <tr><td class="lbl">Billing Month:</td><td class="val">{{ item.month_name }} {{ item.fee.fee_year }}</td></tr>
+
+              <tr>
+                <td class="lbl">Issue Date:</td>
+                <td class="val" style="color:var(--primary);">{{ item.issue_date|date:"l, d-M-Y" }}</td>
+              </tr>
+              <tr>
+                <td class="lbl">Due Date (Expire):</td>
+                <td class="val" style="color:#DC2626;">
+                  {{ item.due_date|date:"l, d-M-Y" }}
+                </td>
+              </tr>
+            </table>
+
+            <table class="fee-table">
+              <thead>
+                <tr><th>Description</th><th style="text-align:right;">Amount (Rs.)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tuition Fee</td><td class="amt">{{ item.fee.tuition_fee }}</td></tr>
+
+                {% if item.fee.transport_fee > 0 %}
+                  <tr><td>Transport Charges</td><td class="amt">{{ item.fee.transport_fee }}</td></tr>
+                {% endif %}
+
+                {% if item.fee.admission_fee > 0 %}
+                  <tr><td>Admission Fee</td><td class="amt">{{ item.fee.admission_fee }}</td></tr>
+                {% endif %}
+
+                {% if item.fee.other_charges > 0 %}
+                  <tr>
+                    <td>{{ item.special_title|default:"Exam / Special Charges" }}</td>
+                    <td class="amt">{{ item.fee.other_charges }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if item.fee.previous_arrears > 0 or item.past_arrears > 0 %}
+                  <tr class="arrears-row">
+                    <td>Previous Dues / Pending Arrears</td>
+                    <td class="amt">
+                      Rs. {% if item.fee.previous_arrears > 0 %}{{ item.fee.previous_arrears }}{% else %}{{ item.past_arrears }}{% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+
+                {% if item.fee.paid_amount > 0 %}
+                  <tr class="advance-row">
+                    <td>Advance Fee Adjusted / Paid (-)</td>
+                    <td class="amt">- Rs. {{ item.fee.paid_amount }}</td>
+                  </tr>
+                {% endif %}
+
+                <tr class="total">
+                  <td>Total Payable Now</td>
+                  <td class="amt">
+                    {% if item.payable_now == 0 %}
+                      <span style="color:#166534;">Rs. 0.00 (PAID)</span>
+                    {% else %}
+                      Rs. {{ item.payable_now }}
+                    {% endif %}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="footer-note">
+              {% if item.is_advance_paid and item.payable_now == 0 %}
+                * This challan is already settled via advance payment.<br>
+                * No dues are pending for this billing period.
+              {% else %}
+                * Challan is valid for {{ item.expiry_days|default:8 }} days from issue date.<br><br>
+                * Late fine applies after the expiry date.
+              {% endif %}
+            </div>
+            <div class="signatures">
+              <div class="sig-line">Cashier / Accounts</div>
+              <div class="sig-line">Principal / Admin</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====================== 2) STUDENT COPY ====================== -->
+        <div class="challan-copy">
+          <div>
+            <div class="c-header">
+              <h2>{{ school.school_name }}</h2>
+              <span style="display:block;font-size:9.5px;font-weight:400;color:#555;line-height:1.5;">
+                {{ school.address }} &nbsp;|&nbsp; Ph: {{ school.phone_number }}
+              </span>
+              <div style="display:flex; justify-content:center; gap:6px; align-items:center;">
+                <span class="copy-tag student">Student Copy</span>
+                {% if item.is_advance_paid %}
+                  <span class="adv-tag">✓ Advance Paid</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <table class="info-table">
+              <tr><td class="lbl">Challan No:</td><td class="val">{{ item.fee.challan_no }}</td></tr>
+              <tr><td class="lbl">Student Name:</td><td class="val">{{ item.student.name }}</td></tr>
+              <tr><td class="lbl">Father Name:</td><td class="val">{{ item.student.father_name }}</td></tr>
+
+              <tr>
+                <td class="lbl">Class & Roll:</td>
+                <td class="val">
+                  Class {{ item.fee.class_field|default:item.student.student_class }}
+                  (Roll #{{ item.fee.roll_no|default:item.student.roll_no }})
+                </td>
+              </tr>
+
+              <tr><td class="lbl">Billing Month:</td><td class="val">{{ item.month_name }} {{ item.fee.fee_year }}</td></tr>
+
+              <tr>
+                <td class="lbl">Issue Date:</td>
+                <td class="val" style="color:var(--primary);">{{ item.issue_date|date:"l, d-M-Y" }}</td>
+              </tr>
+              <tr>
+                <td class="lbl">Due Date (Expire):</td>
+                <td class="val" style="color:#DC2626;">
+                  {{ item.due_date|date:"l, d-M-Y" }}
+                </td>
+              </tr>
+            </table>
+
+            <table class="fee-table">
+              <thead>
+                <tr><th>Description</th><th style="text-align:right;">Amount (Rs.)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Tuition Fee</td><td class="amt">{{ item.fee.tuition_fee }}</td></tr>
+
+                {% if item.fee.transport_fee > 0 %}
+                  <tr><td>Transport Charges</td><td class="amt">{{ item.fee.transport_fee }}</td></tr>
+                {% endif %}
+
+                {% if item.fee.admission_fee > 0 %}
+                  <tr><td>Admission Fee</td><td class="amt">{{ item.fee.admission_fee }}</td></tr>
+                {% endif %}
+
+                {% if item.fee.other_charges > 0 %}
+                  <tr>
+                    <td>{{ item.special_title|default:"Exam / Special Charges" }}</td>
+                    <td class="amt">{{ item.fee.other_charges }}</td>
+                  </tr>
+                {% endif %}
+
+                {% if item.fee.previous_arrears > 0 or item.past_arrears > 0 %}
+                  <tr class="arrears-row">
+                    <td>Previous Dues / Pending Arrears</td>
+                    <td class="amt">
+                      Rs. {% if item.fee.previous_arrears > 0 %}{{ item.fee.previous_arrears }}{% else %}{{ item.past_arrears }}{% endif %}
+                    </td>
+                  </tr>
+                {% endif %}
+
+                {% if item.fee.paid_amount > 0 %}
+                  <tr class="advance-row">
+                    <td>Advance Fee Adjusted / Paid (-)</td>
+                    <td class="amt">- Rs. {{ item.fee.paid_amount }}</td>
+                  </tr>
+                {% endif %}
+
+                <tr class="total">
+                  <td>Total Payable Now</td>
+                  <td class="amt">
+                    {% if item.payable_now == 0 %}
+                      <span style="color:#166534;">Rs. 0.00 (PAID)</span>
+                    {% else %}
+                      Rs. {{ item.payable_now }}
+                    {% endif %}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="footer-note">
+              {% if item.is_advance_paid and item.payable_now == 0 %}
+                * Retain this copy as proof of advance payment clearance.<br>
+                * Deposited via School Accounts Counter.
+              {% else %}
+                * Challan is valid for {{ item.expiry_days|default:8 }} days from issue date.<br><br>
+                * Retain this student copy for your records.
+              {% endif %}
+            </div>
+            <div class="signatures">
+              <div class="sig-line">Cashier / Accounts</div>
+              <div class="sig-line">Parent / Depositor</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    {% if forloop.counter|divisibleby:2 or forloop.last %}
+      </div>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <div class="no-record-box">
+    <div class="no-record-icon">📋</div>
+    <div class="no-record-title">No Pending Challans</div>
+    <div class="no-record-desc">There are no records found for this billing period.</div>
+  </div>
+{% endif %}
+
+</body>
+</html>

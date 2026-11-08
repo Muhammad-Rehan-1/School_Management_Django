@@ -1,0 +1,330 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ notice.code }} — {{ notice.title }}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --primary: #34405E;
+    --primary-2: #2C3752;
+    --orange: #F08A5D;
+    --bg: #F0F2F6;
+    --card: #FFFFFF;
+    --text: #2B3245;
+    --muted: #9AA1B2;
+    --line: #ECEEF3;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    padding: 30px 20px;
+    margin: 0 auto;
+  }
+
+  /* Interactive Action Bar */
+  .p-toolbar {
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .p-toolbar button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  .p-toolbar button:hover {
+    background: #F5F6FA;
+  }
+
+  .p-toolbar .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+
+  .p-toolbar .btn-primary:hover {
+    background: var(--primary-2);
+  }
+
+  /* Notice Paper Container */
+  .notice-paper {
+    background: var(--card);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 45px 50px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(43, 50, 69, 0.06);
+  }
+
+  /* Boxed School Header Block */
+  .school-box {
+    border: 1.5px solid var(--primary);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 20px;
+    background: #FAFBFD;
+  }
+
+  .school-title {
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+
+  .school-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* Full Width Official Notice Banner */
+  .notice-banner {
+    background: var(--primary);
+    color: #ffffff;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    padding: 9px 0;
+    border-radius: 6px;
+    margin-bottom: 24px;
+  }
+
+  /* 2-Column Metadata Table (ID & Date Only) */
+  .notice-meta {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+
+  .notice-meta td {
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    width: 50%;
+    background: #FAFBFD;
+  }
+
+  .meta-label {
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  .meta-value {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Subject Line & Content Body */
+  .subject-line {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--orange);
+    margin-bottom: 20px;
+    color: var(--primary);
+  }
+
+  .notice-body {
+    font-size: 13.5px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    text-align: justify;
+    margin-bottom: 40px;
+    color: var(--text);
+  }
+
+  /* Footer Section with Signature Block */
+  .notice-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+  }
+
+  .issued-block {
+    text-align: left;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  .signature-block {
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* Dedicated Signature Space */
+  .sig-space {
+    height: 65px;
+  }
+
+  .sig-line {
+    display: inline-block;
+    width: 200px;
+    border-bottom: 1.5px solid var(--primary);
+    margin-bottom: 6px;
+  }
+
+  .author-name {
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .author-title {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Expiry Note Banner */
+  .expiry-note {
+    margin-top: 30px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* Print Media Specific Overrides */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    body {
+      background: #fff;
+      padding: 0;
+      margin: 0;
+    }
+
+    .notice-paper {
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0;
+      max-width: 100%;
+    }
+
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Interactive Action Bar -->
+  <div class="p-toolbar no-print">
+    <button type="button" class="btn-primary" onclick="window.print()">
+      🖨 Print Notice
+    </button>
+    <button type="button" onclick="window.close()">
+      Close
+    </button>
+  </div>
+
+  <!-- Printable Notice Board Sheet -->
+  <div class="notice-paper">
+
+    <!-- Header Box -->
+    <header class="school-box">
+      <div class="school-title">{{ school.school_name }}</div>
+      <div class="school-sub">
+        {{ school.address }}<br>
+        Contact: {{ school.phone_number }} &nbsp;|&nbsp; {{ school.email }}
+      </div>
+    </header>
+
+    <!-- Official Notice Banner -->
+    <div class="notice-banner">OFFICIAL NOTICE</div>
+
+    <!-- Metadata Grid (Notice ID & Date Only) -->
+    <table class="notice-meta">
+      <tr>
+        <td>
+          <div class="meta-label">Notice ID</div>
+          <div class="meta-value">{{ notice.code }}</div>
+        </td>
+        <td>
+          <div class="meta-label">Date</div>
+          <div class="meta-value">{{ notice.publish_date|date:"d F Y"|default:"—" }}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Subject Header -->
+    <div class="subject-line">
+      SUBJECT: {{ notice.title }}
+    </div>
+
+    <!-- Content Body -->
+    <main class="notice-body">{{ notice.body }}</main>
+
+    <!-- Footer Section: Issued By + Signature Space -->
+    <footer class="notice-footer">
+      <div class="issued-block">
+        <div class="meta-label">Issued By:</div>
+        <div><b>[ Principal's Office ]</b></div>
+        <div style="font-size: 12px; color: var(--muted);">{{ school.school_name }}</div>
+      </div>
+
+      <div class="signature-block">
+        <div class="meta-label">Authorized Signature</div>
+        <div class="sig-space"></div>
+        <div class="sig-line"></div>
+        <div class="author-name">({{ author_name|default:"Principal" }})</div>
+        <div class="author-title">Principal</div>
+      </div>
+    </footer>
+
+    <!-- Board Display Expiry Note -->
+    {% if notice.expiry_date %}
+      <div class="expiry-note">
+        Note: This notice is to remain posted on the board until {{ notice.expiry_date|date:"d F Y" }}.
+      </div>
+    {% endif %}
+
+  </div>
+
+</body>
+</html>

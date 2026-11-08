@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Level 4 Account - {{ acc.account_id }}{% endblock %}
+
+{% block coa_open %}open{% endblock %}
+{% block nav_coa_l4 %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.content { padding: 6px 26px 26px; }
+.card { background: var(--card); border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(30,40,80,.04); max-width: 900px; margin: 0 auto; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 15px; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 180px; }
+.field label { font-size: 12px; font-weight: 700; color: var(--text); }
+.field input, .field select { padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line); background: #F8F9FC; font-size: 13px; outline: none; }
+.field input[readonly] { background: #eef0f3; color: var(--muted); cursor: not-allowed; font-weight: 700; }
+
+.section-label { font-size: 13px; font-weight: 700; color: var(--text); margin: 24px 0 12px; display: block; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.checkbox-group { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+.checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+.checkbox-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--orange); cursor: pointer; }
+
+.btn-group { display: flex; gap: 10px; margin-top: 30px; }
+.btn-submit { padding: 10px 24px; border-radius: 9px; border: none; background: var(--orange); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: 0.2s ease; }
+.btn-submit:hover { opacity: 0.9; }
+.btn-cancel { padding: 10px 24px; border-radius: 9px; border: 1px solid var(--line); background: #fff; color: var(--text); font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: 0.2s ease; display: inline-flex; align-items: center; }
+.btn-cancel:hover { background: #F8F9FC; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  <div class="card">
+    <h3 style="margin: 0 0 6px 0; color: var(--text); font-size: 20px;">Edit Level 4 Account</h3>
+    <p style="color: var(--muted); font-size: 13px; margin-bottom: 24px;">Updating posting account details for <strong>{{ acc.account_id }}</strong></p>
+
+    <form method="post" action="{% url 'coa_level4_edit' acc.account_id %}">
+      {% csrf_token %}
+
+      <!-- Parent Structure Summary (Read-Only) -->
+      <div class="row">
+        <div class="field" style="flex: 1.5;">
+          <label>Third Level Parent</label>
+          <input value="{{ acc.level3.account_id }} - {{ acc.level3.account_name }}" readonly>
+        </div>
+
+        <div class="field">
+          <label>First Level</label>
+          <input value="{% if acc.level3.level2 and acc.level3.level2.level1 %}{{ acc.level3.level2.level1.account_name }}{% else %}-{% endif %}" readonly>
+        </div>
+
+        <div class="field">
+          <label>Second Level</label>
+          <input value="{% if acc.level3.level2 %}{{ acc.level3.level2.account_name }}{% else %}-{% endif %}" readonly>
+        </div>
+      </div>
+
+      <!-- Account Editable Details -->
+      <div class="row">
+        <div class="field">
+          <label>Account ID</label>
+          <input value="{{ acc.account_id }}" readonly>
+        </div>
+
+        <div class="field" style="flex: 2;">
+          <label>Account Name *</label>
+          <input type="text" name="account_name" value="{{ acc.account_name }}" required placeholder="e.g. Grade-10 Fee Receivables / Meezan Bank">
+        </div>
+
+        <div class="field" style="flex: 2;">
+          <label>Description</label>
+          <input type="text" name="description" value="{{ acc.description|default:'' }}" placeholder="Optional reference notes">
+        </div>
+      </div>
+
+      <!-- Account Special Types (Unique) -->
+      <label class="section-label">Account Special Types (Unique — Only one account can have each)</label>
+      <div class="checkbox-group">
+          <label class="checkbox-item">
+              <input type="checkbox" name="is_cash" {% if acc.is_cash %}checked{% endif %}> Cash Account
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="is_bank" {% if acc.is_bank %}checked{% endif %}> Bank Account
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="is_receivable" {% if acc.is_receivable %}checked{% endif %}> Receivable (e.g. Fees)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="is_payable" {% if acc.is_payable %}checked{% endif %}> Payable (e.g. Salaries)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="is_payable_deposit" {% if acc.is_payable_deposit %}checked{% endif %}> Payable Deposit (PD)
+          </label>
+      </div>
+
+      <!-- Allowed Voucher Permissions -->
+      <label class="section-label">Allowed Voucher Permissions</label>
+      <div class="checkbox-group">
+          <label class="checkbox-item">
+              <input type="checkbox" name="allow_cpv" {% if acc.allow_cpv %}checked{% endif %}> CPV (Cash Pay)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="allow_crv" {% if acc.allow_crv %}checked{% endif %}> CRV (Cash Rec)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="allow_bpv" {% if acc.allow_bpv %}checked{% endif %}> BPV (Bank Pay)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="allow_brv" {% if acc.allow_brv %}checked{% endif %}> BRV (Bank Rec)
+          </label>
+          <label class="checkbox-item">
+              <input type="checkbox" name="allow_jv" {% if acc.allow_jv %}checked{% endif %}> JV (Journal)
+          </label>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div class="btn-group">
+          <button type="submit" class="btn-submit">Update Account</button>
+          <a href="{% url 'coa_level4' %}" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

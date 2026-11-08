@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+
+{% block title %}Timetable Settings — {{ school.school_name }}{% endblock %}
+{% block nav_timetable %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+.page{padding:0 26px 40px;}
+.pg-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+.pg-ic{width:46px;height:46px;border-radius:13px;background:#EEF0FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;}
+.pg-txt h1{font-size:24px;font-weight:700;margin:0;color:var(--text);}
+.pg-txt p{font-size:13px;color:var(--muted);margin-top:4px;}
+.pg-acts{margin-left:auto;}
+
+.btn{border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.15s;text-decoration:none;font-family:inherit;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(240,138,93,.25);}
+.btn-primary:hover{background:#E67D50;}
+.btn-outline{background:#fff;color:var(--text);border:1.4px solid var(--line);}
+.btn-outline:hover{background:#F8F9FC;}
+.btn-danger{background:#FDECEC;color:#C94A48;}
+.btn-sm{padding:8px 13px;font-size:12.5px;}
+
+.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(20,24,40,.04);margin-bottom:20px;}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.panel-head h3{font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:9px;color:var(--text);}
+.panel-head .grow{flex:1;}
+.panel-body{padding:20px;}
+
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:#F8F9FB;padding:11px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);}
+.tbl td{padding:8px 12px;border-bottom:1px solid #F1F2F7;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl input[type=text],.tbl input[type=time],.tbl select{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;color:var(--text);outline:none;transition:.15s;font-family:inherit;box-sizing:border-box;}
+.tbl input:focus,.tbl select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(240,138,93,.12);}
+.tbl input[type=checkbox]{width:18px;height:18px;accent-color:var(--orange);cursor:pointer;}
+.tbl .del-btn{background:#FDECEC;color:#C94A48;border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;margin:0 auto;}
+.tbl .del-btn:hover{background:#FBD9D9;}
+.tbl tr.break-row td{background:#FFF9F5;}
+.tbl tr.off-row{opacity:.6;}
+.col-name{width:140px;} .col-time{width:120px;} .col-chk{width:90px;text-align:center;} .col-num{width:140px;} .col-act{width:60px;text-align:center;}
+
+.badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.badge-break{background:#FEF2E4;color:#C67C2E;}
+.badge-off{background:#F1F2F7;color:#8A92A6;}
+.badge-work{background:#E5F6EE;color:#2A9364;}
+
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;background:#F8F9FB;padding:10px 14px;border-radius:10px;border-left:3px solid var(--primary);}
+.save-bar{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:#FAFBFC;}
+
+.tabs{display:inline-flex;background:#F1F2F7;border-radius:10px;padding:3px;margin-bottom:20px;}
+.tabs button{border:none;background:transparent;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit;}
+.tabs button.on{background:#fff;color:var(--text);box-shadow:0 2px 8px rgba(20,24,40,.08);}
+
+.preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.preview .pv{font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:8px;background:#EEF0FF;color:var(--primary);}
+.preview .pv.brk{background:#FEF2E4;color:#C67C2E;}
+
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <div class="pg-head">
+    <div class="pg-ic">⚙️</div>
+    <div class="pg-txt">
+      <h1>Timetable Settings</h1>
+      <p>Configure period timings, breaks &amp; working days for your school</p>
+    </div>
+    <div class="pg-acts">
+      <a href="{% url 'timetable_page' %}" class="btn btn-outline">← Back to Timetable</a>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="on" id="tabBtnPeriods">🕒 Periods &amp; Breaks</button>
+    <button id="tabBtnDays">📅 Working Days</button>
+  </div>
+
+  <!-- PERIODS TAB -->
+  <div id="tab-periods">
+    <div class="panel">
+      <div class="panel-head">
+        <h3>🕒 Period Configuration</h3>
+        <div class="grow"></div>
+        <button class="btn btn-outline btn-sm" id="btnAddPeriod">+ Add Period</button>
+        <button class="btn btn-outline btn-sm" id="btnAddBreak">+ Add Break</button>
+      </div>
+      <div class="panel-body">
+        <div class="hint">
+          💡 Set the start &amp; end time for each period. Mark a row as <b>Break</b> for lunch/recess.
+          Rows are ordered top to bottom.
+        </div>
+        <table class="tbl" id="periodTable">
+          <thead>
+            <tr>
+              <th class="col-name">Name</th>
+              <th class="col-time">Start Time</th>
+              <th class="col-time">End Time</th>
+              <th class="col-chk">Is Break?</th>
+              <th class="col-chk">Active</th>
+              <th class="col-act"></th>
+            </tr>
+          </thead>
+          <tbody id="periodBody"></tbody>
+        </table>
+        <div class="preview" id="periodPreview"></div>
+      </div>
+      <div class="save-bar">
+        <button class="btn btn-outline" id="btnResetPeriods">Reset</button>
+        <button class="btn btn-primary" id="btnSavePeriods"><span class="btn-text">Save Periods</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAYS TAB -->
+  <div id="tab-days" style="display:none;">
+    <div class="panel">
+      <div class="panel-head"><h3>📅 Working Days Configuration</h3></div>
+      <div class="panel-body">
+        <div class="hint">
+          💡 Turn days on/off. For <b>half-days</b> (like Friday), set the <b>Last Period</b> —
+          all periods after that will be marked OFF automatically.
+        </div>
+        <table class="tbl" id="dayTable">
+          <thead>
+            <tr>
+              <th class="col-name">Day</th>
+              <th class="col-chk">Working?</th>
+              <th class="col-num">Last Period</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="dayBody"></tbody>
+        </table>
+      </div>
+      <div class="save-bar">
+        <button class="btn btn-outline" id="btnResetDays">Reset</button>
+        <button class="btn btn-primary" id="btnSaveDays"><span class="btn-text">Save Days</span></button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  'use strict';
+
+  const API_LOAD  = "{% url 'tt_settings_data' %}";
+  const API_PERIODS = "{% url 'tt_save_periods' %}";
+  const API_DAYS  = "{% url 'tt_save_days' %}";
+
+  let PERIODS = [];
+  let DAYS = [];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const toast = m => (typeof showToast==='function')?showToast(m):alert(m);
+
+  function getCookie(name){
+    let v=null;
+    if(document.cookie){
+      document.cookie.split(';').forEach(c=>{
+        c=c.trim();
+        if(c.substring(0,name.length+1)===name+'='){v=decodeURIComponent(c.substring(name.length+1));}
+      });
+    }
+    return v;
+  }
+
+  /* ═══════════ LOAD DATA ═══════════ */
+  async function loadData(){
+    try{
+      const res = await fetch(API_LOAD);
+      const data = await res.json();
+      if(data.success){
+        PERIODS = data.periods.map(p=>({
+          name:p.name, start:p.start_time, end:p.end_time,
+          is_break:p.is_break, active:p.is_active
+        }));
+        DAYS = data.days.map(d=>({
+          day:d.day, name:d.name, is_working:d.is_working, last:d.last_period_no
+        }));
+
+        // Agar DB khali hai to default days daal do (Mon-Sun)
+        if(DAYS.length === 0){
+          DAYS = [
+            {day:1,name:'Monday',is_working:true,last:null},
+            {day:2,name:'Tuesday',is_working:true,last:null},
+            {day:3,name:'Wednesday',is_working:true,last:null},
+            {day:4,name:'Thursday',is_working:true,last:null},
+            {day:5,name:'Friday',is_working:true,last:null},
+            {day:6,name:'Saturday',is_working:true,last:null},
+            {day:0,name:'Sunday',is_working:false,last:null},
+          ];
+        }
+        renderPeriods();
+        renderDays();
+      }
+    }catch(err){
+      console.error(err);
+      toast('Error loading settings');
+    }
+  }
+
+  /* ═══════════ RENDER PERIODS ═══════════ */
+  function renderPeriods(){
+    const tb = $('periodBody');
+    if(!PERIODS.length){
+      tb.innerHTML = '<tr><td colspan="6" class="loading">No periods yet. Click "Add Period" to start.</td></tr>';
+      $('periodPreview').innerHTML='';
+      return;
+    }
+    tb.innerHTML = PERIODS.map((p,i)=>`
+      <tr class="${p.is_break?'break-row':''}">
+        <td><input type="text" value="${esc(p.name)}" data-i="${i}" data-f="name"></td>
+        <td><input type="time" value="${esc(p.start)}" data-i="${i}" data-f="start"></td>
+        <td><input type="time" value="${esc(p.end)}" data-i="${i}" data-f="end"></td>
+        <td class="col-chk"><input type="checkbox" ${p.is_break?'checked':''} data-i="${i}" data-f="is_break"></td>
+        <td class="col-chk"><input type="checkbox" ${p.active?'checked':''} data-i="${i}" data-f="active"></td>
+        <td class="col-act"><button type="button" class="del-btn" data-del="${i}">🗑</button></td>
+      </tr>
+    `).join('');
+    renderPreview();
+  }
+
+  function renderPreview(){
+    $('periodPreview').innerHTML = PERIODS.map(p=>
+      `<span class="pv ${p.is_break?'brk':''}">${esc(p.name)} · ${esc(p.start)}–${esc(p.end)}</span>`
+    ).join('');
+  }
+
+  // Field changes (event delegation)
+  $('periodBody').addEventListener('input', e=>{
+    const el = e.target;
+    const i = el.dataset.i, f = el.dataset.f;
+    if(i===undefined) return;
+    if(el.type==='checkbox') PERIODS[i][f]=el.checked;
+    else PERIODS[i][f]=el.value;
+    if(f==='is_break') renderPeriods();
+    else renderPreview();
+  });
+
+  $('periodBody').addEventListener('click', e=>{
+    const del = e.target.closest('[data-del]');
+    if(del){
+      if(confirm('Delete this period?')){
+        PERIODS.splice(+del.dataset.del,1);
+        renderPeriods();
+        renderDays();
+      }
+    }
+  });
+
+  $('btnAddPeriod').onclick = ()=>{
+    const cnt = PERIODS.filter(p=>!p.is_break).length+1;
+    PERIODS.push({name:'Period '+cnt,start:'13:30',end:'14:15',is_break:false,active:true});
+    renderPeriods();
+    renderDays();
+  };
+  $('btnAddBreak').onclick = ()=>{
+    PERIODS.push({name:'Break',start:'11:00',end:'11:15',is_break:true,active:true});
+    renderPeriods();
+  };
+
+  /* ═══════════ RENDER DAYS ═══════════ */
+  function renderDays(){
+    const maxP = PERIODS.filter(p=>!p.is_break).length;
+    const opts = n=>{let o='';for(let i=1;i<=maxP;i++)o+=`<option value="${i}"${i==n?' selected':''}>Period ${i}</option>`;return o;};
+    const tb = $('dayBody');
+    tb.innerHTML = DAYS.map((d,i)=>{
+      const isHalf = d.is_working && d.last && d.last < maxP;
+      let status = d.is_working
+        ? (isHalf?'<span class="badge badge-break">Half Day</span>':'<span class="badge badge-work">Full Day</span>')
+        : '<span class="badge badge-off">Off</span>';
+      return `
+      <tr class="${d.is_working?'':'off-row'}">
+        <td><b>${esc(d.name)}</b></td>
+        <td class="col-chk"><input type="checkbox" ${d.is_working?'checked':''} data-di="${i}" data-df="is_working"></td>
+        <td class="col-num"><select ${d.is_working?'':'disabled'} data-di="${i}" data-df="last">${opts(d.last||maxP)}</select></td>
+        <td>${status}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  $('dayBody').addEventListener('change', e=>{
+    const el = e.target;
+    const i = el.dataset.di, f = el.dataset.df;
+    if(i===undefined) return;
+    if(el.type==='checkbox') DAYS[i][f]=el.checked;
+    else DAYS[i][f]=+el.value;
+    renderDays();
+  });
+
+  /* ═══════════ SAVE PERIODS ═══════════ */
+  $('btnSavePeriods').onclick = async ()=>{
+    // validation
+    for(const p of PERIODS){
+      if(!p.name || !p.start || !p.end){
+        toast('Please fill all period fields');
+        return;
+      }
+    }
+    const btn = $('btnSavePeriods');
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    try{
+      const res = await fetch(API_PERIODS,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+        body:JSON.stringify({periods:PERIODS.map(p=>({
+          name:p.name,start_time:p.start,end_time:p.end,is_break:p.is_break,is_active:p.active
+        }))})
+      });
+      const data = await res.json();
+      if(data.success){ toast(data.message||'Saved'); loadData(); }
+      else toast('Error: '+(data.error||'Failed'));
+    }catch(err){ console.error(err); toast('Network error'); }
+    finally{ btn.disabled=false; btn.innerHTML='<span class="btn-text">Save Periods</span>'; }
+  };
+
+  /* ═══════════ SAVE DAYS ═══════════ */
+  $('btnSaveDays').onclick = async ()=>{
+    const btn = $('btnSaveDays');
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    try{
+      const res = await fetch(API_DAYS,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+        body:JSON.stringify({days:DAYS.map(d=>({
+          day:d.day,name:d.name,is_working:d.is_working,
+          last_period_no:d.is_working?d.last:null
+        }))})
+      });
+      const data = await res.json();
+      if(data.success){ toast(data.message||'Saved'); loadData(); }
+      else toast('Error: '+(data.error||'Failed'));
+    }catch(err){ console.error(err); toast('Network error'); }
+    finally{ btn.disabled=false; btn.innerHTML='<span class="btn-text">Save Days</span>'; }
+  };
+
+  $('btnResetPeriods').onclick = ()=>loadData();
+  $('btnResetDays').onclick = ()=>loadData();
+
+  /* ═══════════ TABS ═══════════ */
+  $('tabBtnPeriods').onclick = ()=>{
+    $('tabBtnPeriods').classList.add('on'); $('tabBtnDays').classList.remove('on');
+    $('tab-periods').style.display=''; $('tab-days').style.display='none';
+  };
+  $('tabBtnDays').onclick = ()=>{
+    $('tabBtnDays').classList.add('on'); $('tabBtnPeriods').classList.remove('on');
+    $('tab-days').style.display=''; $('tab-periods').style.display='none';
+    renderDays();
+  };
+
+  /* INIT */
+  loadData();
+
+})();
+</script>
+{% endblock %}

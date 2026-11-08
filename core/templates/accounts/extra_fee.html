@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}Acero — Extra & Exam Fees{% endblock %}
+{% block page_title %}Extra & Exam Fee Management{% endblock %}
+{% block accounts_open %}open{% endblock %}
+{% block nav_extra_fee %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --green: #3E9E6B;
+    --red: #E15C5C;
+    --orange: #F08A5D;
+    --blue: #3E6FB0;
+    --navy: #1E2740;
+    --line: #E5E7EB;
+    --card: #FFFFFF;
+    --muted: #6B7280;
+    --text: #111827;
+    --primary: #1E2740;
+  }
+  .content { padding: 6px 26px 26px; display: flex; flex-direction: column; gap: 16px; }
+
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+  .alert.success { background: #E8F7EF; color: var(--green); }
+  .alert.error { background: #FDECEC; color: var(--red); }
+
+  /* Filter bar */
+  .filter-card {
+    background: var(--card); border-radius: 16px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    box-shadow: 0 2px 8px rgba(30,40,80,.04); border: 1px solid var(--line);
+  }
+  .filter-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-card select {
+    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; font-weight: 600; outline: none;
+  }
+
+  .card-box {
+    background: var(--card); border-radius: 16px; padding: 22px;
+    box-shadow: 0 2px 8px rgba(30,40,80,.04);
+    border: 1px solid var(--line);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card-head h3 { font-size: 16px; font-weight: 600; color: var(--text); }
+  .card-head p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .schedule-form {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto;
+    gap: 12px; align-items: end; margin-top: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--text); }
+  .field input, .field select {
+    padding: 10px 14px; border-radius: 9px; border: 1px solid var(--line);
+    background: #F8F9FC; font-size: 13px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box;
+  }
+  .field input:focus, .field select:focus { border-color: var(--orange); background: #fff; }
+
+  .btn-primary {
+    padding: 10px 20px; border-radius: 9px; border: none; background: var(--orange); color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+  }
+  .btn-primary:hover { background: #E8794C; }
+  .btn-navy { background: var(--navy); }
+  .btn-navy:hover { background: #2B3754; }
+
+  .table-card { background: var(--card); border-radius: 16px; padding: 6px; box-shadow: 0 2px 8px rgba(30,40,80,.04); overflow-x: auto; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; min-width: 850px; }
+  thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  tbody td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:hover { background: #FAFBFD; }
+  
+  .badge-class { background: #EEF2FF; color: #4F46E5; font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .badge-month { background: #F1F2F7; color: var(--text); font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  
+  .btn-delete {
+    background: #FDECEC; color: var(--red); border: 1px solid #F8D7DA; padding: 6px 12px;
+    border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn-delete:hover { background: var(--red); color: #fff; }
+
+  @media (max-width: 960px) {
+    .schedule-form { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ✅ SESSION/YEAR FILTER BAR -->
+  <div class="filter-card">
+    <form method="get" class="filter-group" id="extraFeeFilterForm">
+      <label style="font-size:13px;font-weight:700;color:var(--primary);">Session:</label>
+
+      <select name="session" onchange="document.getElementById('extraFeeFilterForm').submit()">
+        {% for s in all_academic_sessions %}
+          <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+
+      <label style="font-size:13px;font-weight:700;color:var(--primary);">Month:</label>
+      <select name="month" onchange="document.getElementById('extraFeeFilterForm').submit()">
+        {% for m_val, m_name in months.items %}
+          <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+
+      
+      </select>
+    </form>
+
+    <div style="font-size:12px;color:var(--muted);">
+      Active: <b>{{ selected_session }}</b>
+    </div>
+  </div>
+
+  <!-- SECTION 1: Class-Wise Default Fee Structure Setup -->
+  <div class="card-box" style="border-left: 4px solid var(--blue);">
+    <div class="card-head">
+      <div>
+        <h3>🏫 Class-Wise Standard Monthly Fee Structure</h3>
+      </div>
+    </div>
+
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+      <span>ℹ️</span>
+      <span><b>Note:</b> The updated fee will be implemented from the <b>NEXT month</b> of the selected billing month.</span>
+    </div>
+
+    <form method="post" action="{% url 'set_class_base_fee' %}" style="display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 14px;">
+      {% csrf_token %}
+
+      <!-- keep filter state -->
+      <input type="hidden" name="session" value="{{ selected_session }}">
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <input type="hidden" name="month" value="{{ selected_month }}">
+
+      <div class="field">
+        <label>Select Class <span style="color:var(--orange);">*</span></label>
+        <select name="student_class" required>
+          <option value="">-- Choose Class --</option>
+          {% for cls in available_classes %}
+            <option value="{{ cls }}">{{ cls }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Select Current / Reference Month <span style="color:var(--orange);">*</span></label>
+        <select name="effective_month" required>
+          {% for m_val, m_name in months.items %}
+            <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>New Tuition Fee (Rs.) <span style="color:var(--orange);">*</span></label>
+        <input type="number" step="0.01" name="monthly_fee" placeholder="e.g. 2500.00" required style="font-weight:700;color:var(--primary);">
+      </div>
+
+      <div class="field">
+        <label>Admission Fee (Rs.)</label>
+        <input type="number" step="0.01" name="admission_fee" placeholder="0.00" value="0.00">
+      </div>
+
+      {% if perms.can_edit or user.is_superuser %}
+      <div>
+        <button type="submit" class="btn-primary btn-navy">💾 Update Class Fee</button>
+      </div>
+      {% endif %}
+
+    </form>
+
+    {% if class_base_fees %}
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; border-top:1px dashed var(--line); padding-top:12px;">
+      {% for cf in class_base_fees %}
+        <div style="background:#F8F9FC; border:1px solid var(--line); padding:6px 14px; border-radius:10px; font-size:12.5px;">
+          <b>Class {{ cf.student_class }}:</b> <span style="color:var(--green); font-weight:700;">Rs. {{ cf.monthly_fee }} / mo</span>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 2: Specific Month Exam Fee & Other Charges -->
+
+  {% if perms.can_add or user.is_superuser %}
+  <div class="card-box" style="border-left: 4px solid var(--orange);">
+    <div class="card-head">
+      <div>
+        <h3>🗓️ Schedule Specific Month Exam Fee & Other Charges</h3>
+        <p>Define charges (e.g. Mid-Term Exam Fee, Sports Fund) that apply <b>ONLY</b> to a selected month and class.</p>
+      </div>
+    </div>
+    
+
+    <form method="post" action="{% url 'add_special_fee' %}" class="schedule-form">
+      {% csrf_token %}
+
+      <!-- keep filter state -->
+      <input type="hidden" name="session" value="{{ selected_session }}">
+
+      <div class="field">
+        <label>Fee Title / Purpose <span style="color:var(--orange);">*</span></label>
+        <input type="text" name="title" placeholder="e.g. Final Term Exam Fee" required>
+      </div>
+
+      <div class="field">
+        <label>Target Class <span style="color:var(--orange);">*</span></label>
+        <select name="student_class" required>
+          <option value="All">All Classes</option>
+          {% for cls in available_classes %}
+            <option value="{{ cls }}">{{ cls }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Billing Month <span style="color:var(--orange);">*</span></label>
+        <select name="fee_month" required>
+          {% for m_val, m_name in months.items %}
+            <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- ✅ Year dropdown from selected session -->
+      <div class="field">
+        <label>Academic Year <span style="color:var(--orange);">*</span></label>
+        <select name="fee_year" required>
+          {% for y in session_years %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Amount (Rs.) <span style="color:var(--orange);">*</span></label>
+        <input type="number" step="0.01" name="amount" placeholder="1000.00" required style="font-weight:700;color:var(--primary);">
+      </div>
+
+      <div>
+        <button type="submit" class="btn-primary">+ Schedule Charge</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- Scheduled Fees Directory Table -->
+  <div class="table-card">
+    <div style="padding:16px 18px;font-weight:600;font-size:14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">
+      <span>Scheduled Extra & Exam Charges Directory ({{ scheduled_special_fees.count }} Records)</span>
+      <span style="font-size:12px;color:var(--muted);">Session: <b>{{ selected_session }}</b> · Year: <b>{{ selected_year }}</b></span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Fee Title / Purpose</th>
+          <th>Applicable Class</th>
+          <th>Effective Month & Year</th>
+          <th>Amount (Rs.)</th>
+          <th>Scheduled On</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sf in scheduled_special_fees %}
+        <tr>
+          <td><b style="font-size:13.5px;color:var(--primary);">{{ sf.title }}</b></td>
+          <td>
+            <span class="badge-class">
+              {% if sf.student_class == 'All' %}All Classes{% else %}Class {{ sf.student_class }}{% endif %}
+            </span>
+          </td>
+          <td>
+            <span class="badge-month">
+              {{ sf.month_name }} ({{ sf.fee_year }})
+            </span>
+          </td>
+          <td><b style="font-size:14px;color:var(--green);">Rs. {{ sf.amount }}</b></td>
+          <td style="color:var(--muted);font-size:12px;">{{ sf.created_at|date:"d-M-Y" }}</td>
+          <td>
+            <div style="display:flex;justify-content:flex-end;">
+              {% if perms.can_delete or user.is_superuser %}
+              <form method="post"
+                    action="{% url 'delete_special_fee' sf.id %}"
+                    onsubmit="return confirm('Are you sure you want to remove scheduled fee {{ sf.title }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete" title="Delete Charge">✕ Remove</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;padding:36px;color:var(--muted);">
+            No special or exam charges scheduled yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voucher - {{ master.voucher_no }}</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; margin: 0; padding: 20px; background: #fff; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, .15); border-radius: 10px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #4338CA; padding-bottom: 15px; }
+        .header h2 { margin: 0; color: #1E293B; font-size: 24px; }
+        .header p { margin: 4px 0; color: #64748B; font-size: 13px; }
+        
+        .meta-table { width: 100%; margin-bottom: 20px; font-size: 13px; }
+        .meta-table td { padding: 6px; }
+        
+        table.items { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table.items th { background: #0F172A; color: #fff; font-size: 11px; text-transform: uppercase; padding: 10px; text-align: left; }
+        table.items td { padding: 10px; font-size: 13px; border-bottom: 1px solid #E2E8F0; }
+        .text-right { text-align: right; }
+        
+        .totals-row { font-weight: bold; background: #F8FAFC; }
+        
+        .signatures { display: flex; justify-content: space-between; margin-top: 60px; font-size: 13px; text-align: center; }
+        .sig-line { border-top: 1px solid #94A3B8; width: 200px; padding-top: 5px; margin-top: 40px; }
+        
+        @media print {
+            body { padding: 0; background: none; }
+            .invoice-box { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+    <div class="invoice-box">
+        <div class="header">
+            <h2>{{ school_name }}</h2>
+            <p>{{ school_address }}</p>
+            <h3 style="margin: 10px 0 0 0; color: #4338CA; text-transform: uppercase;">{{ master.voucher_type }} - Voucher</h3>
+        </div>
+
+        <table class="meta-table">
+            <tr>
+                <td><strong>Voucher No:</strong> {{ master.voucher_no }}</td>
+                <td class="text-right"><strong>Date:</strong> {{ master.date|date:"d-M-Y" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Status:</strong> {{ master.status }}</td>
+                <td class="text-right"><strong>Reference:</strong> {{ master.description|default:"-" }}</td>
+            </tr>
+        </table>
+
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Account ID</th>
+                    <th>Account Name & Narration</th>
+                    <th class="text-right">Debit (Rs)</th>
+                    <th class="text-right">Credit (Rs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in details %}
+                <tr>
+                    <td><strong>{{ d.account.account_id }}</strong></td>
+                    <td>
+                        {{ d.account.account_name }}<br>
+                        <small style="color: #64748B;">{{ d.narration }}</small>
+                    </td>
+                    <td class="text-right">{% if d.debit > 0 %}Rs {{ d.debit|floatformat:2 }}{% else %}-{% endif %}</td>
+                    <td class="text-right">{% if d.credit > 0 %}Rs {{ d.credit|floatformat:2 }}{% else %}-{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="totals-row">
+                    <td colspan="2" class="text-right">Total Amount:</td>
+                    <td class="text-right">Rs {{ master.total_amount|floatformat:2 }}</td>
+                    <td class="text-right">Rs {{ master.total_amount|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="signatures">
+            <div>
+                <div class="sig-line">Prepared By</div>
+            </div>
+            <div>
+                <div class="sig-line">Checked By</div>
+            </div>
+            <div>
+                <div class="sig-line">Authorized Signature</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;" class="no-print">
+            <button onclick="window.print()" style="background: #4338CA; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold;">Print Again</button>
+            <button onclick="window.close()" style="background: #E2E8F0; color: #334155; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 10px;">Close Window</button>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Results{% endblock %}
+{% block page_title %}Results{% endblock %}
+{% block nav_results %}active{% endblock %}
+
+{% block content %}
+<div style="padding:6px 26px 26px; display:flex; flex-direction:column; gap:16px;">
+
+  <div style="background:var(--card); border-radius:16px; padding:16px 18px; box-shadow:0 2px 8px rgba(30,40,80,.04);">
+    <h2 style="font-size:16px; font-weight:600; margin-bottom:12px;">Select Class & Term</h2>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <select id="classFilter" style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;min-width:200px;">
+        <option value="">Select Class</option>
+        {% for c in classes %}
+          <option value="{{ c.class_field }}">{{ c.class_field }}{% if c.section %} - {{ c.section }}{% endif %}</option>
+        {% endfor %}
+      </select>
+
+      <select id="termFilter" style="padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:#F8F9FC;min-width:200px;">
+        <option value="">Select Term</option>
+        {% for v, lbl in terms %}
+          <option value="{{ v }}">{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div style="background:var(--card); border-radius:16px; padding:6px; box-shadow:0 2px 8px rgba(30,40,80,.04); overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; min-width:950px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Student</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Roll</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">%</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Grade</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Position</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Performance</th>
+          <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:14px 16px;border-bottom:1px solid var(--line);">Action</th>
+        </tr>
+      </thead>
+      <tbody id="studentsTbody">
+        <tr><td colspan="7" style="padding:18px 16px; color:var(--muted);">Select class and term.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadStudents(){
+  const cls = document.getElementById("classFilter").value;
+  const term = document.getElementById("termFilter").value;
+  const tbody = document.getElementById("studentsTbody");
+
+  if(!cls || !term){
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:18px 16px; color:var(--muted);">Select class and term.</td></tr>`;
+    return;
+  }
+
+  const url = new URL("{% url 'results_students_api' %}", window.location.origin);
+  url.searchParams.set("class", cls);
+  url.searchParams.set("term", term);
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  tbody.innerHTML = "";
+  (data.results || []).forEach(s => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);"><b>${s.name}</b></td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);">#${s.roll_no}</td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${s.percentage}%</td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${s.grade}</td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);">${s.position}</td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);color:var(--muted);">${s.remark}</td>
+      <td style="padding:13px 16px;border-bottom:1px solid var(--line);">
+        <a href="/results/${s.id}/?class=${encodeURIComponent(cls)}&term=${encodeURIComponent(term)}"
+           style="text-decoration:none; padding:8px 12px; border-radius:9px; background:var(--orange); color:#fff; font-weight:600; font-size:12.5px;">
+          View Result
+        </a>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if((data.results || []).length === 0){
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:18px 16px; color:var(--muted);">No students found.</td></tr>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("classFilter")?.addEventListener("change", loadStudents);
+  document.getElementById("termFilter")?.addEventListener("change", loadStudents);
+});
+</script>
+{% endblock %}

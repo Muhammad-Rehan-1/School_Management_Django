@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}COA Level 4 - Posting Accounts{% endblock %}
+
+{% block coa_open %}open{% endblock %}
+{% block nav_coa_l1 %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .content { padding: 12px 26px 30px; }
+  
+  /* Card & Header Styles */
+  .card-box { 
+    background: var(--card, #ffffff); 
+    border-radius: 16px; 
+    padding: 24px; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+    border: 1px solid rgba(0,0,0,0.04);
+    margin-bottom: 24px; 
+  }
+  .page-title { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; color: var(--text, #1E293B); }
+  .page-subtitle { color: var(--muted, #64748B); font-size: 13px; margin: 0 0 20px 0; }
+
+  /* Grid Layouts */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group label { font-size: 12px; font-weight: 700; color: var(--text, #334155); }
+  .field-group input, .field-group select { 
+    padding: 10px 14px; 
+    border-radius: 10px; 
+    border: 1px solid var(--line, #E2E8F0); 
+    background: #F8FAFC; 
+    font-size: 13px; 
+    outline: none;
+    transition: all 0.2s ease;
+    color: #0F172A;
+  }
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--orange, #F97316);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+  }
+  .field-group input[readonly] { 
+    background: #F1F5F9; 
+    color: #64748B; 
+    cursor: not-allowed; 
+    font-weight: 700; 
+  }
+
+  /* Checkbox Section Grouping */
+  .control-group-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .control-box {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .box-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748B;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  /* Custom Pill Checkboxes */
+  .pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pill-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+
+  .pill-checkbox:hover {
+    border-color: var(--orange, #F97316);
+    background: #FFF7ED;
+  }
+
+  .pill-checkbox input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--orange, #F97316);
+    cursor: pointer;
+  }
+
+  /* Disabled Pill & Taken Badge CSS */
+  .pill-disabled {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+    color: #94A3B8 !important;
+    cursor: not-allowed !important;
+  }
+
+  .badge-taken {
+    background: #FEE2E2;
+    color: #DC2626;
+    font-size: 9.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+
+  /* Submit Button */
+  .btn-submit { 
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 28px; 
+    border-radius: 10px; 
+    border: none; 
+    background: var(--orange, #F97316); 
+    color: #FFFFFF; 
+    font-size: 13px;
+    font-weight: 700; 
+    cursor: pointer; 
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+  }
+  .btn-submit:hover { 
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
+  }
+
+  /* Table Design */
+  .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .search-input { 
+    padding: 8px 14px; 
+    border-radius: 8px; 
+    border: 1px solid var(--line, #E2E8F0); 
+    width: 260px; 
+    font-size: 13px; 
+    outline: none; 
+    background: #F8FAFC;
+  }
+  .search-input:focus { border-color: var(--orange, #F97316); background: #FFF; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
+  th, td { padding: 12px 10px; text-align: left; font-size: 12.5px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+  th { font-weight: 700; color: #64748B; background: #F8FAFC; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  th:first-child { border-top-left-radius: 8px; }
+  th:last-child { border-top-right-radius: 8px; }
+
+  tr:hover td { background-color: #F8FAFC; }
+
+  /* Actions */
+  .action-btn { padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 11.5px; text-decoration: none; font-weight: 600; display: inline-block; }
+  .edit-btn { background: #FEF3C7; color: #D97706; margin-right: 4px; }
+  .edit-btn:hover { background: #FDE68A; }
+  .delete-btn { background: #FEE2E2; color: #DC2626; }
+  .delete-btn:hover { background: #FCA5A5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+  
+  <!-- Add Account Form Card -->
+  <div class="card-box">
+    <h3 class="page-title">Chart of Accounts — Level 4 (Posting Accounts)</h3>
+    <p class="page-subtitle">Create active operational accounts used for student fees, banking, cash transactions, and voucher entries.</p>
+
+    <form method="post" action="{% url 'coa_level4' %}">
+      {% csrf_token %}
+      
+      <!-- Parent Hierarchy Grid -->
+      <div class="form-grid">
+        <div class="field-group" style="grid-column: span 2;">
+          <label>Third Level Parent Account *</label>
+          <select name="level3_id" id="level3Select" required onchange="updateParentsAndID()">
+            <option value="" selected disabled>Select Third Level Control Head</option>
+            {% for l3 in level3_accounts %}
+              <option value="{{ l3.account_id }}" 
+                      data-l1="{{ l3.level1_name }}" 
+                      data-l2="{{ l3.level2_name }}"
+                      data-nextid="{{ l3.next_l4_id }}">
+                {{ l3.account_id }} - {{ l3.account_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>First Level (Main Head)</label>
+          <input id="l1Display" placeholder="Auto" readonly>
+        </div>
+
+        <div class="field-group">
+          <label>Second Level (Sub Head)</label>
+          <input id="l2Display" placeholder="Auto" readonly>
+        </div>
+      </div>
+
+      <!-- Account Details Grid -->
+      <div class="form-grid">
+        <div class="field-group">
+          <label>Account ID (Auto Generated)</label>
+          <input name="account_id" id="accountIDDisplay" placeholder="Auto Code" readonly>
+        </div>
+
+        <div class="field-group" style="grid-column: span 2;">
+          <label>Account Name *</label>
+          <input name="account_name" placeholder="e.g. Grade-10 Fee Receivables / Meezan Bank Main Account" required>
+        </div>
+
+        <div class="field-group">
+          <label>Description (Optional)</label>
+          <input name="description" placeholder="Reference notes or bank info">
+        </div>
+      </div>
+
+      <!-- Control Flags & Voucher Rules Grid -->
+      <div class="control-group-container">
+        
+       <!-- Box 1: Account Classification Flags (Unique Constraints) -->
+        <div class="control-box">
+          <span class="box-title">Account Types (Unique - only one account can have each)</span>
+          <div class="pills-container">
+            
+            <!-- Cash Account -->
+            <label class="pill-checkbox {% if cash_taken %}pill-disabled{% endif %}">
+              <input type="checkbox" name="is_cash" value="1" {% if cash_taken %}disabled{% endif %}> 
+              Cash Account
+              {% if cash_taken %}<span class="badge-taken">Taken</span>{% endif %}
+            </label>
+
+            <!-- Receivable Account -->
+            <label class="pill-checkbox {% if receivable_taken %}pill-disabled{% endif %}">
+              <input type="checkbox" name="is_receivable" value="1" {% if receivable_taken %}disabled{% endif %}> 
+              PR (Receivable)
+              {% if receivable_taken %}<span class="badge-taken">Taken</span>{% endif %}
+            </label>
+
+            <!-- Payable Account -->
+            <label class="pill-checkbox {% if payable_disabled %}pill-disabled{% endif %}">
+              <input type="checkbox" name="is_payable" value="1" {% if payable_taken %}disabled{% endif %}> 
+              PA (Payable)
+              {% if payable_taken %}<span class="badge-taken">Taken</span>{% endif %}
+            </label>
+
+            <!-- Payable Deposit (PD) Account -->
+            <label class="pill-checkbox {% if payable_deposit_taken %}pill-disabled{% endif %}">
+              <input type="checkbox" name="is_payable_deposit" value="1" {% if payable_deposit_taken %}disabled{% endif %}> 
+              PD (Payable Deposit)
+              {% if payable_deposit_taken %}<span class="badge-taken">Taken</span>{% endif %}
+            </label>
+
+          </div>
+        </div>
+        
+        <!-- Box 2: Allowed Voucher Permissions -->
+        <div class="control-box">
+          <span class="box-title">Allowed Voucher Permissions</span>
+          <div class="pills-container">
+            <label class="pill-checkbox">
+              <input type="checkbox" name="allow_cpv" id="allow_cpv"> CPV (Cash Pay)
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="allow_crv" id="allow_crv"> CRV (Cash Rec)
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="allow_bpv" id="allow_bpv"> BPV (Bank Pay)
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="allow_brv" id="allow_brv"> BRV (Bank Rec)
+            </label>
+            <label class="pill-checkbox">
+              <input type="checkbox" name="allow_jv" id="allow_jv" checked> JV (Journal)
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn-submit">+ Create Level 4 Account</button>
+    </form>
+  </div>
+
+  <!-- Level 4 Accounts Directory -->
+  <div class="card-box" style="overflow-x: auto;">
+    <div class="table-header">
+      <h4 style="margin: 0; font-size: 16px; font-weight: 700; color: #1E293B;">Level 4 Accounts Directory</h4>
+      <input type="text" id="searchInput" class="search-input" onkeyup="filterTable()" placeholder="Search account ID or name...">
+    </div>
+
+    <table id="l4Table">
+      <thead>
+        <tr>
+          <th style="width: 110px;">ACC ID</th>
+          <th>ACCOUNT NAME</th>
+          <th>DESCRIPTION</th>
+          <th style="text-align: center; width: 45px;">CASH</th>
+          <th style="text-align: center; width: 45px;">PA</th>
+          <th style="text-align: center; width: 45px;">PD</th>
+          <th style="text-align: center; width: 45px;">PR</th>
+          <th style="text-align: center; width: 45px;">CPV</th>
+          <th style="text-align: center; width: 45px;">CRV</th>
+          <th style="text-align: center; width: 45px;">BPV</th>
+          <th style="text-align: center; width: 45px;">BRV</th>
+          <th style="text-align: center; width: 45px;">JV</th>
+          <th style="text-align: right; width: 100px;">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for acc in level4_accounts %}
+        <tr>
+          <td><strong style="color: #0F172A;">{{ acc.account_id }}</strong></td>
+          <td style="font-weight: 600; color: #334155;">{{ acc.account_name }}</td>
+          <td style="color: #64748B; font-size: 11.5px;">{{ acc.description|default:"-" }}</td>
+          
+          <!-- CASH -->
+          <td style="text-align: center; color: {% if acc.is_cash %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.is_cash %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- PA (Payable) -->
+          <td style="text-align: center; color: {% if acc.is_payable %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.is_payable %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- PD (Debit) -->
+          <td style="text-align: center; color: #94A3B8; font-weight: bold;">✗</td>
+          <!-- PR (Receivable) -->
+          <td style="text-align: center; color: {% if acc.is_receivable %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.is_receivable %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- CPV -->
+          <td style="text-align: center; color: {% if acc.allow_cpv %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.allow_cpv %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- CRV -->
+          <td style="text-align: center; color: {% if acc.allow_crv %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.allow_crv %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- BPV -->
+          <td style="text-align: center; color: {% if acc.allow_bpv %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.allow_bpv %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- BRV -->
+          <td style="text-align: center; color: {% if acc.allow_brv %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.allow_brv %}✓{% else %}✗{% endif %}
+          </td>
+          <!-- JV -->
+          <td style="text-align: center; color: {% if acc.allow_jv %}#16A34A{% else %}#94A3B8{% endif %}; font-weight: bold;">
+            {% if acc.allow_jv %}✓{% else %}✗{% endif %}
+          </td>
+
+          <td style="text-align: right;">
+            {% if acc.has_transactions %}
+              <span title="Locked: Transactions exist in Ledger" style="background: #FEE2E2; color: #DC2626; padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 700;">🔒 Locked</span>
+            {% else %}
+              <a href="{% url 'coa_level4_edit' acc.account_id %}" class="action-btn edit-btn">Edit</a>
+              <a href="{% url 'coa_level4_delete' acc.account_id %}" class="action-btn delete-btn" onclick="return confirm('Delete this account?');">Delete</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="13" style="text-align: center; color: var(--muted, #64748B); padding: 32px;">No Level-4 posting accounts created yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function updateParentsAndID() {
+  const select = document.getElementById('level3Select');
+  const selectedOption = select.options[select.selectedIndex];
+
+  if (selectedOption && selectedOption.value) {
+    document.getElementById('l1Display').value = selectedOption.getAttribute('data-l1') || 'Auto';
+    document.getElementById('l2Display').value = selectedOption.getAttribute('data-l2') || 'Auto';
+    document.getElementById('accountIDDisplay').value = selectedOption.getAttribute('data-nextid') || 'Auto';
+  }
+}
+
+function filterTable() {
+  const input = document.getElementById('searchInput').value.toUpperCase();
+  const rows = document.getElementById('l4Table').getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const idTd = rows[i].getElementsByTagName('td')[0];
+    const nameTd = rows[i].getElementsByTagName('td')[1];
+    if (idTd || nameTd) {
+      const txtValue = (idTd.textContent || idTd.innerText) + ' ' + (nameTd.textContent || nameTd.innerText);
+      rows[i].style.display = txtValue.toUpperCase().indexOf(input) > -1 ? '' : 'none';
+    }
+  }
+}
+</script>
+{% endblock %}
