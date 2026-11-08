@@ -13,5 +13,5 @@ ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
 # 2. Python packages install karein
 pip install -r requirements.txt
 
-# 3. Static files collect karein
+# 3. Static files collect kareins
 python manage.py collectstatic --no-input
