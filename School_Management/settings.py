@@ -78,25 +78,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'School_Management.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-        'USER': 'shaheemurrehan2005@gmail.com',
-        'PASSWORD': 'chawind@123',
-        'HOST': 'school-db-2026.database.windows.net',
-        'PORT': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'extra_params': 'Encrypt=yes;TrustServerCertificate=no;',
-        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
