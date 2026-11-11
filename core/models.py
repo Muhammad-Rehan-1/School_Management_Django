@@ -198,7 +198,7 @@ class CoreStaffPayroll(models.Model):
     
 class NCategory(models.Model):
     id = models.AutoField(primary_key=True, db_column='id')
-    category_name = models.CharField(unique=True, max_length=100, db_collation='SQL_Latin1_General_CP1_CI_AS')
+    category_name = models.CharField(unique=True, max_length=100)
 
     class Meta:
         managed = False
