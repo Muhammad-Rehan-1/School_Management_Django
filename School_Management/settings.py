@@ -135,3 +135,16 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+
+from django.db.backends.signals import connection_created
+
+def register_sqlite_collation(sender, connection, **kwargs):
+    if connection.vendor == 'sqlite':
+        connection.connection.create_collation(
+            "SQL_Latin1_General_CP1_CI_AS", 
+            lambda s1, s2: (s1 > s2) - (s1 < s2)
+        )
+
+connection_created.connect(register_sqlite_collation)
